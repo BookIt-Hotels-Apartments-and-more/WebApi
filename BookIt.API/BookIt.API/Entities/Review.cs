@@ -1,17 +1,12 @@
-namespace BookIt.Entities
+namespace BookIt.Entities;
+
+public class Review
 {
-    public class Review
-    {
-        public int Id { get; set; }
-
-        public string? Text { get; set; }
-        public double Rating { get; set; }
-        public Image[]? Photo { get; set; }
-
-        public int UserId { get; set; }
-        public User User { get; set; } = null!;
-
-        public int EstablishmentId { get; set; }
-        public Establishment Establishment { get; set; } = null!;
-    }
+    public int Id { get; set; }
+    public string Text { get; set; } = null!;
+    public double Rating { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int BookingId { get; set; }
+    public Booking Booking { get; set; } = null!;
+    public ICollection<Image> Photos { get; set; } = new List<Image>();
 }

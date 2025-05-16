@@ -1,20 +1,26 @@
-namespace BookIt.Entities
+namespace BookIt.Entities;
+
+public enum UserRole
 {
-    public enum UserRole {
-        Admin, // администратор
-        HotelOwner, // владелец отеля
-        Consumer, // потребитель
-    }
+    Admin,
+    Landlord,
+    Tenant
+}
 
-    public class User {
-        public int Id { get; set; }
-
-        public string? Username { get; set; }
-        public string? Email { get; set; }
-        public string? Password { get; set; }
-        public double Rating { get; set; }
-
-        public UserRole Role { get; set; }
-        public Image? Photo { get; set; }
-    }
+public class User
+{
+    public int Id { get; set; }
+    public string Username { get; set; } = null!;
+    public string Email { get; set; } = null!;
+    public string PasswordHash { get; set; } = null!;
+    public string? PhoneNumber { get; set; }
+    public string? Bio { get; set; }
+    public UserRole Role { get; set; }
+    public double? Rating { get; set; } = null;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? LastActiveAt { get; set; }
+    public ICollection<Image> Photos { get; set; } = new List<Image>();
+    public ICollection<Establishment> OwnedEstablishments { get; set; } = new List<Establishment>();
+    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
 }

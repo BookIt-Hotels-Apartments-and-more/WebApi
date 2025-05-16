@@ -6,9 +6,9 @@ namespace BookIt.API.Controllers;
 [Route("test")]
 public class TestController : ControllerBase
 {
-    private readonly DatabaseContext _context;
+    private readonly BookingDbContext _context;
 
-    public TestController(DatabaseContext context)
+    public TestController(BookingDbContext context)
     {
         _context = context;
     }
