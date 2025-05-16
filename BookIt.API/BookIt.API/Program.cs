@@ -12,7 +12,7 @@ builder.Services
     .AddDbContext<BookingDbContext>
     (opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<ITestService, TestService>();
+builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
 
 var app = builder.Build();
 
