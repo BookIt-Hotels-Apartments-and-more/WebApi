@@ -1,22 +1,22 @@
 using Microsoft.AspNetCore.Mvc;
-using BookIt.Database;
+using BookIt.BLL.Interfaces;
 
 namespace BookIt.API.Controllers;
 [ApiController]
 [Route("test")]
 public class TestController : ControllerBase
 {
-    private readonly BookingDbContext _context;
+    private readonly ITestService _testService;
 
-    public TestController(BookingDbContext context)
+    public TestController(ITestService testService)
     {
-        _context = context;
+        _testService = testService;
     }
 
     [HttpGet("check-connection")]
     public async Task<IActionResult> CheckConnection()
     {
-        bool canConnect = await _context.Database.CanConnectAsync();
+        bool canConnect = await _testService.CanConnectToDatabase();
 
         if (canConnect)
             return Ok("Подключение к базе успешно");

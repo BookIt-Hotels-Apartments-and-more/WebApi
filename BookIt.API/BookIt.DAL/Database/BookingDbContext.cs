@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using BookIt.Entities;
+using BookIt.DAL.Models;
 
-namespace BookIt.Database;
+namespace BookIt.DAL.Database;
 
 public class BookingDbContext : DbContext
 {

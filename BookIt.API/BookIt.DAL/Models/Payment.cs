@@ -1,4 +1,4 @@
-﻿namespace BookIt.Entities;
+﻿namespace BookIt.DAL.Models;
 
 public enum PaymentType
 {
@@ -22,6 +22,7 @@ public class Payment
     public PaymentStatus Status { get; set; }
     public decimal Amount { get; set; }
     public DateTime PaidAt { get; set; } = DateTime.UtcNow;
+
     public int BookingId { get; set; }
     public Booking? Booking { get; set; } = null!;
 }
