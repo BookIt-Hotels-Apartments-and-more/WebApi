@@ -1,0 +1,90 @@
+using BookIt.DAL.Models;
+using Microsoft.EntityFrameworkCore;
+using BookIt.DAL.Database;
+
+namespace BookIt.DAL.Repositories;
+
+public class UserRepository
+{
+    private readonly BookingDbContext _context;
+
+    public UserRepository(BookingDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<List<User>> GetAllAsync()
+    {
+        return await _context.Users
+            .Include(u => u.Photos)
+            .Include(u => u.Bookings)
+            .Include(u => u.Favorites)
+            .Include(u => u.OwnedEstablishments)
+            .ToListAsync();
+    }
+
+    public async Task<User?> GetByIdAsync(int id)
+    {
+        return await _context.Users
+            .Include(u => u.Photos)
+            .Include(u => u.Bookings)
+            .Include(u => u.Favorites)
+            .Include(u => u.OwnedEstablishments)
+            .FirstOrDefaultAsync(u => u.Id == id);
+    }
+
+    public async Task<User?> GetByEmailAndPasswordHashAsync(string email, string passwordHash)
+    {
+        return await _context.Users
+            .Include(u => u.Photos)
+            .Include(u => u.Bookings)
+            .Include(u => u.Favorites)
+            .Include(u => u.OwnedEstablishments)
+            .FirstOrDefaultAsync(u => u.Email == email && u.PasswordHash == passwordHash);
+    }
+
+    public async Task<bool> ExistsByEmailAsync(string email)
+    {
+        return await _context.Users.AnyAsync(u => u.Email == email);
+    }
+
+    public async Task<bool> ExistsByUsernameAsync(string username)
+    {
+        return await _context.Users.AnyAsync(u => u.Username == username);
+    }
+
+    public async Task<User> CreateAsync(User user)
+    {
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task<bool> UpdateAsync(User updatedUser)
+    {
+        var user = await _context.Users.FindAsync(updatedUser.Id);
+        if (user == null) return false;
+
+        user.Username = updatedUser.Username;
+        user.Email = updatedUser.Email;
+        user.PasswordHash = updatedUser.PasswordHash;
+        user.PhoneNumber = updatedUser.PhoneNumber;
+        user.Bio = updatedUser.Bio;
+        user.Role = updatedUser.Role;
+        user.Rating = updatedUser.Rating;
+        user.LastActiveAt = updatedUser.LastActiveAt;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return false;
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+}
