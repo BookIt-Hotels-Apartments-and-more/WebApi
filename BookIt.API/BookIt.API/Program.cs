@@ -15,11 +15,15 @@ builder.Services
     .AddDbContext<BookingDbContext>
     (opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddSingleton<JWTService>();
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IJWTService, JWTService>();
+
 builder.Services.AddScoped<EstablishmentsRepository>();
 builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
+
+builder.Services.AddScoped<ApartmentsRepository>();
+builder.Services.AddScoped<IApartmentsService, ApartmentsService>();
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>

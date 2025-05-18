@@ -45,7 +45,7 @@ public class EstablishmentsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult> DeleteAsync(int id)
+    public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
         var deleted = await _service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();

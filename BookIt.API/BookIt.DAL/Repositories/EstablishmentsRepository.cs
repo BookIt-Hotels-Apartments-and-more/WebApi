@@ -19,6 +19,7 @@ public class EstablishmentsRepository
             .Establishments
             .Include(e => e.Owner)
             .Include(e => e.Photos)
+            .Include(e => e.Apartments)
             .ToListAsync();
     }
 
@@ -27,6 +28,7 @@ public class EstablishmentsRepository
         return await _context.Establishments
             .Include(e => e.Owner)
             .Include(e => e.Photos)
+            .Include(e => e.Apartments)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
@@ -51,7 +53,9 @@ public class EstablishmentsRepository
 
     public async Task DeleteAsync(int id)
     {
-        var establishment = await GetByIdAsync(id);
+        var establishment = await _context.Establishments
+            .FirstOrDefaultAsync(e => e.Id == id);
+
         if (establishment is not null)
         {
             _context.Establishments.Remove(establishment);

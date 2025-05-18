@@ -9,43 +9,43 @@ namespace BookIt.API.Controllers;
 [Route("api/[controller]")]
 public class ApartmentsController : ControllerBase
 {
-    private readonly IEstablishmentsService _service;
+    private readonly IApartmentsService _service;
 
-    public ApartmentsController(IEstablishmentsService service)
+    public ApartmentsController(IApartmentsService service)
     {
         _service = service;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<EstablishmentResponse>>> GetAllAsync()
+    public async Task<ActionResult<IEnumerable<ApartmentResponse>>> GetAllAsync()
     {
-        var establishments = await _service.GetAllAsync();
-        return Ok(establishments);
+        var apartments = await _service.GetAllAsync();
+        return Ok(apartments);
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<EstablishmentResponse>> GetByIdAsync([FromRoute] int id)
+    public async Task<ActionResult<ApartmentResponse>> GetByIdAsync([FromRoute] int id)
     {
-        var establishment = await _service.GetByIdAsync(id);
-        return establishment is not null ? Ok(establishment) : NotFound();
+        var apartment = await _service.GetByIdAsync(id);
+        return apartment is not null ? Ok(apartment) : NotFound();
     }
 
     [HttpPost]
-    public async Task<ActionResult<EstablishmentResponse>> CreateAsync([FromBody] EstablishmentRequest request)
+    public async Task<ActionResult<EstablishmentResponse>> CreateAsync([FromBody] ApartmentRequest request)
     {
         var added = await _service.CreateAsync(request);
-        return added is null ? BadRequest("Failed to create establishment.") : Ok(added);
+        return added is null ? BadRequest("Failed to create apartment.") : Ok(added);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult> UpdateAsync([FromRoute] int id, [FromBody] EstablishmentRequest request)
+    public async Task<ActionResult> UpdateAsync([FromRoute] int id, [FromBody] ApartmentRequest request)
     {
         var updated = await _service.UpdateAsync(id, request);
         return updated ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult> DeleteAsync(int id)
+    public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
         var deleted = await _service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
