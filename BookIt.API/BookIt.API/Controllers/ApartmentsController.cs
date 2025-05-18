@@ -7,11 +7,11 @@ namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EstablishmentsController : ControllerBase
+public class ApartmentsController : ControllerBase
 {
     private readonly IEstablishmentsService _service;
 
-    public EstablishmentsController(IEstablishmentsService service)
+    public ApartmentsController(IEstablishmentsService service)
     {
         _service = service;
     }

@@ -3,8 +3,6 @@ using BookIt.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using BookIt.API.DTO;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication;
-using System.Threading.Tasks;
 
 namespace BookIt.API.Controllers;
 

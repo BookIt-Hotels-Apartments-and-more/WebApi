@@ -7,7 +7,7 @@ public interface IEstablishmentsService
 {
     Task<IEnumerable<EstablishmentResponse>> GetAllAsync();
     Task<EstablishmentResponse?> GetByIdAsync(int id);
-    Task<EstablishmentResponse> CreateAsync(EstablishmentRequest request);
+    Task<EstablishmentResponse?> CreateAsync(EstablishmentRequest request);
     Task<bool> UpdateAsync(int id, EstablishmentRequest request);
     Task<bool> DeleteAsync(int id);
 }

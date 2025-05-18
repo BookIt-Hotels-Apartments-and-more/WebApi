@@ -6,7 +6,6 @@ using BookIt.BLL.Interfaces;
 using BookIt.BLL.Services;
 using BookIt.DAL.Repositories;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -16,9 +15,10 @@ builder.Services
     .AddDbContext<BookingDbContext>
     (opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<UserRepository>();
 builder.Services.AddSingleton<JWTService>();
-builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<EstablishmentsRepository>();
 builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
 
 builder.Services.AddAuthentication("Bearer")
