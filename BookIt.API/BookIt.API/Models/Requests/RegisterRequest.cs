@@ -1,8 +1,6 @@
-using BookIt.DAL.Models;
+namespace BookIt.API.Models.Requests;
 
-namespace BookIt.API.DTO;
-
-public class RegisterRequest
+public record RegisterRequest
 {
     public string Username { get; set; } = null!;
     public string Email { get; set; } = null!;

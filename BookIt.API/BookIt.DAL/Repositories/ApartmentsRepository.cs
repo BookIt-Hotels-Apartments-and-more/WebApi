@@ -19,6 +19,7 @@ public class ApartmentsRepository
             .Include(a => a.Photos)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment)
+            .ThenInclude(e => e.Owner)
             .ToListAsync();
     }
 
@@ -28,6 +29,7 @@ public class ApartmentsRepository
             .Include(a => a.Photos)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment)
+            .ThenInclude(e => e.Owner)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 

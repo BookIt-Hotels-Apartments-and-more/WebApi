@@ -1,13 +1,12 @@
-﻿using BookIt.BLL.Models.Requests;
-using BookIt.BLL.Models.Responses;
+﻿using BookIt.BLL.DTOs;
 
 namespace BookIt.BLL.Interfaces;
 
 public interface IApartmentsService
 {
-    Task<IEnumerable<ApartmentResponse>> GetAllAsync();
-    Task<ApartmentResponse?> GetByIdAsync(int id);
-    Task<ApartmentResponse?> CreateAsync(ApartmentRequest request);
-    Task<bool> UpdateAsync(int id, ApartmentRequest request);
+    Task<IEnumerable<ApartmentDTO>> GetAllAsync();
+    Task<ApartmentDTO?> GetByIdAsync(int id);
+    Task<ApartmentDTO?> CreateAsync(ApartmentDTO dto);
+    Task<ApartmentDTO?> UpdateAsync(int id, ApartmentDTO dto);
     Task<bool> DeleteAsync(int id);
 }

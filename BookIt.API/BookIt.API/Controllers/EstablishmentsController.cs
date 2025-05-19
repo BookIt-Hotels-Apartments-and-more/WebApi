@@ -2,6 +2,8 @@
 using BookIt.BLL.Interfaces;
 using BookIt.BLL.Models.Requests;
 using BookIt.BLL.Models.Responses;
+using AutoMapper;
+using BookIt.BLL.DTOs;
 
 namespace BookIt.API.Controllers;
 
@@ -9,39 +11,49 @@ namespace BookIt.API.Controllers;
 [Route("api/[controller]")]
 public class EstablishmentsController : ControllerBase
 {
+    private readonly IMapper _mapper;
     private readonly IEstablishmentsService _service;
 
-    public EstablishmentsController(IEstablishmentsService service)
+    public EstablishmentsController(IMapper mapper, IEstablishmentsService service)
     {
+        _mapper = mapper;
         _service = service;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<EstablishmentResponse>>> GetAllAsync()
     {
-        var establishments = await _service.GetAllAsync();
-        return Ok(establishments);
+        var establishmentsDto = await _service.GetAllAsync();
+        var establishmentsResponse = _mapper.Map<IEnumerable<EstablishmentResponse>>(establishmentsDto);
+        return Ok(establishmentsResponse);
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<EstablishmentResponse>> GetByIdAsync([FromRoute] int id)
     {
-        var establishment = await _service.GetByIdAsync(id);
-        return establishment is not null ? Ok(establishment) : NotFound();
+        var establishmentDto = await _service.GetByIdAsync(id);
+        var establishmentResponse = _mapper.Map<EstablishmentResponse>(establishmentDto);
+        return establishmentResponse is not null ? Ok(establishmentResponse) : NotFound();
     }
 
     [HttpPost]
     public async Task<ActionResult<EstablishmentResponse>> CreateAsync([FromBody] EstablishmentRequest request)
     {
-        var added = await _service.CreateAsync(request);
-        return added is null ? BadRequest("Failed to create establishment.") : Ok(added);
+        var establishmentDto = _mapper.Map<EstablishmentDTO>(request);
+        var added = await _service.CreateAsync(establishmentDto);
+        if (added is null) return BadRequest("Failed to create establishment.");
+        var establishmentResponse = _mapper.Map<EstablishmentResponse>(added);
+        return Ok(establishmentResponse);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult> UpdateAsync([FromRoute] int id, [FromBody] EstablishmentRequest request)
+    public async Task<ActionResult<EstablishmentResponse>> UpdateAsync([FromRoute] int id, [FromBody] EstablishmentRequest request)
     {
-        var updated = await _service.UpdateAsync(id, request);
-        return updated ? NoContent() : NotFound();
+        var establishmentDto = _mapper.Map<EstablishmentDTO>(request);
+        var updated = await _service.UpdateAsync(id, establishmentDto);
+        if (updated is null) return NotFound();
+        var establishmentResponse = _mapper.Map<EstablishmentResponse>(updated);
+        return Ok(establishmentResponse);
     }
 
     [HttpDelete("{id:int}")]

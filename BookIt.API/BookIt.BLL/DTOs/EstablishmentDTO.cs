@@ -1,6 +1,6 @@
-﻿namespace BookIt.BLL.Models.Responses;
+﻿namespace BookIt.BLL.DTOs;
 
-public class EstablishmentResponse
+public record EstablishmentDTO
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
@@ -8,15 +8,16 @@ public class EstablishmentResponse
     public string Description { get; set; } = null!;
     public double Rating { get; set; }
     public DateTime CreatedAt { get; set; }
-    public OwnerResponse Owner { get; set; } = null!;
+    public int OwnerId { get; set; }
+    public OwnerDTO Owner { get; set; } = null!;
     public List<string> Photos { get; set; } = new();
 }
 
-public class OwnerResponse
+public record OwnerDTO
 {
     public string Username { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string? Phone { get; set; } = null!;
     public string? Bio { get; set; } = null!;
-    public double? Rating { get; set; }
+    public List<string> Photos { get; set; } = new();
 }

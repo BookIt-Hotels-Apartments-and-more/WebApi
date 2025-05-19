@@ -1,6 +1,6 @@
-﻿using BookIt.BLL.Interfaces;
-using BookIt.BLL.Models.Requests;
-using BookIt.BLL.Models.Responses;
+﻿using AutoMapper;
+using BookIt.BLL.DTOs;
+using BookIt.BLL.Interfaces;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 
@@ -8,80 +8,45 @@ namespace BookIt.BLL.Services;
 
 public class ApartmentsService : IApartmentsService
 {
+    private readonly IMapper _mapper;
     private readonly ApartmentsRepository _repository;
 
-    public ApartmentsService(ApartmentsRepository repository)
+    public ApartmentsService(IMapper mapper, ApartmentsRepository repository)
     {
+        _mapper = mapper;
         _repository = repository;
     }
 
-    public async Task<IEnumerable<ApartmentResponse>> GetAllAsync()
+    public async Task<IEnumerable<ApartmentDTO>> GetAllAsync()
     {
-        var apartments = await _repository.GetAllAsync();
-
-        return apartments
-            .Select(e => new ApartmentResponse
-            {
-                Id = e.Id,
-                Name = e.Name,
-                Price = e.Price,
-                Capacity = e.Capacity,
-                Rating = e.Rating,
-                Description = e.Description,
-                CreatedAt = e.CreatedAt,
-                Establishment = new(),
-                Photos = e.Photos.Select(p => p.BlobUrl).ToList()
-            });
+        var apartmentsDomain = await _repository.GetAllAsync();
+        var apartmentsDto = _mapper.Map<IEnumerable<ApartmentDTO>>(apartmentsDomain);
+        return apartmentsDto;
     }
 
-    public async Task<ApartmentResponse?> GetByIdAsync(int id)
+    public async Task<ApartmentDTO?> GetByIdAsync(int id)
     {
-        var apartment = await _repository.GetByIdAsync(id);
-        if (apartment is null) return null;
-        return new ApartmentResponse
-        {
-            Id = apartment.Id,
-            Name = apartment.Name,
-            Price = apartment.Price,
-            Capacity = apartment.Capacity,
-            Rating = apartment.Rating,
-            Description = apartment.Description,
-            CreatedAt = apartment.CreatedAt,
-            Establishment = new(),
-            Photos = apartment.Photos.Select(p => p.BlobUrl).ToList()
-        };
+        var apartmentDomain = await _repository.GetByIdAsync(id);
+        if (apartmentDomain is null) return null;
+        var apartmentDto = _mapper.Map<ApartmentDTO>(apartmentDomain);
+        return apartmentDto;
     }
 
-    public async Task<ApartmentResponse?> CreateAsync(ApartmentRequest request)
+    public async Task<ApartmentDTO?> CreateAsync(ApartmentDTO dto)
     {
-        var apartment = new Apartment
-        {
-            Name = request.Name,
-            Price = request.Price,
-            Capacity = request.Capacity,
-            Rating = request.Rating,
-            Description = request.Description,
-            EstablishmentId = request.EstablishmentId
-        };
-        var addedApartment = await _repository.AddAsync(apartment);
+        var apartmentDomain = _mapper.Map<Apartment>(dto);
+        var addedApartment = await _repository.AddAsync(apartmentDomain);
         return await GetByIdAsync(addedApartment.Id);
     }
 
-    public async Task<bool> UpdateAsync(int id, ApartmentRequest request)
+    public async Task<ApartmentDTO?> UpdateAsync(int id, ApartmentDTO dto)
     {
         var apartmentExists = await _repository.ExistsAsync(id);
-        if (!apartmentExists) return false;
-        await _repository.UpdateAsync(new Apartment
-        {
-            Id = id,
-            Name = request.Name,
-            Price = request.Price,
-            Capacity = request.Capacity,
-            Rating = request.Rating,
-            Description = request.Description,
-            EstablishmentId = request.EstablishmentId
-        });
-        return true;
+        if (!apartmentExists) return null;
+        var apartmentDomain = _mapper.Map<Apartment>(dto);
+        apartmentDomain.Id = id;
+        await _repository.UpdateAsync(apartmentDomain);
+        return await GetByIdAsync(id);
     }
 
     public async Task<bool> DeleteAsync(int id)

@@ -5,6 +5,7 @@ using BookIt.DAL.Database;
 using BookIt.BLL.Interfaces;
 using BookIt.BLL.Services;
 using BookIt.DAL.Repositories;
+using BookIt.API.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,8 @@ builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
 
 builder.Services.AddScoped<ApartmentsRepository>();
 builder.Services.AddScoped<IApartmentsService, ApartmentsService>();
+
+builder.Services.AddMapping();
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>

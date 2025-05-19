@@ -1,13 +1,12 @@
-﻿using BookIt.BLL.Models.Requests;
-using BookIt.BLL.Models.Responses;
+﻿using BookIt.BLL.DTOs;
 
 namespace BookIt.BLL.Interfaces;
 
 public interface IEstablishmentsService
 {
-    Task<IEnumerable<EstablishmentResponse>> GetAllAsync();
-    Task<EstablishmentResponse?> GetByIdAsync(int id);
-    Task<EstablishmentResponse?> CreateAsync(EstablishmentRequest request);
-    Task<bool> UpdateAsync(int id, EstablishmentRequest request);
+    Task<IEnumerable<EstablishmentDTO>> GetAllAsync();
+    Task<EstablishmentDTO?> GetByIdAsync(int id);
+    Task<EstablishmentDTO?> CreateAsync(EstablishmentDTO dto);
+    Task<EstablishmentDTO?> UpdateAsync(int id, EstablishmentDTO dto);
     Task<bool> DeleteAsync(int id);
 }
