@@ -1,6 +1,6 @@
-namespace BookIt.API.DTO;
+namespace BookIt.API.Models.Requests;
 
-public class LoginRequest
+public record LoginRequest
 {
     public string Email { get; set; } = null!;
     public string Password { get; set; } = null!;

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace BookIt.BLL.Services;
 
-public class UserService
+public class UserService : IUserService
 {
     private readonly UserRepository _userRepository;
 

@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BookIt.DAL.Database;
 using BookIt.BLL.Interfaces;
 using BookIt.BLL.Services;
 using BookIt.DAL.Repositories;
-
+using BookIt.API.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,10 +30,17 @@ builder.Services
     .AddDbContext<BookingDbContext>
     (opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<ITestService, TestService>();
 builder.Services.AddScoped<UserRepository>();
-builder.Services.AddSingleton<JWTService>();
-builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IJWTService, JWTService>();
+
+builder.Services.AddScoped<EstablishmentsRepository>();
+builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
+
+builder.Services.AddScoped<ApartmentsRepository>();
+builder.Services.AddScoped<IApartmentsService, ApartmentsService>();
+
+builder.Services.AddMapping();
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
@@ -51,7 +57,6 @@ builder.Services.AddAuthentication("Bearer")
                 Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!))
         };
     });
-
 
 builder.Services.AddControllers();
 
