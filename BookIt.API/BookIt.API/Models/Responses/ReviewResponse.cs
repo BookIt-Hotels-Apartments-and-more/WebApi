@@ -1,14 +1,12 @@
-namespace BookIt.DAL.Models;
+﻿namespace BookIt.API.Models.Responses;
 
-public class Review
+public record ReviewResponse
 {
     public int Id { get; set; }
     public string Text { get; set; } = null!;
     public float Rating { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
     public int BookingId { get; set; }
-    public Booking Booking { get; set; } = null!;
-
-    public ICollection<Image> Photos { get; set; } = new List<Image>();
+    public BookingResponse Booking { get; set; } = null!;
+    public List<string> Photos { get; set; } = new();
 }

@@ -16,7 +16,7 @@ public class User
     public string? PhoneNumber { get; set; }
     public string? Bio { get; set; }
     public UserRole Role { get; set; }
-    public double? Rating { get; set; } = null;
+    public float? Rating { get; set; } = null;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastActiveAt { get; set; }
 

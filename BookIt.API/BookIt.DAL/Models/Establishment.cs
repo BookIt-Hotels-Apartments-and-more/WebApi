@@ -6,7 +6,7 @@ public class Establishment
     public string Name { get; set; } = null!;
     public string Address { get; set; } = null!;
     public string Description { get; set; } = null!;
-    public double Rating { get; set; }
+    public float? Rating { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public int OwnerId { get; set; }
