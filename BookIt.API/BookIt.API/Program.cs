@@ -7,16 +7,17 @@ using BookIt.BLL.Services;
 using BookIt.DAL.Repositories;
 using BookIt.API.Mapping;
 
-var builder = WebApplication.CreateBuilder(args);
+const string FRONTEND_CORS_POLICY = "AcceptFrontend";
 
-builder.WebHost.UseUrls("http://localhost:5173");
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy(FRONTEND_CORS_POLICY, policy =>
     {
-        policy.WithOrigins(
+        policy.WithOrigins
+        (
             "http://localhost:5173",
             "https://localhost:5173"
         )
@@ -72,7 +73,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowFrontend");
+app.UseCors(FRONTEND_CORS_POLICY);
 
 app.UseAuthorization();
 
