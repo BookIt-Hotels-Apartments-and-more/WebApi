@@ -9,6 +9,8 @@ using BookIt.API.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("http://localhost:5173");
+
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
