@@ -43,6 +43,16 @@ public class UserRepository
             .FirstOrDefaultAsync(u => u.Email == email && u.PasswordHash == passwordHash);
     }
 
+    public async Task<User?> GetByEmailAsync(string email)
+    {
+        return await _context.Users
+            .Include(u => u.Photos)
+            .Include(u => u.Bookings)
+            .Include(u => u.Favorites)
+            .Include(u => u.OwnedEstablishments)
+            .FirstOrDefaultAsync(u => u.Email == email);
+    }
+
     public async Task<bool> ExistsByEmailAsync(string email)
     {
         return await _context.Users.AnyAsync(u => u.Email == email);

@@ -1,6 +1,4 @@
-using BookIt.DAL.Models;
-
-namespace BookIt.API.DTO;
+namespace BookIt.BLL.DTOs;
 
 public class RegisterRequest
 {

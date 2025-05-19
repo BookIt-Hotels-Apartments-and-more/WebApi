@@ -10,7 +10,23 @@ using BookIt.DAL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("http://localhost:5173");
+
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "https://localhost:5173"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials(); 
+    });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services
@@ -21,6 +37,8 @@ builder.Services.AddScoped<ITestService, TestService>();
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddSingleton<JWTService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<GoogleAuthService>();
+builder.Services.AddHttpClient();
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
@@ -50,6 +68,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowFrontend");
 
 app.UseAuthorization();
 
