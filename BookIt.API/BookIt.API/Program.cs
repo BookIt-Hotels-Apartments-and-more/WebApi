@@ -49,6 +49,9 @@ builder.Services.AddScoped<IBookingsService, BookingsService>();
 builder.Services.AddScoped<ReviewsRepository>();
 builder.Services.AddScoped<IReviewsService, ReviewsService>();
 
+builder.Services.AddScoped<FavoritesRepository>();
+builder.Services.AddScoped<IFavoritesService, FavoritesService>();
+
 builder.Services.AddMapping();
 
 builder.Services.AddAuthentication("Bearer")
