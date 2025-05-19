@@ -1,4 +1,4 @@
-namespace BookIt.BLL.DTOs;
+namespace BookIt.API.DTO;
 
 public class LoginRequest
 {

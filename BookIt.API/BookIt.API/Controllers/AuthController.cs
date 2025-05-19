@@ -1,9 +1,8 @@
 using BookIt.BLL.Services;
 using BookIt.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
-using BookIt.BLL.DTOs;
 using Microsoft.AspNetCore.Authorization;
-using System.Threading.Tasks;
+using BookIt.API.Models.Requests;
 
 namespace BookIt.API.Controllers;
 
@@ -11,13 +10,13 @@ namespace BookIt.API.Controllers;
 [Route("auth")]
 public class UsersController : ControllerBase
 {
-    private readonly UserService _userService;
-    private readonly JWTService _jwtService;
+    private readonly IUserService _userService;
+    private readonly IJWTService _jwtService;
 
-    public UsersController(UserService userService, JWTService JWTService)
+    public UsersController(IUserService userService, IJWTService jwtService)
     {
         _userService = userService;
-        _jwtService = JWTService;
+        _jwtService = jwtService;
     }
 
     [HttpPost("register")]

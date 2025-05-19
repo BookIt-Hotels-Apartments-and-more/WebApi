@@ -3,10 +3,7 @@ namespace BookIt.DAL.Models;
 public class Image
 {
     public int Id { get; set; }
-    public string FileName { get; set; } = null!;
-    public string ContentType { get; set; } = null!;
     public string BlobUrl { get; set; } = null!;
-    public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
     public int? UserId { get; set; }
     public User? User { get; set; } = null!;

@@ -1,6 +1,6 @@
-namespace BookIt.DAL.Models;
+﻿namespace BookIt.BLL.DTOs;
 
-public class Apartment
+public record ApartmentDTO
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
@@ -9,10 +9,7 @@ public class Apartment
     public double Rating { get; set; }
     public string Description { get; set; } = null!;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
     public int EstablishmentId { get; set; }
-    public Establishment Establishment { get; set; } = null!;
-
-    public ICollection<Image> Photos { get; set; } = new List<Image>();
-    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public EstablishmentDTO Establishment { get; set; } = null!;
+    public List<string> Photos { get; set; } = new();
 }

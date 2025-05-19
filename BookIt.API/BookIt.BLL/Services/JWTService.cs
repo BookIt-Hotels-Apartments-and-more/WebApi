@@ -7,7 +7,7 @@ using BookIt.DAL.Models;
 
 namespace BookIt.BLL.Services;
 
-public class JWTService
+public class JWTService : IJWTService
 {
     private readonly string _secret;
     private readonly string _issuer;
