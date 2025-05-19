@@ -8,10 +8,10 @@ namespace BookIt.API.Controllers;
 public class GoogleAuthController : ControllerBase
 {
     private readonly GoogleAuthService _googleAuthService;
-    private readonly UserService _userService;
-    private readonly JWTService _jwtService;
+    private readonly IUserService _userService;
+    private readonly IJWTService _jwtService;
 
-    public GoogleAuthController(GoogleAuthService googleAuthService, UserService userService, JWTService jwtService)
+    public GoogleAuthController(GoogleAuthService googleAuthService, IUserService userService, IJWTService jwtService)
     {
         _googleAuthService = googleAuthService;
         _userService = userService;

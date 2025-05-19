@@ -7,9 +7,9 @@ namespace BookIt.BLL.Services;
 
 public class GoogleOAuthSettings
 {
-    public string ClientId { get; set; }
-    public string ClientSecret { get; set; }
-    public string RedirectUri { get; set; }
+    public string ClientId { get; set; } = null!;
+    public string ClientSecret { get; set; } = null!;
+    public string RedirectUri { get; set; } = null!;
 }
 
 public class GoogleAuthService
