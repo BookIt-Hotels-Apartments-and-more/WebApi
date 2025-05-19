@@ -7,6 +7,7 @@ public static class ServicesExtensions
     public static IServiceCollection AddMapping(this IServiceCollection services)
     {
         services.AddAutoMapper(typeof(EstablishmentsMappingProfile));
+        services.AddAutoMapper(typeof(ApartmentsMappingProfile));
         return services;
     }
 }
