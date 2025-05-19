@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
+using BookIt.API.Models.Requests;
+using BookIt.API.Models.Responses;
 using BookIt.BLL.DTOs;
-using BookIt.BLL.Models.Requests;
-using BookIt.BLL.Models.Responses;
 using BookIt.DAL.Models;
 
 namespace BookIt.API.Mapping.MappingProfiles;

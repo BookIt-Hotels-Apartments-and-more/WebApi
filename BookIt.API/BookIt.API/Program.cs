@@ -43,6 +43,9 @@ builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
 builder.Services.AddScoped<ApartmentsRepository>();
 builder.Services.AddScoped<IApartmentsService, ApartmentsService>();
 
+builder.Services.AddScoped<BookingsRepository>();
+builder.Services.AddScoped<IBookingsService, BookingsService>();
+
 builder.Services.AddMapping();
 
 builder.Services.AddAuthentication("Bearer")

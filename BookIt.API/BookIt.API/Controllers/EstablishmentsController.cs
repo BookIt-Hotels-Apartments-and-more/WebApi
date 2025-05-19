@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using BookIt.BLL.Interfaces;
-using BookIt.BLL.Models.Requests;
-using BookIt.BLL.Models.Responses;
 using AutoMapper;
 using BookIt.BLL.DTOs;
+using BookIt.API.Models.Responses;
+using BookIt.API.Models.Requests;
 
 namespace BookIt.API.Controllers;
 
