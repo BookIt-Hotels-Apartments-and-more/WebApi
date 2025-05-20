@@ -34,17 +34,17 @@ public class UserService : IUserService
         return await _userRepository.CreateAsync(user);
     }
 
-    public async Task<User> AuthByGoogleAsync(string username, string email)
+    public async Task<User?> AuthByGoogleAsync(string username, string email)
     {
         var existingUser = await _userRepository.ExistsByEmailAsync(email);
 
-        if (!existingUser)
+        if (existingUser)
         {
             return await _userRepository.GetByEmailAsync(email);
         }
         else
         {
-            return await RegisterAsync(username, email, null, UserRole.Tenant);
+            return await RegisterAsync(username, email, "", UserRole.Tenant);
         }
     }
 
