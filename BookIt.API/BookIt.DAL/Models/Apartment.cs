@@ -6,7 +6,6 @@ public class Apartment
     public string Name { get; set; } = null!;
     public double Price { get; set; }
     public int Capacity { get; set; }
-    public float? Rating { get; set; }
     public string Description { get; set; } = null!;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -14,5 +13,6 @@ public class Apartment
     public Establishment Establishment { get; set; } = null!;
 
     public ICollection<Image> Photos { get; set; } = new List<Image>();
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }

@@ -17,6 +17,9 @@ public class ReviewsRepository
     {
         return await _context.Reviews
             .Include(a => a.Photos)
+            .Include(r => r.User).ThenInclude(a => a.Photos)
+            .Include(r => r.Apartment).ThenInclude(a => a.Photos)
+            .Include(r => r.Apartment).ThenInclude(a => a.Establishment)
             .Include(a => a.Booking).ThenInclude(b => b.User).ThenInclude(u => u.Photos)
             .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Photos)
             .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment)
@@ -27,10 +30,30 @@ public class ReviewsRepository
     {
         return await _context.Reviews
             .Include(a => a.Photos)
+            .Include(r => r.User).ThenInclude(a => a.Photos)
+            .Include(r => r.Apartment).ThenInclude(a => a.Photos)
+            .Include(r => r.Apartment).ThenInclude(a => a.Establishment)
             .Include(a => a.Booking).ThenInclude(b => b.User).ThenInclude(u => u.Photos)
             .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Photos)
             .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment)
             .FirstOrDefaultAsync(a => a.Id == id);
+    }
+
+    public async Task<IEnumerable<Review>> GetByApartmentId(int apartmentId)
+    {
+        return await _context.Reviews
+            .Include(a => a.Photos)
+            .Include(r => r.User).ThenInclude(a => a.Photos)
+            .Where(r => r.ApartmentId == apartmentId)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Review>> GetByEstablishmentId(int establishmentId)
+    {
+        return await _context.Reviews
+            .Include(r => r.Apartment)
+            .Where(r => r.Apartment.EstablishmentId == establishmentId)
+            .ToListAsync();
     }
 
     public async Task<bool> ExistsAsync(int id)

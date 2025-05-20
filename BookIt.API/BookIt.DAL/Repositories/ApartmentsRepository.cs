@@ -17,6 +17,7 @@ public class ApartmentsRepository
     {
         return await _context.Apartments
             .Include(a => a.Photos)
+            .Include(u => u.Reviews)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
             .ToListAsync();
@@ -26,6 +27,7 @@ public class ApartmentsRepository
     {
         return await _context.Apartments
             .Include(a => a.Photos)
+            .Include(u => u.Reviews)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
             .FirstOrDefaultAsync(a => a.Id == id);

@@ -1,6 +1,6 @@
 using BookIt.DAL.Models;
-using Microsoft.EntityFrameworkCore;
 using BookIt.DAL.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookIt.DAL.Repositories;
 
@@ -17,6 +17,7 @@ public class UserRepository
     {
         return await _context.Users
             .Include(u => u.Photos)
+            .Include(u => u.Reviews)
             .Include(u => u.Bookings)
             .Include(u => u.Favorites)
             .Include(u => u.OwnedEstablishments)
@@ -27,6 +28,7 @@ public class UserRepository
     {
         return await _context.Users
             .Include(u => u.Photos)
+            .Include(u => u.Reviews)
             .Include(u => u.Bookings)
             .Include(u => u.Favorites)
             .Include(u => u.OwnedEstablishments)
@@ -81,7 +83,6 @@ public class UserRepository
         user.PhoneNumber = updatedUser.PhoneNumber;
         user.Bio = updatedUser.Bio;
         user.Role = updatedUser.Role;
-        user.Rating = updatedUser.Rating;
         user.LastActiveAt = updatedUser.LastActiveAt;
 
         await _context.SaveChangesAsync();

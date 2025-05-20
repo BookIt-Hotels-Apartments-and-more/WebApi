@@ -16,11 +16,11 @@ public class User
     public string? PhoneNumber { get; set; }
     public string? Bio { get; set; }
     public UserRole Role { get; set; }
-    public float? Rating { get; set; } = null;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastActiveAt { get; set; }
 
     public ICollection<Image> Photos { get; set; } = new List<Image>();
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     public ICollection<Establishment> OwnedEstablishments { get; set; } = new List<Establishment>();

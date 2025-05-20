@@ -9,18 +9,24 @@ namespace BookIt.BLL.Services;
 public class ApartmentsService : IApartmentsService
 {
     private readonly IMapper _mapper;
+    private readonly IRatingsService _ratingsService;
     private readonly ApartmentsRepository _repository;
 
-    public ApartmentsService(IMapper mapper, ApartmentsRepository repository)
+    public ApartmentsService(IMapper mapper, ApartmentsRepository repository, IRatingsService ratingsService)
     {
         _mapper = mapper;
         _repository = repository;
+        _ratingsService = ratingsService;
     }
 
     public async Task<IEnumerable<ApartmentDTO>> GetAllAsync()
     {
         var apartmentsDomain = await _repository.GetAllAsync();
         var apartmentsDto = _mapper.Map<IEnumerable<ApartmentDTO>>(apartmentsDomain);
+
+        foreach (var apartment in apartmentsDto)
+            apartment.Rating = await _ratingsService.CalculateRating(apartment);
+
         return apartmentsDto;
     }
 
@@ -29,6 +35,7 @@ public class ApartmentsService : IApartmentsService
         var apartmentDomain = await _repository.GetByIdAsync(id);
         if (apartmentDomain is null) return null;
         var apartmentDto = _mapper.Map<ApartmentDTO>(apartmentDomain);
+        apartmentDto.Rating = await _ratingsService.CalculateRating(apartmentDto);
         return apartmentDto;
     }
 

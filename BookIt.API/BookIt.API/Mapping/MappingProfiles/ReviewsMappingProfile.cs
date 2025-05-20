@@ -13,12 +13,15 @@ public class ReviewsMappingProfile : Profile
         CreateMap<ReviewRequest, ReviewDTO>();
 
         CreateMap<ReviewDTO, Review>()
-            .ForMember(a => a.Id, o => o.Ignore())
-            .ForMember(a => a.Photos, o => o.Ignore())
-            .ForMember(a => a.CreatedAt, o => o.Ignore());
+            .ForMember(r => r.Id, o => o.Ignore())
+            .ForMember(r => r.Photos, o => o.Ignore())
+            .ForMember(r => r.CreatedAt, o => o.Ignore())
+            .ForMember(r => r.UserId, o => o.MapFrom(dto => dto.CustomerId));
 
         CreateMap<Review, ReviewDTO>()
-            .ForMember(dto => dto.Photos, o => o.MapFrom(a => a.Photos.Select(im => im.BlobUrl)));
+            .ForMember(dto => dto.CustomerId, o => o.MapFrom(r => r.UserId))
+            .ForMember(dto => dto.Customer, o => o.MapFrom(r => r.User))
+            .ForMember(dto => dto.Photos, o => o.MapFrom(r => r.Photos.Select(im => im.BlobUrl)));
 
         CreateMap<ReviewDTO, ReviewResponse>();
     }

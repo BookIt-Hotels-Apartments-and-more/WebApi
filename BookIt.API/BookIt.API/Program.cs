@@ -46,6 +46,8 @@ builder.Services.AddScoped<IApartmentsService, ApartmentsService>();
 builder.Services.AddScoped<BookingsRepository>();
 builder.Services.AddScoped<IBookingsService, BookingsService>();
 
+builder.Services.AddScoped<IRatingsService, RatingsService>();
+
 builder.Services.AddScoped<ReviewsRepository>();
 builder.Services.AddScoped<IReviewsService, ReviewsService>();
 
