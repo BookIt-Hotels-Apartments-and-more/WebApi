@@ -12,7 +12,7 @@ public class GoogleOAuthSettings
     public string RedirectUri { get; set; } = null!;
 }
 
-public class GoogleAuthService
+public class GoogleAuthService : IGoogleAuthService
 {
     private readonly GoogleOAuthSettings _settings;
     private readonly IHttpClientFactory _httpClientFactory;

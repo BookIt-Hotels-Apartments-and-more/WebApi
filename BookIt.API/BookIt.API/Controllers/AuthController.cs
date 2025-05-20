@@ -3,6 +3,7 @@ using BookIt.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BookIt.API.Models.Requests;
+using BookIt.BLL.Models.Responses;
 
 namespace BookIt.API.Controllers;
 
@@ -37,18 +38,19 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var user = await _userService.LoginAsync(request.Email, request.Password);
+
         if (user == null)
         {
             return Unauthorized(new { message = "Invalid email or password" });
         }
 
         var token = _jwtService.GenerateToken(user);
-        return Ok(new
+
+        return Ok(new UserAuthResponse
         {
-            user.Id,
-            user.Username,
-            user.Email,
-            user.Role,
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
             Token = token
         });
     }
@@ -62,11 +64,17 @@ public class UsersController : ControllerBase
 
         var _user = await _userService.GetUserByIdAsync(userId);
 
-        _user.PasswordHash = null; // безопастность - самое главное (потом исправлю этот костыль)
 
-        return Ok(new
+        if (_user == null)
         {
-            user = _user
+            return Unauthorized(new { message = "Invalid auth token" });
+        }
+
+        return Ok(new UserAuthResponse
+        {
+            Id = _user.Id,
+            Username = _user.Username,
+            Email = _user.Email,
         });
     }
 }
