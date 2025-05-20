@@ -7,15 +7,22 @@ namespace BookIt.API.Controllers;
 [ApiController]
 public class GoogleAuthController : ControllerBase
 {
-    private readonly GoogleAuthService _googleAuthService;
+    private readonly IGoogleAuthService _googleAuthService;
     private readonly IUserService _userService;
     private readonly IJWTService _jwtService;
+    private readonly string _clientUrl;
 
-    public GoogleAuthController(GoogleAuthService googleAuthService, IUserService userService, IJWTService jwtService)
+    public GoogleAuthController(
+        IGoogleAuthService googleAuthService,
+        IUserService userService,
+        IJWTService jwtService,
+        IConfiguration configuration)
     {
         _googleAuthService = googleAuthService;
         _userService = userService;
         _jwtService = jwtService;
+        _clientUrl = configuration.GetValue<string>("Urls:ClientUrl")
+    ?? throw new InvalidOperationException("Redirect URL is not configured");
     }
 
     [HttpGet("login")]
@@ -36,20 +43,18 @@ public class GoogleAuthController : ControllerBase
             var (email, name) = await _googleAuthService.GetUserEmailAndNameAsync(code);
             var user = await _userService.AuthByGoogleAsync(name, email);
 
+            if (user == null)
+            {
+                return Redirect($"{_clientUrl}/auth/error?error=User is nullable");
+            }
 
             var token = _jwtService.GenerateToken(user);
-            return Ok(new
-            {
-                user.Id,
-                user.Username,
-                user.Email,
-                user.Role,
-                Token = token
-            });
+
+            return Redirect($"{_clientUrl}/auth/success?token={token}");
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return Redirect($"{_clientUrl}/auth/error?error={ex.Message}");
         }
     }
 }
