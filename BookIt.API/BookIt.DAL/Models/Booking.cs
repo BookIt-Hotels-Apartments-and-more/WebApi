@@ -5,7 +5,7 @@ public class Booking
     public int Id { get; set; }
     public DateTime DateFrom { get; set; }
     public DateTime DateTo { get; set; }
-    public bool IsCheckedIn { get; set; }
+    public bool IsCheckedIn { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public int UserId { get; set; }

@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using BookIt.BLL.Interfaces;
-using BookIt.BLL.Models.Requests;
-using BookIt.BLL.Models.Responses;
 using BookIt.BLL.DTOs;
 using AutoMapper;
+using BookIt.API.Models.Responses;
+using BookIt.API.Models.Requests;
 
 namespace BookIt.API.Controllers;
 
@@ -32,8 +32,8 @@ public class ApartmentsController : ControllerBase
     public async Task<ActionResult<ApartmentResponse>> GetByIdAsync([FromRoute] int id)
     {
         var apartmentDto = await _service.GetByIdAsync(id);
-        var apartmnetResponse = _mapper.Map<ApartmentResponse>(apartmentDto);
-        return apartmnetResponse is not null ? Ok(apartmnetResponse) : NotFound();
+        var apartmentResponse = _mapper.Map<ApartmentResponse>(apartmentDto);
+        return apartmentResponse is not null ? Ok(apartmentResponse) : NotFound();
     }
 
     [HttpPost]

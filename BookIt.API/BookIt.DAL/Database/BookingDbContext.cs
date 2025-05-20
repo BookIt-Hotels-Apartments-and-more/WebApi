@@ -26,5 +26,17 @@ public class BookingDbContext : DbContext
             .WithMany(u => u.OwnedEstablishments)
             .HasForeignKey(e => e.OwnerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Review>()
+            .HasOne(a => a.Apartment)
+            .WithMany(a => a.Reviews)
+            .HasForeignKey(a => a.ApartmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Review>()
+            .HasOne(a => a.User)
+            .WithMany(a => a.Reviews)
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

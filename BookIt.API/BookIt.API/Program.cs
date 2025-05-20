@@ -33,9 +33,13 @@ builder.Services
     .AddDbContext<BookingDbContext>
     (opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddMapping();
+builder.Services.AddHttpClient();
+
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<IJWTService, JWTService>();
+builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 
 builder.Services.AddScoped<EstablishmentsRepository>();
 builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
@@ -43,10 +47,16 @@ builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
 builder.Services.AddScoped<ApartmentsRepository>();
 builder.Services.AddScoped<IApartmentsService, ApartmentsService>();
 
-builder.Services.AddHttpClient();
-builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddScoped<BookingsRepository>();
+builder.Services.AddScoped<IBookingsService, BookingsService>();
 
-builder.Services.AddMapping();
+builder.Services.AddScoped<IRatingsService, RatingsService>();
+
+builder.Services.AddScoped<ReviewsRepository>();
+builder.Services.AddScoped<IReviewsService, ReviewsService>();
+
+builder.Services.AddScoped<FavoritesRepository>();
+builder.Services.AddScoped<IFavoritesService, FavoritesService>();
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>

@@ -8,6 +8,8 @@ public static class ServicesExtensions
     {
         services.AddAutoMapper(typeof(EstablishmentsMappingProfile));
         services.AddAutoMapper(typeof(ApartmentsMappingProfile));
+        services.AddAutoMapper(typeof(BookingsMappingProfile));
+        services.AddAutoMapper(typeof(FavoritesMappingProfile));
         return services;
     }
 }

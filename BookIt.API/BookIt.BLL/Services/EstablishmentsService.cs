@@ -9,18 +9,24 @@ namespace BookIt.BLL.Services;
 public class EstablishmentsService : IEstablishmentsService
 {
     private readonly IMapper _mapper;
+    private readonly IRatingsService _ratingsService;
     private readonly EstablishmentsRepository _repository;
 
-    public EstablishmentsService(IMapper mapper, EstablishmentsRepository repository)
+    public EstablishmentsService(IMapper mapper, EstablishmentsRepository repository, IRatingsService ratingsService)
     {
         _mapper = mapper;
         _repository = repository;
+        _ratingsService = ratingsService;
     }
 
     public async Task<IEnumerable<EstablishmentDTO>> GetAllAsync()
     {
         var establishmentsDomain = await _repository.GetAllAsync();
         var establishmentsDto = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishmentsDomain);
+
+        foreach (var establishment in establishmentsDto)
+            establishment.Rating = await _ratingsService.CalculateRating(establishment);
+
         return establishmentsDto;
     }
 
@@ -29,6 +35,7 @@ public class EstablishmentsService : IEstablishmentsService
         var establishmentDomain = await _repository.GetByIdAsync(id);
         if (establishmentDomain is null) return null;
         var establishmentDto = _mapper.Map<EstablishmentDTO>(establishmentDomain);
+        establishmentDto.Rating = await _ratingsService.CalculateRating(establishmentDto);
         return establishmentDto;
     }
 

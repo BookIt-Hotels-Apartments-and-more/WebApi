@@ -1,4 +1,4 @@
-﻿namespace BookIt.BLL.Models.Requests;
+﻿namespace BookIt.API.Models.Requests;
 
 public record EstablishmentRequest
 {
