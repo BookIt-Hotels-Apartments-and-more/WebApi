@@ -22,13 +22,16 @@ public class UserService : IUserService
             throw new Exception("User existing");
         }
 
+        var token = Guid.NewGuid().ToString();
+
         var user = new User
         {
             Username = username,
             Email = email,
             PasswordHash = HashPassword(password),
             Role = role,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            EmailConfirmationToken = token
         };
 
         return await _userRepository.CreateAsync(user);
@@ -46,6 +49,18 @@ public class UserService : IUserService
         {
             return await RegisterAsync(username, email, "", UserRole.Tenant);
         }
+    }
+
+    public async Task<User?> VerifyEmailAsync(string token)
+    {
+        User? user = await _userRepository.GetByEmailTokenAsync(token) ?? throw new Exception("Invalid email token");
+
+        user.EmailConfirmationToken = null;
+        user.IsEmailConfirmed = true;
+
+        await _userRepository.UpdateAsync(user);
+
+        return user;
     }
 
     public async Task<User?> LoginAsync(string email, string password)

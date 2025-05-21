@@ -40,6 +40,7 @@ builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<IJWTService, JWTService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 
 builder.Services.AddScoped<EstablishmentsRepository>();
 builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
