@@ -50,6 +50,42 @@ public class UsersController : ControllerBase
         }
     }
 
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+
+        try
+        {
+            var user = await _userService.ResetPasswordAsync(request.Token, request.NewPassword);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("reset-password/generate-token")]
+    public async Task<IActionResult> ResetPasswordToken([FromBody] GenerateResetPasswordTokenRequest request)
+    {
+        var baseUrl = _configuration.GetValue<string>("AppSettings:BaseUrl");
+
+        try
+        {
+            var user = await _userService.GenerateResetPasswordTokenAsync(request.Email);
+            var confirmationLink = $"{baseUrl}/auth/reset-token?token={user.ResetPasswordToken}";
+            var body = $"Сброс пароля: {confirmationLink}";
+
+            _emailSenderService.SendEmail(user.Email, "Сброс пароля", body);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {

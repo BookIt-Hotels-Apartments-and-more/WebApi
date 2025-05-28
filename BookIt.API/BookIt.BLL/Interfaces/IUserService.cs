@@ -9,4 +9,6 @@ public interface IUserService
     Task<User?> GetUserByIdAsync(int id);
     Task<User?> AuthByGoogleAsync(string username, string email);
     Task<User?> VerifyEmailAsync(string token);
+    Task<User?> GenerateResetPasswordTokenAsync(string email);
+    Task<User?> ResetPasswordAsync(string token, string newPassword);
 }

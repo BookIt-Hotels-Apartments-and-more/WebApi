@@ -14,6 +14,7 @@ public class User
     public string Email { get; set; } = null!;
     public bool IsEmailConfirmed { get; set; } = false;
     public string? EmailConfirmationToken { get; set; } = null;
+    public string? ResetPasswordToken { get; set; } = null;
     public string? PasswordHash { get; set; } = null;
     public string? PhoneNumber { get; set; }
     public string? Bio { get; set; }
