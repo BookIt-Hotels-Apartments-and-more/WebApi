@@ -45,6 +45,18 @@ public class UserRepository
             .FirstOrDefaultAsync(u => u.Email == email && u.PasswordHash == passwordHash);
     }
 
+    public async Task<User?> GetByEmailTokenAsync(string token)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.EmailConfirmationToken == token);
+    }
+
+    public async Task<User?> GetByResetPasswordTokenAsync(string token)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.ResetPasswordToken == token);
+    }
+
     public async Task<User?> GetByEmailAsync(string email)
     {
         return await _context.Users
@@ -83,6 +95,8 @@ public class UserRepository
         user.PhoneNumber = updatedUser.PhoneNumber;
         user.Bio = updatedUser.Bio;
         user.Role = updatedUser.Role;
+        user.EmailConfirmationToken = updatedUser.EmailConfirmationToken;
+        user.IsEmailConfirmed = updatedUser.IsEmailConfirmed;
         user.LastActiveAt = updatedUser.LastActiveAt;
 
         await _context.SaveChangesAsync();
