@@ -59,6 +59,11 @@ builder.Services.AddScoped<IReviewsService, ReviewsService>();
 builder.Services.AddScoped<FavoritesRepository>();
 builder.Services.AddScoped<IFavoritesService, FavoritesService>();
 
+builder.Services.AddScoped<PaymentRepository>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+builder.Services.AddScoped<IMonobankAcquiringService, MonobankAcquiringService>();
+
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
