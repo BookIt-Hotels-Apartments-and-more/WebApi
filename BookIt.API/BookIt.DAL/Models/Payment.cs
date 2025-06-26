@@ -21,6 +21,7 @@ public class Payment
     public PaymentType Type { get; set; }
     public PaymentStatus Status { get; set; }
     public decimal Amount { get; set; }
+    public string? InvoiceUrl { get; set; } = null;
     public DateTime PaidAt { get; set; } = DateTime.UtcNow;
 
     public int BookingId { get; set; }

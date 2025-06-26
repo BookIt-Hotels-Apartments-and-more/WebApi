@@ -27,6 +27,12 @@ public class PaymentRepository
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
+    public async Task<Payment?> GetByBookingIdAsync(int bookingId)
+    {
+        return await _context.Payments
+            .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.Type == PaymentType.Mono);
+    }
+
     public async Task AddAsync(Payment payment)
     {
         await _context.Payments.AddAsync(payment);

@@ -44,6 +44,7 @@ public class PaymentService : IPaymentService
             Type = payment.Type,
             Status = payment.Status,
             Amount = payment.Amount,
+            InvoiceUrl = payment.InvoiceUrl,
             PaidAt = payment.PaidAt,
             BookingId = payment.BookingId
         };
@@ -71,14 +72,36 @@ public class PaymentService : IPaymentService
 
         var invoiceRequest = new CreateInvoiceRequest
         {
-            Amount = ((int)(payment.Amount * 100)).ToString(), // копійки як рядок
-            MerchantPaymInfo = $"Оплата бронювання #{payment.Id}",
-            RedirectUrl = "https://yourapp.com/payment/success", // 🔁 підставити свій URL
-            WebHookUrl = "https://yourapp.com/api/monobank/webhook" // 🔁 підставити свій webhook
+            Amount = (int)(payment.Amount * 100),
+            Ccy = 980,
+            MerchantPaymInfo = new MerchantPaymInfo
+            {
+                Reference = $"BOOKING-{payment.Id}",
+                Destination = $"Оплата бронювання #{payment.Id}"
+            },
+            RedirectUrl = "https://yourapp.com/payment/success",
+            WebHookUrl = "https://yourapp.com/api/monobank/webhook"
         };
 
         var response = await _monobankAcquiringService.CreateInvoiceAsync(invoiceRequest);
         return response?.PageUrl;
+    }
+
+    public async Task<bool> ConfirmManualPaymentAsync(int paymentId)
+    {
+        var payment = await _paymentRepository.GetByIdAsync(paymentId);
+        if (payment == null)
+            return false;
+
+        // Перевіряємо, чи це ручний тип платежу
+        if (payment.Type != PaymentType.Cash && payment.Type != PaymentType.BankTransfer)
+            return false;
+
+        payment.Status = PaymentStatus.Completed;
+        payment.PaidAt = DateTime.UtcNow;
+
+        await _paymentRepository.UpdateAsync(payment);
+        return true;
     }
 
     public async Task<bool> CheckMonoPaymentStatusAsync(ProcessMonoPaymentDto dto)
@@ -105,6 +128,78 @@ public class PaymentService : IPaymentService
 
         return false;
     }
+
+    public async Task<UniversalPaymentResponse?> CreateUniversalPaymentAsync(CreateUniversalPayment dto)
+    {
+        PaymentDetailsDto? paymentExist = await this.GetPaymentByIdAsync(dto.BookingId);
+
+        if (paymentExist != null)
+        {
+            return new UniversalPaymentResponse
+            {
+                PaymentId = paymentExist.Id,
+                Type = paymentExist.Type,
+                PaidAt = paymentExist.PaidAt,
+                InvoiceUrl = paymentExist.InvoiceUrl
+            };
+        }
+
+        var payment = new Payment
+        {
+            Type = dto.Type,
+            Amount = dto.Amount,
+            BookingId = dto.BookingId,
+            Status = PaymentStatus.Pending,
+            PaidAt = DateTime.UtcNow
+        };
+
+        await _paymentRepository.AddAsync(payment);
+
+
+        string? invoiceUrl = null;
+        if (dto.Type == PaymentType.Mono)
+        {
+            var invoiceRequest = new CreateInvoiceRequest
+            {
+                Amount = (int)(payment.Amount * 100),
+                Ccy = 980,
+                MerchantPaymInfo = new MerchantPaymInfo
+                {
+                    Reference = $"BOOKING-{dto.BookingId}",
+                    Destination = $"Оплата бронювання #{payment.Id}"
+                },
+                RedirectUrl = "https://yourapp.com/payment/success",
+            };
+
+            var invoice = await _monobankAcquiringService.CreateInvoiceAsync(invoiceRequest);
+            invoiceUrl = invoice?.PageUrl;
+
+            payment.InvoiceUrl = invoiceUrl;
+
+            await _paymentRepository.UpdateAsync(payment);
+        }
+
+        return new UniversalPaymentResponse
+        {
+            PaymentId = payment.Id,
+            Type = payment.Type,
+            PaidAt = payment.PaidAt,
+            InvoiceUrl = invoiceUrl,
+        };
+    }
+
+    public async Task<bool> MarkPaymentAsCompletedAsync(int bookingId)
+    {
+        var payment = await _paymentRepository.GetByBookingIdAsync(bookingId);
+        if (payment == null) return false;
+
+        payment.Status = PaymentStatus.Completed;
+        payment.PaidAt = DateTime.UtcNow;
+        await _paymentRepository.UpdateAsync(payment);
+
+        return true;
+    }
+
 
     public async Task UpdatePaymentAsync(Payment payment)
     {

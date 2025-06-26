@@ -4,6 +4,7 @@ using BookIt.DAL.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookIt.DAL.Migrations
 {
     [DbContext(typeof(BookingDbContext))]
-    partial class BookingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250626114939_AddInvoiceUrlInPayment")]
+    partial class AddInvoiceUrlInPayment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,9 +44,6 @@ namespace BookIt.DAL.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("EstablishmentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Features")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
