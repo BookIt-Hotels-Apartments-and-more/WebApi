@@ -6,6 +6,7 @@ using BookIt.BLL.Interfaces;
 using BookIt.BLL.Services;
 using BookIt.DAL.Repositories;
 using BookIt.API.Mapping;
+using BookIt.BLL.Configuration;
 
 const string FRONTEND_CORS_POLICY = "AcceptFrontend";
 
@@ -58,6 +59,12 @@ builder.Services.AddScoped<IReviewsService, ReviewsService>();
 
 builder.Services.AddScoped<FavoritesRepository>();
 builder.Services.AddScoped<IFavoritesService, FavoritesService>();
+
+builder.Services.AddScoped<PaymentRepository>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+builder.Services.Configure<MonobankSettings>(builder.Configuration.GetSection("Monobank"));
+builder.Services.AddHttpClient<IMonobankAcquiringService, MonobankAcquiringService>();
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
