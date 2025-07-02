@@ -63,4 +63,12 @@ public class EstablishmentsService : IEstablishmentsService
         await _repository.DeleteAsync(id);
         return true;
     }
+
+    public List<string> GetFeatureList(Establishment establishment)
+    {
+        return Enum.GetValues<EstablishmentFeatures>()
+            .Where(f => f != EstablishmentFeatures.None && establishment.Features.HasFlag(f))
+            .Select(f => f.ToString())
+            .ToList();
+    }
 }
