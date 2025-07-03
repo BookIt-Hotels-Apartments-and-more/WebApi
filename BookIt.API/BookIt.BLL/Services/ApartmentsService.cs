@@ -8,7 +8,7 @@ namespace BookIt.BLL.Services;
 
 public class ApartmentsService : IApartmentsService
 {
-    private static readonly string BlobContainerName = "apartments";
+    private const string BlobContainerName = "apartments";
 
     private readonly IMapper _mapper;
     private readonly IImagesService _imagesService;

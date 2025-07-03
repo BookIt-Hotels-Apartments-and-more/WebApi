@@ -49,4 +49,11 @@ public class ImagesRepository
             .Where(i => i.ApartmentId == id)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Image>> GetAllByEstablishmentIdAsync(int id)
+    {
+        return await _context.Images
+            .Where(i => i.EstablishmentId == id)
+            .ToListAsync();
+    }
 }
