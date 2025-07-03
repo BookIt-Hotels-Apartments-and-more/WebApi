@@ -11,4 +11,6 @@ public interface IUserService
     Task<User?> VerifyEmailAsync(string token);
     Task<User?> GenerateResetPasswordTokenAsync(string email);
     Task<User?> ResetPasswordAsync(string token, string newPassword);
+    Task<IEnumerable<User>> GetAllUsersAsync(UserRole? role = null);
+
 }

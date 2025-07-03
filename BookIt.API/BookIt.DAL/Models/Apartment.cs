@@ -17,7 +17,7 @@ public class Apartment
     public int Id { get; set; }
     public string Name { get; set; } = null!;
     public double Price { get; set; }
-    public int Capacity { get; set; }
+    public int Capacity { get; set; } // місткість
     public string Description { get; set; } = null!;
     public ApartmentFeatures Features { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
