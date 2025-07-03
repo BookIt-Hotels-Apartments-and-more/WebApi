@@ -66,6 +66,10 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.Configure<MonobankSettings>(builder.Configuration.GetSection("Monobank"));
 builder.Services.AddHttpClient<IMonobankAcquiringService, MonobankAcquiringService>();
 
+builder.Services.AddScoped<ImagesRepository>();
+builder.Services.AddScoped<IImagesService, ImagesService>();
+builder.Services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
+
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {

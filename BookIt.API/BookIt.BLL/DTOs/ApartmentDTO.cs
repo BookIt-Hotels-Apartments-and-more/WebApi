@@ -11,5 +11,5 @@ public record ApartmentDTO
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int EstablishmentId { get; set; }
     public EstablishmentDTO Establishment { get; set; } = null!;
-    public List<string> Photos { get; set; } = new();
+    public List<ImageDTO> Photos { get; set; } = new();
 }
