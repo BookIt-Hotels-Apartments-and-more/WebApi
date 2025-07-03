@@ -112,4 +112,12 @@ public class ApartmentsService : IApartmentsService
 
         return true;
     }
+
+    public List<string> GetFeatureList(Apartment apartment)
+    {
+        return Enum.GetValues<ApartmentFeatures>()
+            .Where(f => f != ApartmentFeatures.None && apartment.Features.HasFlag(f))
+            .Select(f => f.ToString())
+            .ToList();
+    }
 }
