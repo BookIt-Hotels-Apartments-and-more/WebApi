@@ -73,7 +73,7 @@ public class EstablishmentsService : IEstablishmentsService
         Action<Image> setEstablishmentIdDelegate = image => image.EstablishmentId = id;
 
         var idsOfExistingPhotosForEstablishment = (await _imagesRepository
-            .GetAllByEstablishmentIdAsync(id))
+            .GetEstablishmentImagesAsync(id))
             .Select(photo => photo.Id)
             .ToList();
 
@@ -103,7 +103,7 @@ public class EstablishmentsService : IEstablishmentsService
         if (!establishmentExists) return false;
 
         var idsOfEstablishmentImages = (await _imagesRepository
-            .GetAllByEstablishmentIdAsync(id))
+            .GetEstablishmentImagesAsync(id))
             .Select(image => image.Id)
             .ToList();
 

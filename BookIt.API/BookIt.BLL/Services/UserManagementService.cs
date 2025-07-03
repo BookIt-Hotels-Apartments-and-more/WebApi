@@ -23,7 +23,7 @@ public class UserManagementService : IUserManagementService
         Action<Image> setUserIdDelegate = image => image.UserId = userId;
 
         var idsOfExistingPhotosForUser = (await _imagesRepository
-            .GetAllByUserIdAsync(userId))
+            .GetUserImagesAsync(userId))
             .Select(photo => photo.Id)
             .ToList();
 

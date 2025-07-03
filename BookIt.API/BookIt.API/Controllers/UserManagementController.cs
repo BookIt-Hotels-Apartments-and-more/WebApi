@@ -17,7 +17,7 @@ public class UserManagementController : ControllerBase
         _userManagementService = userManagementService;
     }
 
-    [HttpPost("images")]
+    [HttpPut("images")]
     [Authorize]
     public async Task<IActionResult> SetUserImages([FromBody] UserImagesRequest request)
     {

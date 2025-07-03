@@ -43,31 +43,31 @@ public class ImagesRepository
         }
     }
 
-    public async Task<IEnumerable<Image>> GetAllByApartmentIdAsync(int id)
+    public async Task<IEnumerable<Image>> GetApartmentImagesAsync(int apartmentId)
     {
         return await _context.Images
-            .Where(i => i.ApartmentId == id)
+            .Where(i => i.ApartmentId == apartmentId)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Image>> GetAllByEstablishmentIdAsync(int id)
+    public async Task<IEnumerable<Image>> GetEstablishmentImagesAsync(int establishmentId)
     {
         return await _context.Images
-            .Where(i => i.EstablishmentId == id)
+            .Where(i => i.EstablishmentId == establishmentId)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Image>> GetAllByReviewIdAsync(int id)
+    public async Task<IEnumerable<Image>> GetReviewImagesAsync(int reviewId)
     {
         return await _context.Images
-            .Where(i => i.ReviewId == id)
+            .Where(i => i.ReviewId == reviewId)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Image>> GetAllByUserIdAsync(int id)
+    public async Task<IEnumerable<Image>> GetUserImagesAsync(int userId)
     {
         return await _context.Images
-            .Where(i => i.UserId == id)
+            .Where(i => i.UserId == userId)
             .ToListAsync();
     }
 }

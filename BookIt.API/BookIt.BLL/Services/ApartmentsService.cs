@@ -72,7 +72,7 @@ public class ApartmentsService : IApartmentsService
         Action<Image> setApartmentIdDelegate = image => image.ApartmentId = id;
 
         var idsOfExistingPhotosForApartment = (await _imagesRepository
-            .GetAllByApartmentIdAsync(id))
+            .GetApartmentImagesAsync(id))
             .Select(photo => photo.Id)
             .ToList();
 
@@ -102,7 +102,7 @@ public class ApartmentsService : IApartmentsService
         if (!apartmentExists) return false;
 
         var idsOfApartmentImages = (await _imagesRepository
-            .GetAllByApartmentIdAsync(id))
+            .GetApartmentImagesAsync(id))
             .Select(image => image.Id)
             .ToList();
 

@@ -65,7 +65,7 @@ public class ReviewsService : IReviewsService
         Action<Image> setReviewIdDelegate = image => image.ReviewId = id;
 
         var idsOfExistingPhotosForReview = (await _imagesRepository
-            .GetAllByReviewIdAsync(id))
+            .GetReviewImagesAsync(id))
             .Select(photo => photo.Id)
             .ToList();
 
@@ -95,7 +95,7 @@ public class ReviewsService : IReviewsService
         if (!reviewExists) return false;
 
         var idsOfReviewImages = (await _imagesRepository
-            .GetAllByReviewIdAsync(id))
+            .GetReviewImagesAsync(id))
             .Select(image => image.Id)
             .ToList();
 
