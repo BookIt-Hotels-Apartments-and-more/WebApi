@@ -10,7 +10,10 @@ public class ReviewsMappingProfile : Profile
 {
     public ReviewsMappingProfile()
     {
-        CreateMap<ReviewRequest, ReviewDTO>();
+        CreateMap<ReviewRequest, ReviewDTO>()
+            .ForMember(dto => dto.Photos,
+                       o => o.MapFrom(req => req.ExistingPhotosIds.Select(id => new ImageDTO { Id = id })
+                                             .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 })))); ;
 
         CreateMap<ReviewDTO, Review>()
             .ForMember(r => r.Id, o => o.Ignore())
@@ -20,8 +23,7 @@ public class ReviewsMappingProfile : Profile
 
         CreateMap<Review, ReviewDTO>()
             .ForMember(dto => dto.CustomerId, o => o.MapFrom(r => r.UserId))
-            .ForMember(dto => dto.Customer, o => o.MapFrom(r => r.User))
-            .ForMember(dto => dto.Photos, o => o.MapFrom(r => r.Photos.Select(im => im.BlobUrl)));
+            .ForMember(dto => dto.Customer, o => o.MapFrom(r => r.User));
 
         CreateMap<ReviewDTO, ReviewResponse>();
     }
