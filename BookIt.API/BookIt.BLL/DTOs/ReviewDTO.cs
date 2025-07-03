@@ -12,5 +12,5 @@ public record ReviewDTO
     public ApartmentDTO? Apartment { get; set; } = null!;
     public int BookingId { get; set; }
     public BookingDTO Booking { get; set; } = null!;
-    public List<string> Photos { get; set; } = new();
+    public List<ImageDTO> Photos { get; set; } = new();
 }

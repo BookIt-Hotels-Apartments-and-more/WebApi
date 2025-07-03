@@ -42,6 +42,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<IJWTService, JWTService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
 builder.Services.AddScoped<EstablishmentsRepository>();
 builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
@@ -65,6 +66,10 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 builder.Services.Configure<MonobankSettings>(builder.Configuration.GetSection("Monobank"));
 builder.Services.AddHttpClient<IMonobankAcquiringService, MonobankAcquiringService>();
+
+builder.Services.AddScoped<ImagesRepository>();
+builder.Services.AddScoped<IImagesService, ImagesService>();
+builder.Services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>

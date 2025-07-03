@@ -8,20 +8,30 @@ namespace BookIt.BLL.Services;
 
 public class ApartmentsService : IApartmentsService
 {
-    private readonly IMapper _mapper;
-    private readonly IRatingsService _ratingsService;
-    private readonly ApartmentsRepository _repository;
+    private const string BlobContainerName = "apartments";
 
-    public ApartmentsService(IMapper mapper, ApartmentsRepository repository, IRatingsService ratingsService)
+    private readonly IMapper _mapper;
+    private readonly IImagesService _imagesService;
+    private readonly IRatingsService _ratingsService;
+    private readonly ImagesRepository _imagesRepository;
+    private readonly ApartmentsRepository _apartmentsRepository;
+
+    public ApartmentsService(IMapper mapper,
+        IImagesService imagesService,
+        IRatingsService ratingsService,
+        ImagesRepository imagesRepository,
+        ApartmentsRepository apartmentsRepository)
     {
         _mapper = mapper;
-        _repository = repository;
+        _imagesService = imagesService;
         _ratingsService = ratingsService;
+        _imagesRepository = imagesRepository;
+        _apartmentsRepository = apartmentsRepository;
     }
 
     public async Task<IEnumerable<ApartmentDTO>> GetAllAsync()
     {
-        var apartmentsDomain = await _repository.GetAllAsync();
+        var apartmentsDomain = await _apartmentsRepository.GetAllAsync();
         var apartmentsDto = _mapper.Map<IEnumerable<ApartmentDTO>>(apartmentsDomain);
 
         foreach (var apartment in apartmentsDto)
@@ -32,7 +42,7 @@ public class ApartmentsService : IApartmentsService
 
     public async Task<ApartmentDTO?> GetByIdAsync(int id)
     {
-        var apartmentDomain = await _repository.GetByIdAsync(id);
+        var apartmentDomain = await _apartmentsRepository.GetByIdAsync(id);
         if (apartmentDomain is null) return null;
         var apartmentDto = _mapper.Map<ApartmentDTO>(apartmentDomain);
         apartmentDto.Rating = await _ratingsService.CalculateRating(apartmentDto);
@@ -42,25 +52,64 @@ public class ApartmentsService : IApartmentsService
     public async Task<ApartmentDTO?> CreateAsync(ApartmentDTO dto)
     {
         var apartmentDomain = _mapper.Map<Apartment>(dto);
-        var addedApartment = await _repository.AddAsync(apartmentDomain);
+        var addedApartment = await _apartmentsRepository.AddAsync(apartmentDomain);
+
+        Action<Image> setApartmentIdDelegate = image => image.ApartmentId = addedApartment.Id;
+
+        await _imagesService.SaveImagesAsync(dto.Photos, BlobContainerName, setApartmentIdDelegate);
+
         return await GetByIdAsync(addedApartment.Id);
     }
 
     public async Task<ApartmentDTO?> UpdateAsync(int id, ApartmentDTO dto)
     {
-        var apartmentExists = await _repository.ExistsAsync(id);
+        var apartmentExists = await _apartmentsRepository.ExistsAsync(id);
         if (!apartmentExists) return null;
         var apartmentDomain = _mapper.Map<Apartment>(dto);
         apartmentDomain.Id = id;
-        await _repository.UpdateAsync(apartmentDomain);
+        await _apartmentsRepository.UpdateAsync(apartmentDomain);
+
+        Action<Image> setApartmentIdDelegate = image => image.ApartmentId = id;
+
+        var idsOfExistingPhotosForApartment = (await _imagesRepository
+            .GetApartmentImagesAsync(id))
+            .Select(photo => photo.Id)
+            .ToList();
+
+        var idsOfPhotosToKeep = dto.Photos
+            .Where(photo => photo.Id is not null && photo.Base64Image is null)
+            .Select(photo => photo.Id!.Value)
+            .ToList();
+
+        var idsOfPhotosToRemove = idsOfExistingPhotosForApartment
+            .Where(id => !idsOfPhotosToKeep.Contains(id))
+            .ToList();
+
+        await _imagesService.DeleteImagesAsync(idsOfPhotosToRemove, BlobContainerName);
+
+        var photosToAdd = dto.Photos
+            .Where(photo => photo.Id is null && photo.Base64Image is not null)
+            .ToList();
+
+        await _imagesService.SaveImagesAsync(photosToAdd, BlobContainerName, setApartmentIdDelegate);
+
         return await GetByIdAsync(id);
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        var apartmentExists = await _repository.ExistsAsync(id);
+        var apartmentExists = await _apartmentsRepository.ExistsAsync(id);
         if (!apartmentExists) return false;
-        await _repository.DeleteAsync(id);
+
+        var idsOfApartmentImages = (await _imagesRepository
+            .GetApartmentImagesAsync(id))
+            .Select(image => image.Id)
+            .ToList();
+
+        await _imagesService.DeleteImagesAsync(idsOfApartmentImages, BlobContainerName);
+
+        await _apartmentsRepository.DeleteAsync(id);
+
         return true;
     }
 
