@@ -27,7 +27,7 @@ public class Apartment
 
     public int EstablishmentId { get; set; }
     public Establishment Establishment { get; set; } = null!;
-
+    
     public ICollection<Image> Photos { get; set; } = new List<Image>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();

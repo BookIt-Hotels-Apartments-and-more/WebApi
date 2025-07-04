@@ -8,5 +8,5 @@ public record ReviewResponse
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int BookingId { get; set; }
     public BookingResponse Booking { get; set; } = null!;
-    public List<string> Photos { get; set; } = new();
+    public List<ImageResponse> Photos { get; set; } = new();
 }

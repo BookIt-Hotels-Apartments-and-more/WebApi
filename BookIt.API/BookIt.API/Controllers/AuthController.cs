@@ -54,7 +54,6 @@ public class UsersController : ControllerBase
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
-
         try
         {
             var user = await _userService.ResetPasswordAsync(request.Token, request.NewPassword);
@@ -133,7 +132,6 @@ public class UsersController : ControllerBase
         int userId = Int32.Parse(userIdStr);
 
         var _user = await _userService.GetUserByIdAsync(userId);
-
 
         if (_user == null)
         {

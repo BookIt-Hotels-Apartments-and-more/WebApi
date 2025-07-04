@@ -9,5 +9,5 @@ public record EstablishmentResponse
     public float? Rating { get; set; }
     public DateTime CreatedAt { get; set; }
     public OwnerResponse Owner { get; set; } = null!;
-    public List<string> Photos { get; set; } = new();
+    public List<ImageResponse> Photos { get; set; } = new();
 }

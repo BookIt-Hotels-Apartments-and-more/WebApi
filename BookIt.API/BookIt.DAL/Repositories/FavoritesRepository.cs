@@ -18,12 +18,11 @@ public class FavoritesRepository
         return await _context.Favorites.ToListAsync();
     }
 
-    public async Task<Apartment?> GetByIdAsync(int id)
+    public async Task<Favorite?> GetByIdAsync(int id)
     {
-        return await _context.Apartments
-            .Include(a => a.Photos)
-            .Include(a => a.Bookings)
-            .Include(a => a.Establishment).ThenInclude(e => e.Owner)
+        return await _context.Favorites
+            .Include(a => a.User)
+            .Include(a => a.Apartment).ThenInclude(e => e.Establishment)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 

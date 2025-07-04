@@ -10,5 +10,5 @@ public record EstablishmentDTO
     public DateTime CreatedAt { get; set; }
     public int OwnerId { get; set; }
     public OwnerDTO Owner { get; set; } = null!;
-    public List<string> Photos { get; set; } = new();
+    public List<ImageDTO> Photos { get; set; } = new();
 }

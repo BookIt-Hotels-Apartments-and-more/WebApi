@@ -10,15 +10,17 @@ public class ApartmentsMappingProfile : Profile
 {
     public ApartmentsMappingProfile()
     {
-        CreateMap<ApartmentRequest, ApartmentDTO>();
+        CreateMap<ApartmentRequest, ApartmentDTO>()
+            .ForMember(dto => dto.Photos,
+                       o => o.MapFrom(req => req.ExistingPhotosIds.Select(id => new ImageDTO { Id = id })
+                                             .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 }))));
 
         CreateMap<ApartmentDTO, Apartment>()
             .ForMember(a => a.Id, o => o.Ignore())
             .ForMember(a => a.Photos, o => o.Ignore())
             .ForMember(a => a.CreatedAt, o => o.Ignore());
 
-        CreateMap<Apartment, ApartmentDTO>()
-            .ForMember(dto => dto.Photos, o => o.MapFrom(a => a.Photos.Select(im => im.BlobUrl)));
+        CreateMap<Apartment, ApartmentDTO>();
 
         CreateMap<ApartmentDTO, ApartmentResponse>();
     }

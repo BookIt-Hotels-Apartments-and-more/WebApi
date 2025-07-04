@@ -10,5 +10,5 @@ public record ApartmentResponse
     public string Description { get; set; } = null!;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public EstablishmentResponse Establishment { get; set; } = null!;
-    public List<string> Photos { get; set; } = new();
+    public List<ImageResponse> Photos { get; set; } = new();
 }
