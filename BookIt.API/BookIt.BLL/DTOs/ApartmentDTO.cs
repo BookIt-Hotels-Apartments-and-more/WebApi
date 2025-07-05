@@ -1,5 +1,7 @@
 ﻿namespace BookIt.BLL.DTOs;
 
+using BookIt.DAL.Models;
+
 public record ApartmentDTO
 {
     public int Id { get; set; }
@@ -10,6 +12,7 @@ public record ApartmentDTO
     public string Description { get; set; } = null!;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int EstablishmentId { get; set; }
+    public ApartmentFeatures Features { get; set; } = new();
     public EstablishmentDTO Establishment { get; set; } = null!;
     public List<ImageDTO> Photos { get; set; } = new();
 }

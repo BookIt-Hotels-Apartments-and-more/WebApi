@@ -36,6 +36,24 @@ public class UserService : IUserService
 
         return await _userRepository.CreateAsync(user);
     }
+    
+    public async Task<bool> IsAdmin(int userId)
+    {
+
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new Exception("User not found");
+        }
+
+        return user.Role == UserRole.Admin;
+    }
+
+    public async Task<List<User>> GetUsersAsync()
+    {
+
+        return await _userRepository.GetAllAsync();
+    }
 
     public async Task<User?> AuthByGoogleAsync(string username, string email)
     {
