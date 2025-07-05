@@ -39,9 +39,9 @@ public class UsersController : ControllerBase
         {
             var user = await _userService.RegisterAsync(request.Username, request.Email, request.Password, UserRole.Tenant);
             var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
-            var body = $"Пожалуйста, подтвердите ваш email, перейдя по ссылке: {confirmationLink}";
+            var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
 
-            _emailSenderService.SendEmail(user.Email, "Подтверждение Email", body);
+            _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
             return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt });
         }
         catch (Exception ex)
@@ -74,9 +74,9 @@ public class UsersController : ControllerBase
         {
             var user = await _userService.GenerateResetPasswordTokenAsync(request.Email);
             var confirmationLink = $"{baseUrl}/auth/reset-token?token={user.ResetPasswordToken}";
-            var body = $"Сброс пароля: {confirmationLink}";
+            var body = $"Password Reset: {confirmationLink}";
 
-            _emailSenderService.SendEmail(user.Email, "Сброс пароля", body);
+            _emailSenderService.SendEmail(user.Email, "Password Reset", body);
             return Ok();
         }
         catch (Exception ex)
@@ -115,11 +115,11 @@ public class UsersController : ControllerBase
         try
         {
             await _userService.VerifyEmailAsync(token);
-            return Redirect("https://localhost:3000/email-confirmed");
+            return Redirect("https://localhost:5173/email-confirmed");
         }
         catch
         {
-            return Redirect("https://localhost:3000/email-not-confirm");
+            return Redirect("https://localhost:5173/email-not-confirm");
         }
 
     }
