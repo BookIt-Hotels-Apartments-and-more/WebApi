@@ -28,7 +28,7 @@ public class GoogleAuthService : IGoogleAuthService
         var query = new Dictionary<string, string>
         {
             ["client_id"] = "932606301370-0cip35440rogmahvu5o3lpcp64q3h7fn.apps.googleusercontent.com",
-            ["redirect_uri"] = "http://localhost:5173/google-auth/callback",
+            ["redirect_uri"] = "http://localhost:5290/google-auth/callback",
             ["response_type"] = "code",
             ["scope"] = "openid email profile",
             ["access_type"] = "offline",
@@ -47,8 +47,8 @@ public class GoogleAuthService : IGoogleAuthService
             {
                 ["code"] = code,
                 ["client_id"] = "932606301370-0cip35440rogmahvu5o3lpcp64q3h7fn.apps.googleusercontent.com",
-                ["client_secret"] = "",
-                ["redirect_uri"] = "http://localhost:5173/google-auth/callback",
+                ["client_secret"] = "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",
+                ["redirect_uri"] = "http://localhost:5290/google-auth/callback",
                 ["grant_type"] = "authorization_code"
             }));
 
