@@ -17,8 +17,10 @@ public class ApartmentsMappingProfile : Profile
             .ForMember(a => a.Photos, o => o.Ignore())
             .ForMember(a => a.CreatedAt, o => o.Ignore());
 
+        CreateMap<Image, ImageDTO>();
+
         CreateMap<Apartment, ApartmentDTO>()
-            .ForMember(dto => dto.Photos, o => o.MapFrom(a => a.Photos.Select(im => im.BlobUrl)));
+            .ForMember(dto => dto.Photos, o => o.MapFrom(a => a.Photos));
 
         CreateMap<ApartmentDTO, ApartmentResponse>()
         .ForMember(dest => dest.Features, opt => opt.MapFrom(src => new ApartmentFeaturesResponse
