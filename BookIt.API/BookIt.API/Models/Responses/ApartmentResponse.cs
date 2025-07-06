@@ -1,5 +1,7 @@
 ﻿namespace BookIt.API.Models.Responses;
 
+using BookIt.BLL.DTOs;
+
 public record ApartmentFeaturesResponse
 {
     public bool FreeWifi { get; set; }
@@ -23,6 +25,6 @@ public record ApartmentResponse
     public string Description { get; set; } = null!;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public EstablishmentResponse Establishment { get; set; } = null!;
-    public List<string> Photos { get; set; } = new();
+    public List<ImageDTO> Photos { get; set; } = new();
     public ApartmentFeaturesResponse Features { get; set; } = new();
 }
