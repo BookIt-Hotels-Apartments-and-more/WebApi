@@ -1,6 +1,7 @@
 ﻿namespace BookIt.API.Models.Responses;
 
 using BookIt.DAL.Models;
+using BookIt.BLL.DTOs;
 
 public record EstablishmentFeaturesResponse
 {
@@ -29,5 +30,5 @@ public record EstablishmentResponse
     public TimeOnly CheckOutTime { get; set; }
     public float? Rating { get; set; }
     public OwnerResponse Owner { get; set; } = null!;
-    public List<string> Photos { get; set; } = new();
+    public List<ImageDTO> Photos { get; set; } = new();
 }
