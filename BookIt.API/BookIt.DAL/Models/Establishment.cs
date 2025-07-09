@@ -1,6 +1,5 @@
 namespace BookIt.DAL.Models;
 
-
 public enum EstablishmentType
 {
     Hotel,
@@ -30,7 +29,6 @@ public class Establishment
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
-    public string Address { get; set; } = null!;
     public string Description { get; set; } = null!;
     public EstablishmentType Type { get; set; }
     public EstablishmentFeatures Features { get; set; }
@@ -41,6 +39,9 @@ public class Establishment
 
     public int OwnerId { get; set; }
     public User Owner { get; set; } = null!;
+
+    public int? GeolocationId { get; set; }
+    public Geolocation? Geolocation { get; set; } = null!;
 
     public ICollection<Image> Photos { get; set; } = new List<Image>();
     public ICollection<Apartment> Apartments { get; set; } = new List<Apartment>();
