@@ -11,6 +11,7 @@ public static class ServicesExtensions
         services.AddAutoMapper(typeof(BookingsMappingProfile));
         services.AddAutoMapper(typeof(FavoritesMappingProfile));
         services.AddAutoMapper(typeof(ImagesMappingProfile));
+        services.AddAutoMapper(typeof(GeolocationsMappingProfile));
         return services;
     }
 }

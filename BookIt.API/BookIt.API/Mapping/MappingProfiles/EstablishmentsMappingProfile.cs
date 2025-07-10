@@ -11,6 +11,8 @@ public class EstablishmentsMappingProfile : Profile
     public EstablishmentsMappingProfile()
     {
         CreateMap<EstablishmentRequest, EstablishmentDTO>()
+            .ForMember(dto => dto.Geolocation,
+                       o => o.MapFrom(req => new Geolocation { Latitude = req.Latitude, Longitude = req.Longitude }))
             .ForMember(dto => dto.Photos,
                        o => o.MapFrom(req => req.ExistingPhotosIds.Select(id => new ImageDTO { Id = id })
                                              .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 }))));
@@ -18,7 +20,8 @@ public class EstablishmentsMappingProfile : Profile
         CreateMap<EstablishmentDTO, Establishment>()
             .ForMember(e => e.Id, o => o.Ignore())
             .ForMember(e => e.Photos, o => o.Ignore())
-            .ForMember(e => e.CreatedAt, o => o.Ignore());
+            .ForMember(e => e.CreatedAt, o => o.Ignore())
+            .ForMember(e => e.Geolocation, o => o.Ignore());
 
         CreateMap<Establishment, EstablishmentDTO>()
             .ForMember(dto => dto.Photos, o => o.MapFrom(e => e.Photos.Select(im => new ImageDTO { BlobUrl = im.BlobUrl })))
@@ -46,5 +49,5 @@ public class EstablishmentsMappingProfile : Profile
                 Elevator = (src.Features & EstablishmentFeatures.Elevator) != 0
             }))
             .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type.ToString()));
-        }
+    }
 }

@@ -16,6 +16,7 @@ public class BookingDbContext : DbContext
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Image> Images { get; set; }
     public DbSet<Favorite> Favorites { get; set; }
+    public DbSet<Geolocation> Geolocations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

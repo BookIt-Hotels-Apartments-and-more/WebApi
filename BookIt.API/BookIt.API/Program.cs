@@ -47,6 +47,9 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<EstablishmentsRepository>();
 builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
 
+builder.Services.AddScoped<GeolocationRepository>();
+builder.Services.AddScoped<IGeolocationService, GeolocationService>();
+
 builder.Services.AddScoped<ApartmentsRepository>();
 builder.Services.AddScoped<IApartmentsService, ApartmentsService>();
 
