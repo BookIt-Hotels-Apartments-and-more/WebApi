@@ -14,6 +14,7 @@ public class EstablishmentsService : IEstablishmentsService
     private readonly IImagesService _imagesService;
     private readonly IRatingsService _ratingsService;
     private readonly ImagesRepository _imagesRepository;
+    private readonly IGeolocationService _geolocationService;
     private readonly EstablishmentsRepository _establishmentsRepository;
 
     public EstablishmentsService(
@@ -21,11 +22,13 @@ public class EstablishmentsService : IEstablishmentsService
         IImagesService imagesService,
         IRatingsService ratingsService,
         ImagesRepository imagesRepository,
+        IGeolocationService geolocationService,
         EstablishmentsRepository establishmentsRepository)
     {
         _mapper = mapper;
         _imagesService = imagesService;
         _ratingsService = ratingsService;
+        _geolocationService = geolocationService;
         _imagesRepository = imagesRepository;
         _establishmentsRepository = establishmentsRepository;
     }
@@ -52,7 +55,13 @@ public class EstablishmentsService : IEstablishmentsService
 
     public async Task<EstablishmentDTO?> CreateAsync(EstablishmentDTO dto)
     {
+        var addedGeolocationDto = await _geolocationService.CreateAsync(dto.Geolocation);
+        if (addedGeolocationDto is null || addedGeolocationDto.Id is null)
+            return null;
+
         var establishmentDomain = _mapper.Map<Establishment>(dto);
+        establishmentDomain.GeolocationId = addedGeolocationDto.Id.Value;
+
         var addedEstablishment = await _establishmentsRepository.AddAsync(establishmentDomain);
 
         Action<Image> setEstablishmentIdDelegate = image => image.EstablishmentId = addedEstablishment.Id;
@@ -108,6 +117,8 @@ public class EstablishmentsService : IEstablishmentsService
             .ToList();
 
         await _imagesService.DeleteImagesAsync(idsOfEstablishmentImages, BlobContainerName);
+
+        await _geolocationService.DeleteEstablishmentGeolocationAsync(id);
 
         await _establishmentsRepository.DeleteAsync(id);
 

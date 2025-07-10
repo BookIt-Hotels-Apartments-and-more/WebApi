@@ -4,6 +4,7 @@ using BookIt.DAL.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookIt.DAL.Migrations
 {
     [DbContext(typeof(BookingDbContext))]
-    partial class BookingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250709195809_Added Separate Geolocations Table")]
+    partial class AddedSeparateGeolocationsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -137,9 +140,7 @@ namespace BookIt.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GeolocationId")
-                        .IsUnique()
-                        .HasFilter("[GeolocationId] IS NOT NULL");
+                    b.HasIndex("GeolocationId");
 
                     b.HasIndex("OwnerId");
 
@@ -390,8 +391,8 @@ namespace BookIt.DAL.Migrations
             modelBuilder.Entity("BookIt.DAL.Models.Establishment", b =>
                 {
                     b.HasOne("BookIt.DAL.Models.Geolocation", "Geolocation")
-                        .WithOne("Establishment")
-                        .HasForeignKey("BookIt.DAL.Models.Establishment", "GeolocationId");
+                        .WithMany()
+                        .HasForeignKey("GeolocationId");
 
                     b.HasOne("BookIt.DAL.Models.User", "Owner")
                         .WithMany("OwnedEstablishments")
@@ -507,11 +508,6 @@ namespace BookIt.DAL.Migrations
                     b.Navigation("Apartments");
 
                     b.Navigation("Photos");
-                });
-
-            modelBuilder.Entity("BookIt.DAL.Models.Geolocation", b =>
-                {
-                    b.Navigation("Establishment");
                 });
 
             modelBuilder.Entity("BookIt.DAL.Models.Review", b =>

@@ -1,6 +1,5 @@
 ﻿namespace BookIt.API.Models.Requests;
 
-
 using BookIt.DAL.Models;
 
 public record ApartmentRequest
