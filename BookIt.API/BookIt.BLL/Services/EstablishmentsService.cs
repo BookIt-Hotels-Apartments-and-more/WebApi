@@ -77,6 +77,12 @@ public class EstablishmentsService : IEstablishmentsService
         if (!establishmentExists) return null;
         var establishmentDomain = _mapper.Map<Establishment>(dto);
         establishmentDomain.Id = id;
+
+        var geolocation = await _geolocationService.UpdateEstablishmentGeolocationAsync(id, dto.Geolocation);
+
+        if (geolocation?.Id is not null)
+            establishmentDomain.GeolocationId = geolocation.Id;
+
         await _establishmentsRepository.UpdateAsync(establishmentDomain);
 
         Action<Image> setEstablishmentIdDelegate = image => image.EstablishmentId = id;

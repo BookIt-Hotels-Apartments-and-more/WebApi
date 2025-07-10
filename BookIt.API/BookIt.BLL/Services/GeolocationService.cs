@@ -11,6 +11,8 @@ namespace BookIt.BLL.Services;
 
 public class GeolocationService : IGeolocationService, IDisposable
 {
+    private const double _closeGeoThreshold = 1e-5;
+
     private readonly string _host;
     private readonly string _apiKey;
     private readonly string _reverseGeocodingBaseUrl;
@@ -38,14 +40,32 @@ public class GeolocationService : IGeolocationService, IDisposable
         if (reverseGeocodingResult is null)
             return null;
 
-        reverseGeocodingResult.Latitude = reverseGeocodingResult.Latitude.Replace(".", ",");
-        reverseGeocodingResult.Longitude = reverseGeocodingResult.Longitude.Replace(".", ",");
-
         var geolocation = _mapper.Map<Geolocation>(reverseGeocodingResult);
 
         var addedGeolocation = await _repository.AddAsync(geolocation);
         var geolocationDto = _mapper.Map<GeolocationDTO>(addedGeolocation);
         return geolocationDto;
+    }
+
+    public async Task<GeolocationDTO?> UpdateEstablishmentGeolocationAsync(int establishmentId, GeolocationDTO dto)
+    {
+        var currentGeolocation = await _repository.GetByEstablishmentIdAsync(establishmentId);
+
+        if (currentGeolocation is not null &&
+            IsNewGeolocationCloseToCurrent((currentGeolocation.Latitude, currentGeolocation.Longitude),
+                                           (dto.Latitude, dto.Longitude)))
+        {
+            var geolocationDto = _mapper.Map<GeolocationDTO>(currentGeolocation);
+            return geolocationDto;
+        }
+
+        var reverseGeocodingResult = await ReverseGeocode(dto);
+        var geolocation = _mapper.Map<Geolocation>(reverseGeocodingResult);
+        geolocation.Id = currentGeolocation!.Id;
+
+        var updatedGeolocation = await _repository.UpdateAsync(geolocation);
+        var updatedGeolocationDto = _mapper.Map<GeolocationDTO>(currentGeolocation);
+        return updatedGeolocationDto;
     }
 
     public async Task<bool> DeleteEstablishmentGeolocationAsync(int establishmentId)
@@ -69,7 +89,13 @@ public class GeolocationService : IGeolocationService, IDisposable
 
         try
         {
-            return JsonSerializer.Deserialize<ReverseGeocodingResult>(geocodingString);
+            var reverseGeocodingResult = JsonSerializer.Deserialize<ReverseGeocodingResult>(geocodingString);
+            if (reverseGeocodingResult is null) return null;
+
+            reverseGeocodingResult.Latitude = reverseGeocodingResult.Latitude.Replace(".", ",");
+            reverseGeocodingResult.Longitude = reverseGeocodingResult.Longitude.Replace(".", ",");
+
+            return reverseGeocodingResult;
         }
         catch (JsonException)
         {
@@ -101,6 +127,12 @@ public class GeolocationService : IGeolocationService, IDisposable
                       .GetProperties()
                       .Select(p => $"{p.Name.ToLower()}={p.GetValue(options)}"))
                .Replace(",", ".");
+    }
+
+    private bool IsNewGeolocationCloseToCurrent((double lat, double lon) currentGeo, (double lat, double lon) newGeo)
+    {
+        return Math.Abs(currentGeo.lat - newGeo.lat) < _closeGeoThreshold &&
+               Math.Abs(currentGeo.lon - newGeo.lon) < _closeGeoThreshold;
     }
 
     public void Dispose()
