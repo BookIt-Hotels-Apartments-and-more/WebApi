@@ -24,6 +24,14 @@ public class GeolocationRepository
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    public async Task<Geolocation?> GetByEstablishmentIdAsync(int establishmentId)
+    {
+        return await _context.Geolocations
+            .AsNoTracking()
+            .Include(e => e.Establishment)
+            .FirstOrDefaultAsync(e => e.Establishment!.Id == establishmentId);
+    }
+
     public async Task<bool> ExistsAsync(int id)
     {
         return await _context.Geolocations.AnyAsync(a => a.Id == id);
@@ -32,6 +40,13 @@ public class GeolocationRepository
     public async Task<Geolocation> AddAsync(Geolocation geolocation)
     {
         await _context.Geolocations.AddAsync(geolocation);
+        await _context.SaveChangesAsync();
+        return geolocation;
+    }
+
+    public async Task<Geolocation?> UpdateAsync(Geolocation geolocation)
+    {
+        _context.Geolocations.Update(geolocation);
         await _context.SaveChangesAsync();
         return geolocation;
     }
