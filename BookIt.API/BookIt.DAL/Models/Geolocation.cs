@@ -9,4 +9,6 @@ public class Geolocation
     public string? City { get; set; }
     public string? PostalCode { get; set; }
     public string? Address { get; set; }
+
+    public Establishment? Establishment { get; set; } = null!;
 }

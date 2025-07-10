@@ -118,6 +118,8 @@ public class EstablishmentsService : IEstablishmentsService
 
         await _imagesService.DeleteImagesAsync(idsOfEstablishmentImages, BlobContainerName);
 
+        await _geolocationService.DeleteEstablishmentGeolocationAsync(id);
+
         await _establishmentsRepository.DeleteAsync(id);
 
         return true;

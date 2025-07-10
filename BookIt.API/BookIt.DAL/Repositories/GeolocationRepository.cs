@@ -35,4 +35,17 @@ public class GeolocationRepository
         await _context.SaveChangesAsync();
         return geolocation;
     }
+
+    public async Task DeleteByEstablishmentIdAsync(int establishmentId)
+    {
+        var establishmentGeolocation = await _context.Geolocations
+            .Include(e => e.Establishment)
+            .FirstOrDefaultAsync(e => e.Establishment!.Id == establishmentId);
+
+        if (establishmentGeolocation is not null)
+        {
+            _context.Geolocations.Remove(establishmentGeolocation);
+            await _context.SaveChangesAsync();
+        }
+    }
 }

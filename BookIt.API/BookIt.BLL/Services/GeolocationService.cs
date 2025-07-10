@@ -48,6 +48,19 @@ public class GeolocationService : IGeolocationService, IDisposable
         return geolocationDto;
     }
 
+    public async Task<bool> DeleteEstablishmentGeolocationAsync(int establishmentId)
+    {
+        try
+        {
+            await _repository.DeleteByEstablishmentIdAsync(establishmentId);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     private async Task<ReverseGeocodingResult?> ReverseGeocode(GeolocationDTO dto)
     {
         var geocodingString = await GetGeocodingString(dto.Latitude, dto.Longitude);

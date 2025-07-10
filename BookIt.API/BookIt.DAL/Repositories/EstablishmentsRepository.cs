@@ -19,6 +19,7 @@ public class EstablishmentsRepository
             .Establishments
             .Include(e => e.Owner)
             .Include(e => e.Photos)
+            .Include(e => e.Geolocation)
             .Include(e => e.Apartments).ThenInclude(a => a.Reviews)
             .ToListAsync();
     }
