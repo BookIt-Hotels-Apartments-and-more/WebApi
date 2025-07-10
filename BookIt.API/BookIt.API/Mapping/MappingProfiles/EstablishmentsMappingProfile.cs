@@ -12,7 +12,7 @@ public class EstablishmentsMappingProfile : Profile
     {
         CreateMap<EstablishmentRequest, EstablishmentDTO>()
             .ForMember(dto => dto.Geolocation,
-                       o => o.MapFrom(req => new Geolocation { Latitude = req.Latitude, Longitude = req.Longitude }))
+                       o => o.MapFrom(req => new GeolocationDTO { Latitude = req.Latitude, Longitude = req.Longitude }))
             .ForMember(dto => dto.Photos,
                        o => o.MapFrom(req => req.ExistingPhotosIds.Select(id => new ImageDTO { Id = id })
                                              .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 }))));
