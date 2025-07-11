@@ -61,11 +61,21 @@ public class GeolocationService : IGeolocationService, IDisposable
 
         var reverseGeocodingResult = await ReverseGeocode(dto);
         var geolocation = _mapper.Map<Geolocation>(reverseGeocodingResult);
-        geolocation.Id = currentGeolocation!.Id;
 
-        var updatedGeolocation = await _repository.UpdateAsync(geolocation);
-        var updatedGeolocationDto = _mapper.Map<GeolocationDTO>(currentGeolocation);
-        return updatedGeolocationDto;
+        Geolocation? newGeolocation;
+
+        if (currentGeolocation?.Id is not null)
+        {
+            geolocation.Id = currentGeolocation.Id;
+            newGeolocation = await _repository.UpdateAsync(geolocation);
+        }
+        else
+        {
+            newGeolocation = await _repository.AddAsync(geolocation);
+        }
+
+        var newGeolocationDto = _mapper.Map<GeolocationDTO>(newGeolocation);
+        return newGeolocationDto;
     }
 
     public async Task<bool> DeleteEstablishmentGeolocationAsync(int establishmentId)
