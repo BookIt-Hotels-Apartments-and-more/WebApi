@@ -112,4 +112,17 @@ public class UserRepository
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<List<User>> GetAllByRoleAsync(UserRole role)
+    {
+        return await _context.Users
+            .Where(u => u.Role == role)
+            .Include(u => u.Photos)
+            .Include(u => u.Reviews)
+            .Include(u => u.Bookings)
+            .Include(u => u.Favorites)
+            .Include(u => u.OwnedEstablishments)
+            .ToListAsync();
+    }
+
 }

@@ -123,4 +123,12 @@ public class UserService : IUserService
         var hash = sha256.ComputeHash(bytes);
         return Convert.ToBase64String(hash);
     }
+
+    public async Task<IEnumerable<User>> GetAllUsersAsync(UserRole? role = null)
+    {
+        if (role.HasValue)
+            return await _userRepository.GetAllByRoleAsync(role.Value);
+        return await _userRepository.GetAllAsync();
+    }
+
 }
