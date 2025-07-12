@@ -120,4 +120,29 @@ public class ApartmentsService : IApartmentsService
             .Select(f => f.ToString())
             .ToList();
     }
+
+    public async Task<PagedResultDTO<ApartmentDTO>> GetPagedByEstablishmentIdAsync(int establishmentId, int page, int pageSize)
+    {
+        var (apartments, totalCount) = await _apartmentsRepository.GetPagedByEstablishmentIdAsync(establishmentId, page, pageSize);
+        var apartmentsDto = _mapper.Map<IEnumerable<ApartmentDTO>>(apartments);
+
+        // Calculate rating for each apartment
+        foreach (var apartment in apartmentsDto)
+        {
+            apartment.Rating = await _ratingsService.CalculateRating(apartment);
+        }
+
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        return new PagedResultDTO<ApartmentDTO>
+        {
+            Items = apartmentsDto.ToList(),
+            PageNumber = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
+    }
 }

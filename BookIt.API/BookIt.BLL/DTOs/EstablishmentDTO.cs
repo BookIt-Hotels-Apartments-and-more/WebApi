@@ -17,4 +17,5 @@ public record EstablishmentDTO
     public OwnerDTO Owner { get; set; } = null!;
     public List<ImageDTO> Photos { get; set; } = new();
     public GeolocationDTO Geolocation { get; set; } = null!;
+    public decimal Price { get; set; }
 }
