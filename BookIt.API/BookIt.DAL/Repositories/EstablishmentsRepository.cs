@@ -1,6 +1,7 @@
 ﻿using BookIt.DAL.Database;
 using BookIt.DAL.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace BookIt.DAL.Repositories;
 
@@ -63,5 +64,26 @@ public class EstablishmentsRepository
             _context.Establishments.Remove(establishment);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<(IEnumerable<Establishment>, int)> GetFilteredAsync(
+        Expression<Func<Establishment, bool>> predicate,
+        int page,
+        int pageSize)
+    {
+        var totalCount = await _context.Establishments
+            .Where(predicate)
+            .CountAsync();
+
+        var establishments = await _context.Establishments
+            .Where(predicate)
+            .Include(e => e.Owner)
+            .Include(e => e.Geolocation)
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (establishments, totalCount);
     }
 }

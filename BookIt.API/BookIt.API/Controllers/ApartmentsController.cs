@@ -62,4 +62,25 @@ public class ApartmentsController : ControllerBase
         var deleted = await _service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
     }
+
+    [HttpGet("establishment/{establishmentId:int}")]
+    public async Task<ActionResult<PaginatedResponse<ApartmentResponse>>> GetPagedByEstablishmentIdAsync(
+        [FromRoute] int establishmentId,
+        [FromQuery] ApartmentsByEstablishmentPaginationRequest request)
+    {
+        var pagedResult = await _service.GetPagedByEstablishmentIdAsync(establishmentId, request.Page, request.PageSize);
+
+        var response = new PaginatedResponse<ApartmentResponse>
+        {
+            Items = _mapper.Map<IEnumerable<ApartmentResponse>>(pagedResult.Items),
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize,
+            TotalCount = pagedResult.TotalCount,
+            TotalPages = pagedResult.TotalPages,
+            HasNextPage = pagedResult.HasNextPage,
+            HasPreviousPage = pagedResult.HasPreviousPage
+        };
+
+        return Ok(response);
+    }
 }

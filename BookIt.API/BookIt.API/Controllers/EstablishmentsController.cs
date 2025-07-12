@@ -19,6 +19,26 @@ public class EstablishmentsController : ControllerBase
         _mapper = mapper;
         _service = service;
     }
+    
+    [HttpGet("filter")]
+    public async Task<ActionResult<PaginatedResponse<EstablishmentResponse>>> GetFilteredAsync([FromQuery] EstablishmentFilterRequest request)
+    {
+        var filterDto = _mapper.Map<EstablishmentFilterDTO>(request);
+        var pagedResult = await _service.GetFilteredAsync(filterDto);
+        
+        var response = new PaginatedResponse<EstablishmentResponse>
+        {
+            Items = _mapper.Map<IEnumerable<EstablishmentResponse>>(pagedResult.Items),
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize,
+            TotalCount = pagedResult.TotalCount,
+            TotalPages = pagedResult.TotalPages,
+            HasNextPage = pagedResult.HasNextPage,
+            HasPreviousPage = pagedResult.HasPreviousPage
+        };
+        
+        return Ok(response);
+    }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<EstablishmentResponse>>> GetAllAsync()

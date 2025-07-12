@@ -63,4 +63,23 @@ public class ApartmentsRepository
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task<(IEnumerable<Apartment>, int)> GetPagedByEstablishmentIdAsync(int establishmentId, int page, int pageSize)
+    {
+        var totalCount = await _context.Apartments
+            .Where(a => a.EstablishmentId == establishmentId)
+            .CountAsync();
+
+        var apartments = await _context.Apartments
+            .Where(a => a.EstablishmentId == establishmentId)
+            .Include(a => a.Photos)
+            .Include(a => a.Establishment)
+            .ThenInclude(e => e.Owner)
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (apartments, totalCount);
+    }
 }
