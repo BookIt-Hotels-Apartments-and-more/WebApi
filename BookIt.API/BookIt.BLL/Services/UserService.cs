@@ -2,6 +2,7 @@ using BookIt.DAL.Repositories;
 using BookIt.DAL.Models;
 using System.Security.Cryptography;
 using System.Text;
+using BookIt.DAL.Enums;
 
 namespace BookIt.BLL.Services;
 
@@ -19,7 +20,7 @@ public class UserService : IUserService
         var existingUser = await _userRepository.ExistsByEmailAsync(email);
         if (existingUser)
         {
-            throw new Exception("User existing");
+            throw new Exception("User exists");
         }
 
         var token = Guid.NewGuid().ToString();
@@ -41,7 +42,7 @@ public class UserService : IUserService
     {
 
         var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
+        if (user is null)
         {
             throw new Exception("User not found");
         }
@@ -51,7 +52,6 @@ public class UserService : IUserService
 
     public async Task<List<User>> GetUsersAsync()
     {
-
         return await _userRepository.GetAllAsync();
     }
 
@@ -130,5 +130,4 @@ public class UserService : IUserService
             return await _userRepository.GetAllByRoleAsync(role.Value);
         return await _userRepository.GetAllAsync();
     }
-
 }

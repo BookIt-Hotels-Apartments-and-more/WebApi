@@ -1,5 +1,5 @@
 ﻿using BookIt.BLL.DTOs;
-using BookIt.DAL.Models;
+using BookIt.DAL.Enums;
 
 namespace BookIt.API.Models.Responses;
 
@@ -15,17 +15,6 @@ public record EstablishmentFeaturesResponse
     public bool AccessibleForDisabled { get; set; }
     public bool ElectricCarCharging { get; set; }
     public bool Elevator { get; set; }
-}
-
-public record GeolocationResponse 
-{
-    public int Id { get; set; }
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
-    public string? Country { get; set; }
-    public string? City { get; set; }
-    public string? PostalCode { get; set; }
-    public string? Address { get; set; }
 }
 
 public record EstablishmentResponse

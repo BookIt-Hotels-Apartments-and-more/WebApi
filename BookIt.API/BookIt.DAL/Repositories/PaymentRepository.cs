@@ -1,8 +1,9 @@
-namespace BookIt.DAL.Repositories;
-
 using BookIt.DAL.Database;
+using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 using Microsoft.EntityFrameworkCore;
+
+namespace BookIt.DAL.Repositories;
 
 public class PaymentRepository
 {
@@ -48,7 +49,7 @@ public class PaymentRepository
     public async Task DeleteAsync(int id)
     {
         var payment = await _context.Payments.FindAsync(id);
-        if (payment != null)
+        if (payment is not null)
         {
             _context.Payments.Remove(payment);
             await _context.SaveChangesAsync();

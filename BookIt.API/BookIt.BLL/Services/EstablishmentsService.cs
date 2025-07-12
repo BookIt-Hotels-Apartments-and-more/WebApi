@@ -4,6 +4,7 @@ using BookIt.DAL.Repositories;
 using BookIt.BLL.DTOs;
 using AutoMapper;
 using System.Linq.Expressions;
+using BookIt.DAL.Enums;
 
 namespace BookIt.BLL.Services;
 

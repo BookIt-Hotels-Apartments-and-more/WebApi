@@ -1,7 +1,7 @@
 ﻿using BookIt.API.Models.Requests.Common;
 using BookIt.API.Validation;
 using BookIt.DAL.Constants;
-using BookIt.DAL.Models;
+using BookIt.DAL.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace BookIt.API.Models.Requests;

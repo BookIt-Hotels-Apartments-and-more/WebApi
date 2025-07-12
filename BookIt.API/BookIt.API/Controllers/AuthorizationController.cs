@@ -1,10 +1,10 @@
 using BookIt.BLL.Services;
-using BookIt.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BookIt.API.Models.Requests;
 using BookIt.BLL.Models.Responses;
 using BookIt.BLL.Interfaces;
+using BookIt.DAL.Enums;
 
 namespace BookIt.API.Controllers;
 

@@ -1,4 +1,4 @@
-using BookIt.DAL.Models;
+using BookIt.DAL.Enums;
 
 namespace BookIt.BLL.Models;
 
@@ -9,5 +9,3 @@ public class UniversalPaymentResponse
     public DateTime PaidAt { get; set; }
     public string? InvoiceUrl { get; set; }
 }
-
-

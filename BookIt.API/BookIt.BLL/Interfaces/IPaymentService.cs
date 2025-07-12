@@ -1,6 +1,6 @@
-using BookIt.DAL.Models;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Models;
+using BookIt.DAL.Models;
 
 namespace BookIt.BLL.Services;
 

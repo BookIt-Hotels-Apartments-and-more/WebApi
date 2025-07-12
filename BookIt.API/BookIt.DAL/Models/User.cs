@@ -1,11 +1,6 @@
-namespace BookIt.DAL.Models;
+using BookIt.DAL.Enums;
 
-public enum UserRole
-{
-    Admin,
-    Landlord,
-    Tenant
-}
+namespace BookIt.DAL.Models;
 
 public class User
 {

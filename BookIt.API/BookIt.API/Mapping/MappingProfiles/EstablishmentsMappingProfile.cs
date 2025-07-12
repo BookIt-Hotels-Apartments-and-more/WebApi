@@ -2,6 +2,7 @@
 using BookIt.API.Models.Requests;
 using BookIt.API.Models.Responses;
 using BookIt.BLL.DTOs;
+using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 
 namespace BookIt.API.Mapping.MappingProfiles;
