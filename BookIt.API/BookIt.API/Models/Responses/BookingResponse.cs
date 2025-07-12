@@ -7,6 +7,7 @@ public record BookingResponse
     public DateTime DateTo { get; set; }
     public bool IsCheckedIn { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? AdditionalRequests { get; set; }
     public CustomerResponse Customer{ get; set; } = null!;
     public ApartmentResponse Apartment { get; set; } = null!;
 }

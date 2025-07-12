@@ -6,4 +6,5 @@ public record BookingRequest
     public DateTime DateTo { get; set; }
     public int CustomerId { get; set; }
     public int ApartmentId { get; set; }
+    public string? AdditionalRequests { get; set; }
 }
