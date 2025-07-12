@@ -7,6 +7,7 @@ public class Booking
     public DateTime DateTo { get; set; }
     public bool IsCheckedIn { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? AdditionalRequests { get; set; }
 
     public int UserId { get; set; }
     public User User { get; set; } = null!;
