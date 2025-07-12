@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using BookIt.BLL.Services;
-using BookIt.BLL.Models;
 using BookIt.API.Models.Requests;
 
 namespace BookIt.API.Controllers;
@@ -23,10 +22,6 @@ public class MonobankWebhookController : ControllerBase
         [FromRoute] string secret,
         [FromBody] MonobankWebhookRequest payload)
     {
-        Console.WriteLine(payload.Amount);
-        Console.WriteLine(payload.Status);
-        Console.WriteLine(payload.Reference);
-
         var expectedSecret = _configuration["Monobank:WebhookSecret"];
         if (secret != expectedSecret)
             return Unauthorized("Invalid webhook secret");
@@ -34,10 +29,8 @@ public class MonobankWebhookController : ControllerBase
         // if (!payload.Reference.StartsWith("BOOKING-"))
         //     return BadRequest("Invalid reference");
 
-
         if (payload.Status != "success")
-            return Ok(); // Ігноруємо неуспішні
-
+            return Ok();
 
         var bookingIdStr = payload.Reference.Replace("BOOKING-", "");
         if (!int.TryParse(bookingIdStr, out int bookingId))

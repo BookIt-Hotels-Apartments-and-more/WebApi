@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using BookIt.BLL.Services;
 using BookIt.BLL.DTOs;
-using BookIt.DAL.Models;
 using BookIt.BLL.Models;
 
 namespace BookIt.API.Controllers;
@@ -17,7 +16,6 @@ public class PaymentController : ControllerBase
         _paymentService = paymentService;
     }
 
-    /// <summary>Отримати всі платежі</summary>
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -25,7 +23,6 @@ public class PaymentController : ControllerBase
         return Ok(payments);
     }
 
-    /// <summary>Отримати конкретний платіж</summary>
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id)
     {
@@ -34,7 +31,6 @@ public class PaymentController : ControllerBase
         return Ok(payment);
     }
 
-    /// <summary>Створити платіж</summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto)
     {
@@ -42,7 +38,6 @@ public class PaymentController : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = paymentId }, new { id = paymentId });
     }
 
-    /// <summary>Видалити платіж</summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -50,31 +45,28 @@ public class PaymentController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Перевірити статус інвойсу у Monobank</summary>
     [HttpPost("mono-status")]
     public async Task<IActionResult> CheckMonoStatus([FromBody] ProcessMonoPaymentDto dto)
     {
         var result = await _paymentService.CheckMonoPaymentStatusAsync(dto);
-        return result ? Ok("Оплата підтверджена.") : BadRequest("Оплата не підтверджена.");
+        return result 
+            ? Ok("Payment was approved.")
+            : BadRequest("Payment was not approved.");
     }
 
-    /// <summary>Універсальне створення платежу (Mono, Cash, BankTransfer)</summary>
     [HttpPost("universal")]
     public async Task<IActionResult> CreateUniversal([FromBody] CreateUniversalPayment dto)
     {
-        Console.WriteLine("est contac2t");
         var result = await _paymentService.CreateUniversalPaymentAsync(dto);
-        if (result == null) return BadRequest("Не вдалося створити платіж.");
-
-        return Ok(result);
+        return result is not null
+            ? Ok(result)
+            : BadRequest("Could not create a payment");
     }
 
-
-    /// <summary>Підтвердити платіж вручну (Cash або BankTransfer)</summary>
     [HttpPost("manual-confirm")]
     public async Task<IActionResult> ConfirmManual([FromBody] ManualConfirmPaymentDto dto)
     {
         var success = await _paymentService.ConfirmManualPaymentAsync(dto.PaymentId);
-        return success ? Ok("Платіж оновлено.") : BadRequest("Не вдалося оновити платіж.");
+        return success ? Ok("Payment was confirmed.") : BadRequest("Could not confirm payment.");
     }
 }

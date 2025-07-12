@@ -12,15 +12,15 @@ public class BookingsMappingProfile : Profile
     {
         CreateMap<BookingRequest, BookingDTO>();
 
+        CreateMap<Booking, BookingDTO>()
+            .ForMember(dto => dto.Customer, o => o.MapFrom(b => b.User))
+            .ForMember(dto => dto.CustomerId, o => o.MapFrom(b => b.UserId));
+
         CreateMap<BookingDTO, Booking>()
             .ForMember(e => e.Id, o => o.Ignore())
             .ForMember(e => e.CreatedAt, o => o.Ignore())
             .ForMember(e => e.IsCheckedIn, o => o.Ignore())
             .ForMember(e => e.UserId, o => o.MapFrom(dto => dto.CustomerId));
-
-        CreateMap<Booking, BookingDTO>()
-            .ForMember(dto => dto.Customer, o => o.MapFrom(b => b.User))
-            .ForMember(dto => dto.CustomerId, o => o.MapFrom(b => b.UserId));
 
         CreateMap<BookingDTO, BookingResponse>();
 

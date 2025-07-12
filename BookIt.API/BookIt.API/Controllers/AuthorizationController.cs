@@ -10,14 +10,14 @@ namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("auth")]
-public class UsersController : ControllerBase
+public class AuthorizationController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IJWTService _jwtService;
     private readonly IEmailSenderService _emailSenderService;
     private readonly IConfiguration _configuration;
 
-    public UsersController(
+    public AuthorizationController(
         IUserService userService,
         IJWTService jwtService,
         IEmailSenderService emailSenderService,
@@ -50,7 +50,6 @@ public class UsersController : ControllerBase
         }
     }
 
-
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
@@ -79,9 +78,9 @@ public class UsersController : ControllerBase
             _emailSenderService.SendEmail(user.Email, "Password Reset", body);
             return Ok();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest();
         }
     }
 
@@ -90,7 +89,7 @@ public class UsersController : ControllerBase
     {
         var user = await _userService.LoginAsync(request.Email, request.Password);
 
-        if (user == null)
+        if (user is null)
         {
             return Unauthorized(new { message = "Invalid email or password" });
         }
@@ -105,7 +104,6 @@ public class UsersController : ControllerBase
             Token = token
         });
     }
-
 
     [HttpGet("verify-email")]
     public async Task<IActionResult> VerifyEmail()
@@ -129,13 +127,13 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Me()
     {
         var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        int userId = Int32.Parse(userIdStr);
+        int userId = int.Parse(userIdStr);
 
         var _user = await _userService.GetUserByIdAsync(userId);
 
-        if (_user == null)
+        if (_user is null)
         {
-            return Unauthorized(new { message = "Invalid auth token" });
+            return Unauthorized();
         }
 
         return Ok(new UserAuthResponse

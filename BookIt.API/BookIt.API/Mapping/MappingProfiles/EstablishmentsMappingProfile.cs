@@ -10,10 +10,7 @@ public class EstablishmentsMappingProfile : Profile
 {
     public EstablishmentsMappingProfile()
     {
-
-        CreateMap<EstablishmentRequest, EstablishmentDTO>();
-
-        CreateMap<Establishment, EstablishmentDTO>();
+        CreateMap<EstablishmentFilterRequest, EstablishmentFilterDTO>();
 
         CreateMap<EstablishmentRequest, EstablishmentDTO>()
             .ForMember(dto => dto.Geolocation,
@@ -22,22 +19,14 @@ public class EstablishmentsMappingProfile : Profile
                        o => o.MapFrom(req => req.ExistingPhotosIds.Select(id => new ImageDTO { Id = id })
                                              .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 }))));
 
+        CreateMap<Establishment, EstablishmentDTO>()
+            .ForMember(dto => dto.Owner, o => o.MapFrom(e => e.Owner));
+
         CreateMap<EstablishmentDTO, Establishment>()
             .ForMember(e => e.Id, o => o.Ignore())
             .ForMember(e => e.Photos, o => o.Ignore())
             .ForMember(e => e.CreatedAt, o => o.Ignore())
             .ForMember(e => e.Geolocation, o => o.Ignore());
-
-        CreateMap<Establishment, EstablishmentDTO>()
-            // .ForMember(dto => dto.Photos, o => o.MapFrom(e => e.Photos.Select(im => new ImageDTO { BlobUrl = im.BlobUrl })))
-            .ForMember(dto => dto.Owner, o => o.MapFrom(e => e.Owner));
-
-        CreateMap<EstablishmentDTO, EstablishmentResponse>();
-
-        CreateMap<User, OwnerDTO>()
-            .ForMember(dto => dto.Photos, o => o.MapFrom(u => u.Photos.Select(im => im.BlobUrl)));
-
-        CreateMap<OwnerDTO, OwnerResponse>();
 
         CreateMap<EstablishmentDTO, EstablishmentResponse>()
             .ForMember(dest => dest.Features, opt => opt.MapFrom(src => new EstablishmentFeaturesResponse
@@ -54,5 +43,10 @@ public class EstablishmentsMappingProfile : Profile
                 Elevator = (src.Features & EstablishmentFeatures.Elevator) != 0
             }))
             .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type.ToString()));
+
+        CreateMap<User, OwnerDTO>()
+            .ForMember(dto => dto.Photos, o => o.MapFrom(u => u.Photos.Select(im => im.BlobUrl)));
+
+        CreateMap<OwnerDTO, OwnerResponse>();
     }
 }
