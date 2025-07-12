@@ -7,6 +7,7 @@ public record ApartmentDTO
     public int Id { get; set; }
     public string Name { get; set; } = null!;
     public double Price { get; set; }
+    public double Area { get; set; }
     public int Capacity { get; set; }
     public float? Rating { get; set; }
     public string Description { get; set; } = null!;
