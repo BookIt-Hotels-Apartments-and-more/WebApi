@@ -10,6 +10,8 @@ public record EstablishmentDTO
     public string Description { get; set; } = null!;
     public float? Rating { get; set; }
     public DateTime CreatedAt { get; set; }
+    public TimeOnly CheckInTime { get; set; }
+    public TimeOnly CheckOutTime { get; set; }
     public EstablishmentFeatures Features { get; set; } = new();
     public int OwnerId { get; set; }
     public OwnerDTO Owner { get; set; } = null!;
