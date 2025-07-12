@@ -1,5 +1,6 @@
 ﻿using BookIt.API.Models.Requests.Common;
 using BookIt.API.Validation;
+using BookIt.DAL.Constants;
 
 namespace BookIt.API.Models.Requests;
 
@@ -11,6 +12,6 @@ public record UserImagesRequest : IHasPhotos
     [Base64ImageValidation]
     public List<string> NewPhotosBase64 { get; set; } = new();
 
-    [PhotoLimitValidation(5, isRequired: false)]
+    [PhotoLimitValidation(PhotosNumberConstants.MaxPhotosForUser, isRequired: false)]
     public int TotalPhotosCount => ExistingPhotosIds.Count + NewPhotosBase64.Count;
 }

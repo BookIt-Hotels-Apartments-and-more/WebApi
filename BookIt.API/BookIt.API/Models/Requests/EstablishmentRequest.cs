@@ -1,5 +1,6 @@
 ﻿using BookIt.API.Models.Requests.Common;
 using BookIt.API.Validation;
+using BookIt.DAL.Constants;
 using BookIt.DAL.Models;
 using System.ComponentModel.DataAnnotations;
 
@@ -47,6 +48,6 @@ public record EstablishmentRequest : IHasPhotos
     [Range(-180.0, 180.0, ErrorMessage = "Longitude must be between -180 and 180 degrees")]
     public double Longitude { get; set; }
 
-    [PhotoLimitValidation(20, isRequired: true)]
+    [PhotoLimitValidation(PhotosNumberConstants.MaxPhotosForEstablishment, isRequired: true)]
     public int TotalPhotosCount => ExistingPhotosIds.Count + NewPhotosBase64.Count;
 }

@@ -34,6 +34,6 @@ public record ReviewRequest : IHasPhotos
     [ReviewTargetValidation]
     public bool IsValid => CustomerId.HasValue ^ ApartmentId.HasValue;
 
-    [PhotoLimitValidation(10, isRequired: false)]
+    [PhotoLimitValidation(PhotosNumberConstants.MaxPhotosForReview, isRequired: false)]
     public int TotalPhotosCount => ExistingPhotosIds.Count + NewPhotosBase64.Count;
 }

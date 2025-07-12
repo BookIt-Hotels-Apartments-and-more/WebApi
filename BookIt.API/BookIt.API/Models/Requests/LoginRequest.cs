@@ -1,3 +1,4 @@
+using BookIt.DAL.Constants;
 using System.ComponentModel.DataAnnotations;
 
 namespace BookIt.API.Models.Requests;
@@ -10,7 +11,7 @@ public record LoginRequest
     public string Email { get; set; } = null!;
 
     [Required(ErrorMessage = "Password is required")]
-    [StringLength(128, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 128 characters")]
+    [StringLength(UserConstants.MaxPasswordLength, MinimumLength = UserConstants.MinPasswordLength, ErrorMessage = "Password must be between 8 and 128 characters")]
     // no additional security validation for password in login request because it is not a registration or password change
     public string Password { get; set; } = null!;
 }
