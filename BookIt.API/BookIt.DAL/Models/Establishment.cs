@@ -14,6 +14,8 @@ public class Establishment
     public TimeOnly CheckInTime { get; set; } = new TimeOnly(14, 0);
     public TimeOnly CheckOutTime { get; set; } = new TimeOnly(12, 0);
 
+    public VibeType? Vibe { get; set; } = VibeType.None;
+
     public int OwnerId { get; set; }
     public User Owner { get; set; } = null!;
 

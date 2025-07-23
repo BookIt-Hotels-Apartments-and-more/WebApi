@@ -47,6 +47,8 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<EstablishmentsRepository>();
 builder.Services.AddScoped<IEstablishmentsService, EstablishmentsService>();
 
+builder.Services.AddScoped<IClassificationService, ClassificationService>();
+
 builder.Services.AddScoped<GeolocationRepository>();
 builder.Services.AddScoped<IGeolocationService, GeolocationService>();
 

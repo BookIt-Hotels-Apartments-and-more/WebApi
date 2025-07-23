@@ -24,6 +24,7 @@ public record EstablishmentResponse
     public string Description { get; set; } = null!;
     public EstablishmentType Type { get; set; }
     public EstablishmentFeaturesResponse Features { get; set; } = new();
+    public VibeType? Vibe { get; set; }
     public DateTime CreatedAt { get; set; }
     public TimeOnly CheckInTime { get; set; }
     public TimeOnly CheckOutTime { get; set; }

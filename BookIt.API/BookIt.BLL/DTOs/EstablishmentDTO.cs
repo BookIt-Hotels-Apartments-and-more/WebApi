@@ -13,6 +13,7 @@ public record EstablishmentDTO
     public TimeOnly CheckInTime { get; set; }
     public TimeOnly CheckOutTime { get; set; }
     public EstablishmentFeatures Features { get; set; } = new();
+    public VibeType? Vibe { get; set; }
     public int OwnerId { get; set; }
     public OwnerDTO Owner { get; set; } = null!;
     public List<ImageDTO> Photos { get; set; } = new();

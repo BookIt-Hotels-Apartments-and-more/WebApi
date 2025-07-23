@@ -25,6 +25,7 @@ public class EstablishmentsMappingProfile : Profile
 
         CreateMap<EstablishmentDTO, Establishment>()
             .ForMember(e => e.Id, o => o.Ignore())
+            .ForMember(e => e.Vibe, o => o.Ignore())
             .ForMember(e => e.Photos, o => o.Ignore())
             .ForMember(e => e.CreatedAt, o => o.Ignore())
             .ForMember(e => e.Geolocation, o => o.Ignore());
