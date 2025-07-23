@@ -1,4 +1,4 @@
-using BookIt.DAL.Models;
+using BookIt.DAL.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace BookIt.API.Models.Requests;

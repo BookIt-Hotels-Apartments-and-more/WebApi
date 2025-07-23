@@ -1,3 +1,4 @@
+using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 
 namespace BookIt.BLL.Services;
@@ -14,5 +15,4 @@ public interface IUserService
     Task<User?> GenerateResetPasswordTokenAsync(string email);
     Task<User?> ResetPasswordAsync(string token, string newPassword);
     Task<IEnumerable<User>> GetAllUsersAsync(UserRole? role = null);
-
 }

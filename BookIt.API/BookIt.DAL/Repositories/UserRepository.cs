@@ -1,6 +1,7 @@
 using BookIt.DAL.Models;
 using BookIt.DAL.Database;
 using Microsoft.EntityFrameworkCore;
+using BookIt.DAL.Enums;
 
 namespace BookIt.DAL.Repositories;
 
@@ -87,7 +88,7 @@ public class UserRepository
     public async Task<bool> UpdateAsync(User updatedUser)
     {
         var user = await _context.Users.FindAsync(updatedUser.Id);
-        if (user == null) return false;
+        if (user is null) return false;
 
         user.Username = updatedUser.Username;
         user.Email = updatedUser.Email;
@@ -106,7 +107,7 @@ public class UserRepository
     public async Task<bool> DeleteAsync(int id)
     {
         var user = await _context.Users.FindAsync(id);
-        if (user == null) return false;
+        if (user is null) return false;
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
@@ -124,5 +125,4 @@ public class UserRepository
             .Include(u => u.OwnedEstablishments)
             .ToListAsync();
     }
-
 }

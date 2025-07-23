@@ -1,4 +1,4 @@
-using BookIt.DAL.Models;
+using BookIt.DAL.Enums;
 
 namespace BookIt.BLL.Models;
 

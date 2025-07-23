@@ -1,19 +1,6 @@
-﻿namespace BookIt.DAL.Models;
+﻿using BookIt.DAL.Enums;
 
-public enum PaymentType
-{
-    Cash,
-    Mono,
-    BankTransfer
-}
-
-public enum PaymentStatus
-{
-    Pending,
-    Completed,
-    Failed,
-    Cancelled
-}
+namespace BookIt.DAL.Models;
 
 public class Payment
 {

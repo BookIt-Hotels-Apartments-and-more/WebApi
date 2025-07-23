@@ -2,6 +2,7 @@ using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 using BookIt.BLL.Models;
 using BookIt.BLL.DTOs;
+using BookIt.DAL.Enums;
 
 namespace BookIt.BLL.Services;
 
@@ -93,7 +94,6 @@ public class PaymentService : IPaymentService
         if (payment == null)
             return false;
 
-        // Перевіряємо, чи це ручний тип платежу
         if (payment.Type != PaymentType.Cash && payment.Type != PaymentType.BankTransfer)
             return false;
 
@@ -166,7 +166,7 @@ public class PaymentService : IPaymentService
                 MerchantPaymInfo = new MerchantPaymInfo
                 {
                     Reference = $"BOOKING-{dto.BookingId}",
-                    Destination = $"Оплата бронювання #{payment.Id}"
+                    Destination = $"Booking #{payment.Id} payment"
                 },
                 RedirectUrl = "https://yourapp.com/payment/success",
             };
@@ -199,7 +199,6 @@ public class PaymentService : IPaymentService
 
         return true;
     }
-
 
     public async Task UpdatePaymentAsync(Payment payment)
     {

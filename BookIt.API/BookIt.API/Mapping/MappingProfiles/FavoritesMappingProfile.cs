@@ -12,10 +12,10 @@ public class FavoritesMappingProfile : Profile
     {
         CreateMap<FavoriteRequest, FavoriteDTO>();
 
+        CreateMap<Favorite, FavoriteDTO>();
+
         CreateMap<FavoriteDTO, Favorite>()
             .ForMember(a => a.Id, o => o.Ignore());
-
-        CreateMap<Favorite, FavoriteDTO>();
 
         CreateMap<FavoriteDTO, FavoriteResponse>();
     }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
+using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 

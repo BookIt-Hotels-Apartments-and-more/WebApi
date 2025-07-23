@@ -4,6 +4,7 @@ using BookIt.DAL.Repositories;
 using BookIt.BLL.DTOs;
 using AutoMapper;
 using System.Linq.Expressions;
+using BookIt.DAL.Enums;
 
 namespace BookIt.BLL.Services;
 
@@ -16,6 +17,7 @@ public class EstablishmentsService : IEstablishmentsService
     private readonly IRatingsService _ratingsService;
     private readonly ImagesRepository _imagesRepository;
     private readonly IGeolocationService _geolocationService;
+    private readonly IClassificationService _classificationService;
     private readonly EstablishmentsRepository _establishmentsRepository;
 
     public EstablishmentsService(
@@ -24,13 +26,15 @@ public class EstablishmentsService : IEstablishmentsService
         IRatingsService ratingsService,
         ImagesRepository imagesRepository,
         IGeolocationService geolocationService,
+        IClassificationService classificationService,
         EstablishmentsRepository establishmentsRepository)
     {
         _mapper = mapper;
         _imagesService = imagesService;
         _ratingsService = ratingsService;
-        _geolocationService = geolocationService;
         _imagesRepository = imagesRepository;
+        _geolocationService = geolocationService;
+        _classificationService = classificationService;
         _establishmentsRepository = establishmentsRepository;
     }
 
@@ -56,19 +60,25 @@ public class EstablishmentsService : IEstablishmentsService
 
     public async Task<EstablishmentDTO?> CreateAsync(EstablishmentDTO dto)
     {
-        var addedGeolocationDto = await _geolocationService.CreateAsync(dto.Geolocation);
-        if (addedGeolocationDto is null || addedGeolocationDto.Id is null)
+        Task<GeolocationDTO?> addGeolocationTask = _geolocationService.CreateAsync(dto.Geolocation);
+        Task<VibeType?> classifyVibeTask = _classificationService.ClassifyEstablishmentVibeAsync(dto);
+
+        await Task.WhenAll(addGeolocationTask, classifyVibeTask);
+
+        if (addGeolocationTask.Result?.Id is null)
             return null;
 
         var establishmentDomain = _mapper.Map<Establishment>(dto);
-        establishmentDomain.GeolocationId = addedGeolocationDto.Id.Value;
+
+        establishmentDomain.GeolocationId = addGeolocationTask.Result.Id;
+        establishmentDomain.Vibe = classifyVibeTask.Result ?? VibeType.None;
 
         var addedEstablishment = await _establishmentsRepository.AddAsync(establishmentDomain);
 
         Action<Image> setEstablishmentIdDelegate = image => image.EstablishmentId = addedEstablishment.Id;
 
         await _imagesService.SaveImagesAsync(dto.Photos, BlobContainerName, setEstablishmentIdDelegate);
-
+        
         return await GetByIdAsync(addedEstablishment.Id);
     }
 
@@ -79,10 +89,16 @@ public class EstablishmentsService : IEstablishmentsService
         var establishmentDomain = _mapper.Map<Establishment>(dto);
         establishmentDomain.Id = id;
 
-        var geolocation = await _geolocationService.UpdateEstablishmentGeolocationAsync(id, dto.Geolocation);
+        Task<GeolocationDTO?> updateGeolocationTask = _geolocationService.UpdateEstablishmentGeolocationAsync(id, dto.Geolocation);
+        Task<VibeType?> updateVibeTask = _classificationService.UpdateEstablishmentVibeAsync(id, dto);
 
-        if (geolocation?.Id is not null)
-            establishmentDomain.GeolocationId = geolocation.Id;
+        await Task.WhenAll(updateGeolocationTask, updateVibeTask);
+
+        if (updateGeolocationTask.Result?.Id is not null)
+            establishmentDomain.GeolocationId = updateGeolocationTask.Result?.Id;
+
+        if (updateVibeTask.Result is not null)
+            establishmentDomain.Vibe = updateVibeTask.Result;
 
         await _establishmentsRepository.UpdateAsync(establishmentDomain);
 
@@ -102,13 +118,12 @@ public class EstablishmentsService : IEstablishmentsService
             .Where(id => !idsOfPhotosToKeep.Contains(id))
             .ToList();
 
-        await _imagesService.DeleteImagesAsync(idsOfPhotosToRemove, BlobContainerName);
-
         var photosToAdd = dto.Photos
             .Where(photo => photo.Id is null && photo.Base64Image is not null)
             .ToList();
 
-        await _imagesService.SaveImagesAsync(photosToAdd, BlobContainerName, setEstablishmentIdDelegate);
+        await Task.WhenAll(_imagesService.DeleteImagesAsync(idsOfPhotosToRemove, BlobContainerName),
+                           _imagesService.SaveImagesAsync(photosToAdd, BlobContainerName, setEstablishmentIdDelegate));
 
         return await GetByIdAsync(id);
     }
@@ -171,16 +186,13 @@ public class EstablishmentsService : IEstablishmentsService
 
         var establishmentsDto = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishments);
 
-        // Calculate rating for each establishment
         foreach (var establishment in establishmentsDto)
         {
             establishment.Rating = await _ratingsService.CalculateRating(establishment);
         }
 
-        // Apply post-database filtering for fields that need to be filtered in-memory
         var filteredEstablishments = establishmentsDto.AsEnumerable();
 
-        // Filter by country and city (these are in the geolocation)
         if (!string.IsNullOrWhiteSpace(filter.Country))
         {
             filteredEstablishments = filteredEstablishments.Where(e =>
@@ -195,7 +207,6 @@ public class EstablishmentsService : IEstablishmentsService
                 e.Geolocation.City.Contains(filter.City, StringComparison.OrdinalIgnoreCase));
         }
 
-        // Filter by rating
         if (filter.MinRating.HasValue)
         {
             filteredEstablishments = filteredEstablishments.Where(e => e.Rating >= filter.MinRating.Value);
@@ -206,7 +217,6 @@ public class EstablishmentsService : IEstablishmentsService
             filteredEstablishments = filteredEstablishments.Where(e => e.Rating <= filter.MaxRating.Value);
         }
 
-        // Filter by price
         if (filter.MinPrice.HasValue)
         {
             filteredEstablishments = filteredEstablishments.Where(e => e.Price >= filter.MinPrice.Value);
@@ -217,10 +227,8 @@ public class EstablishmentsService : IEstablishmentsService
             filteredEstablishments = filteredEstablishments.Where(e => e.Price <= filter.MaxPrice.Value);
         }
 
-        // Count after in-memory filtering
         var finalCount = filteredEstablishments.Count();
 
-        // Calculate pagination metadata
         var totalPages = (int)Math.Ceiling(finalCount / (double)filter.PageSize);
 
         return new PagedResultDTO<EstablishmentDTO>

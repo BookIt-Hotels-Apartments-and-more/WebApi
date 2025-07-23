@@ -1,6 +1,6 @@
-﻿namespace BookIt.BLL.DTOs;
+﻿using BookIt.DAL.Enums;
 
-using BookIt.DAL.Models;
+namespace BookIt.BLL.DTOs;
 
 public record ApartmentDTO
 {

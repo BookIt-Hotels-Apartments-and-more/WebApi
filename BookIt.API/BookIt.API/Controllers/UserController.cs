@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using BookIt.BLL.Services;
-using BookIt.BLL.DTOs;
-using BookIt.DAL.Models;
-using BookIt.BLL.Models;
 
 namespace BookIt.API.Controllers;
 
