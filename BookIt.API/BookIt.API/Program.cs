@@ -9,7 +9,7 @@ using BookIt.API.Mapping;
 using DotNetEnv;
 using BookIt.DAL.Configuration;
 
-const string FRONTEND_CORS_POLICY = "AcceptFrontend";
+const string CORS_POLICY_NAME = "CORS_ANY";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,17 +18,7 @@ Env.Load();
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(FRONTEND_CORS_POLICY, policy =>
-    {
-        policy.WithOrigins
-        (
-            "http://localhost:5173",
-            "https://localhost:5173"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
-    });
+    options.AddPolicy(CORS_POLICY_NAME, p => p.AllowAnyOrigin().AllowAnyMethod().AllowCredentials());
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -110,7 +100,7 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-app.UseCors(FRONTEND_CORS_POLICY);
+app.UseCors(CORS_POLICY_NAME);
 
 app.UseAuthorization();
 
