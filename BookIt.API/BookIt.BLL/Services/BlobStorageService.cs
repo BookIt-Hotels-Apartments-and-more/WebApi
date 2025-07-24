@@ -16,7 +16,8 @@ public class AzureBlobStorageService : IBlobStorageService
 
     public AzureBlobStorageService(IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("AzureBlobStorage");
+        var connectionString = Environment.GetEnvironmentVariable("AZURE_BLOB_STORAGE_CONNECTION_STRING")
+            ?? configuration.GetConnectionString("AzureBlobStorage");
         _blobServiceClient = new BlobServiceClient(connectionString);
     }
 
@@ -38,7 +39,7 @@ public class AzureBlobStorageService : IBlobStorageService
             var blobHttpHeaders = new BlobHttpHeaders
             {
                 ContentType = mimeType,
-                CacheControl = "public, max-age=31536000" // Cache for 1 year
+                CacheControl = "public, max-age=31536000"
             };
 
             await blobClient.UploadAsync(stream, new BlobUploadOptions

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using BookIt.BLL.Services;
 using BookIt.API.Models.Requests;
+using Microsoft.Extensions.Options;
+using BookIt.DAL.Configuration.Settings;
 
 namespace BookIt.API.Controllers;
 
@@ -9,12 +11,14 @@ namespace BookIt.API.Controllers;
 public class MonobankWebhookController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
-    private readonly IConfiguration _configuration;
+    private readonly IOptions<MonobankSettings> _monobankSettingsOptions;
 
-    public MonobankWebhookController(IPaymentService paymentService, IConfiguration configuration)
+    public MonobankWebhookController(
+        IPaymentService paymentService,
+        IOptions<MonobankSettings> monobankSettingsOptions)
     {
         _paymentService = paymentService;
-        _configuration = configuration;
+        _monobankSettingsOptions = monobankSettingsOptions;
     }
 
     [HttpPost]
@@ -22,7 +26,7 @@ public class MonobankWebhookController : ControllerBase
         [FromRoute] string secret,
         [FromBody] MonobankWebhookRequest payload)
     {
-        var expectedSecret = _configuration["Monobank:WebhookSecret"];
+        var expectedSecret = _monobankSettingsOptions.Value.WebhookSecret;
         if (secret != expectedSecret)
             return Unauthorized("Invalid webhook secret");
 
