@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  bookit:
+    build:
+        context: .
+        dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DB_CONNECTION_STRING=${DB_CONNECTION_STRING}
+      - AZURE_BLOB_STORAGE_CONNECTION_STRING=${AZURE_BLOB_STORAGE_CONNECTION_STRING}
+      - JWT_SECRET=${JWT_SECRET}
+      - CLIENT_URL=${CLIENT_URL}
+      - BASE_URL=${BASE_URL}
+      - MONOBANK_TOKEN=${MONOBANK_TOKEN}
+      - MONOBANK_WEBHOOK_SECRET=${MONOBANK_WEBHOOK_SECRET}
+      - GEOCODING_API_KEY=${GEOCODING_API_KEY}
+      - GEMINI_AI_API_KEY=${GEMINI_AI_API_KEY}

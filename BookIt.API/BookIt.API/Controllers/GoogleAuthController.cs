@@ -1,5 +1,7 @@
 using BookIt.BLL.Services;
+using BookIt.DAL.Configuration.Settings;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace BookIt.API.Controllers;
 
@@ -10,19 +12,18 @@ public class GoogleAuthController : ControllerBase
     private readonly IGoogleAuthService _googleAuthService;
     private readonly IUserService _userService;
     private readonly IJWTService _jwtService;
-    private readonly string _clientUrl;
+    private readonly IOptions<UrlSettings> _urlSettingsOptions;
 
     public GoogleAuthController(
-        IGoogleAuthService googleAuthService,
-        IUserService userService,
         IJWTService jwtService,
-        IConfiguration configuration)
+        IUserService userService,
+        IGoogleAuthService googleAuthService,
+        IOptions<UrlSettings> urlSettingsOptions)
     {
-        _googleAuthService = googleAuthService;
-        _userService = userService;
         _jwtService = jwtService;
-        _clientUrl = configuration.GetValue<string>("Urls:ClientUrl")
-    ?? throw new InvalidOperationException("Redirect URL is not configured");
+        _userService = userService;
+        _googleAuthService = googleAuthService;
+        _urlSettingsOptions = urlSettingsOptions;
     }
 
     [HttpGet("login")]
@@ -38,6 +39,8 @@ public class GoogleAuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(code))
             return BadRequest("Missing code");
 
+        var clientUrl = _urlSettingsOptions.Value.ClientUrl;
+
         try
         {
             var (email, name) = await _googleAuthService.GetUserEmailAndNameAsync(code);
@@ -45,16 +48,16 @@ public class GoogleAuthController : ControllerBase
 
             if (user == null)
             {
-                return Redirect($"{_clientUrl}/auth/error?error=User is nullable");
+                return Redirect($"{clientUrl}/auth/error?error=User is nullable");
             }
 
             var token = _jwtService.GenerateToken(user);
 
-            return Redirect($"{_clientUrl}/auth/success?token={token}");
+            return Redirect($"{clientUrl}/auth/success?token={token}");
         }
         catch (Exception ex)
         {
-            return Redirect($"{_clientUrl}/auth/error?error={ex.Message}");
+            return Redirect($"{clientUrl}/auth/error?error={ex.Message}");
         }
     }
 }

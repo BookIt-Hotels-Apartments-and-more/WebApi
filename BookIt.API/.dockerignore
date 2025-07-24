@@ -1,0 +1,17 @@
+**/.dockerignore
+**/.env
+**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/.idea
+**/bin
+**/obj
+**/out
+**/*.user
+**/.nuget
+**/TestResults
+Dockerfile*
+docker-compose*
+README.md
+LICENSE

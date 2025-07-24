@@ -1,23 +1,20 @@
-using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using BookIt.DAL.Models;
+using Microsoft.Extensions.Options;
+using BookIt.DAL.Configuration.Settings;
 
 namespace BookIt.BLL.Services;
 
 public class JWTService : IJWTService
 {
-    private readonly string _secret;
-    private readonly string _issuer;
-    private readonly string _audience;
+    private readonly IOptions<JwtSettings> _jwtSettingsOptions;
 
-    public JWTService(IConfiguration configuration)
+    public JWTService(IOptions<JwtSettings> jwtSettingsOptions)
     {
-        _secret = configuration["JWT:Secret"]!;
-        _issuer = configuration["JWT:Issuer"]!;
-        _audience = configuration["JWT:Audience"]!;
+        _jwtSettingsOptions = jwtSettingsOptions;
     }
 
     public string GenerateToken(User user)
@@ -30,12 +27,12 @@ public class JWTService : IJWTService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettingsOptions.Value.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: _issuer,
-            audience: _audience,
+            issuer: _jwtSettingsOptions.Value.Issuer,
+            audience: _jwtSettingsOptions.Value.Audience,
             claims: claims,
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: creds
