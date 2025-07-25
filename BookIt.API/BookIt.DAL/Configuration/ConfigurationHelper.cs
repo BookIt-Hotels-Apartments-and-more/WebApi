@@ -30,6 +30,19 @@ public static class ConfigurationHelper
                 options.Secret = jwtSecret;
         });
 
+        services.Configure<GoogleOAuthSettings>(options =>
+        {
+            configuration.GetSection(GoogleOAuthSettings.SectionName).Bind(options);
+
+            var clientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+            if (!string.IsNullOrEmpty(clientId))
+                options.ClientId = clientId;
+
+            var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
+            if (!string.IsNullOrEmpty(clientSecret))
+                options.ClientSecret = clientSecret;
+        });
+
         services.Configure<UrlSettings>(options =>
         {
             configuration.GetSection(UrlSettings.SectionName).Bind(options);

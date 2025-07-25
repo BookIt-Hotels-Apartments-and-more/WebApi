@@ -15,7 +15,7 @@ public class UserService : IUserService
         _userRepository = userRepository;
     }
 
-    public async Task<User> RegisterAsync(string username, string email, string password, UserRole role)
+    public async Task<User> RegisterAsync(string username, string email, string? password, UserRole role)
     {
         var existingUser = await _userRepository.ExistsByEmailAsync(email);
         if (existingUser)
@@ -29,7 +29,7 @@ public class UserService : IUserService
         {
             Username = username,
             Email = email,
-            PasswordHash = HashPassword(password),
+            PasswordHash = string.IsNullOrEmpty(password) ? password : HashPassword(password),
             Role = role,
             CreatedAt = DateTime.UtcNow,
             EmailConfirmationToken = token
