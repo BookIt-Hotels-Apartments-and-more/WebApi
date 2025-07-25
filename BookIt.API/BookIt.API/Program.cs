@@ -18,7 +18,15 @@ Env.Load();
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(CORS_POLICY_NAME, p => p.AllowAnyOrigin().AllowAnyMethod().AllowCredentials());
+    options.AddPolicy(CORS_POLICY_NAME, p =>
+        p.WithOrigins
+        (
+            "http://localhost:5173",
+            "https://localhost:5173"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -102,6 +110,7 @@ app.UseHttpsRedirection();
 
 app.UseCors(CORS_POLICY_NAME);
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
