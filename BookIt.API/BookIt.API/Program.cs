@@ -6,36 +6,43 @@ using BookIt.BLL.Interfaces;
 using BookIt.BLL.Services;
 using BookIt.DAL.Repositories;
 using BookIt.API.Mapping;
-using BookIt.BLL.Configuration;
+using DotNetEnv;
+using BookIt.DAL.Configuration;
 
-const string FRONTEND_CORS_POLICY = "AcceptFrontend";
+const string CORS_POLICY_NAME = "CORS_ANY";
 
 var builder = WebApplication.CreateBuilder(args);
+
+Env.Load();
 
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(FRONTEND_CORS_POLICY, policy =>
-    {
-        policy.WithOrigins
+    options.AddPolicy(CORS_POLICY_NAME, p =>
+        p.WithOrigins
         (
             "http://localhost:5173",
             "https://localhost:5173"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
-        .AllowCredentials(); 
-    });
+        .AllowCredentials());
 });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services
-    .AddDbContext<BookingDbContext>
-    (opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddDbContext<BookingDbContext>(options =>
+{
+    var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
+        ?? builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseSqlServer(connectionString);
+});
 
 builder.Services.AddMapping();
 builder.Services.AddHttpClient();
+
+builder.Services.ConfigureSettings(builder.Configuration);
 
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -69,7 +76,6 @@ builder.Services.AddScoped<IFavoritesService, FavoritesService>();
 builder.Services.AddScoped<PaymentRepository>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
-builder.Services.Configure<MonobankSettings>(builder.Configuration.GetSection("Monobank"));
 builder.Services.AddHttpClient<IMonobankAcquiringService, MonobankAcquiringService>();
 
 builder.Services.AddScoped<ImagesRepository>();
@@ -79,6 +85,8 @@ builder.Services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
+        var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? builder.Configuration["JWT:Secret"];
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -87,8 +95,7 @@ builder.Services.AddAuthentication("Bearer")
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["JWT:Issuer"],
             ValidAudience = builder.Configuration["JWT:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret!))
         };
     });
 
@@ -96,16 +103,14 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-app.UseCors(FRONTEND_CORS_POLICY);
+app.UseCors(CORS_POLICY_NAME);
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

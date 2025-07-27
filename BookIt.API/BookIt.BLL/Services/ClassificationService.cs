@@ -1,10 +1,11 @@
 ﻿using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
+using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 using GenerativeAI;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using System.Text;
 
 namespace BookIt.BLL.Services;
@@ -14,23 +15,12 @@ public class ClassificationService : IClassificationService
     private readonly GenerativeModel _geminiModel;
     private readonly EstablishmentsRepository _establishmentsRepository;
 
-    public ClassificationService(IConfiguration configuration, EstablishmentsRepository establishmentsRepository)
+    public ClassificationService(
+        IOptions<GeminiAISettings> geminiAiOptions,
+        EstablishmentsRepository establishmentsRepository)
     {
-        string? apiKey = configuration["GeminiAI:ApiKey"];
 
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            throw new InvalidOperationException("Gemini API Key is missing. Please configure 'GeminiAI:ApiKey'.");
-        }
-
-        string? modelName = configuration["GeminiAI:Model"];
-
-        if (string.IsNullOrWhiteSpace(modelName))
-        {
-            throw new InvalidOperationException("Gemini model name is missing. Please configure 'GeminiAI:Model'.");
-        }
-
-        _geminiModel = new GenerativeModel(apiKey, model: modelName);
+        _geminiModel = new GenerativeModel(geminiAiOptions.Value.ApiKey, geminiAiOptions.Value.Model);
         _establishmentsRepository = establishmentsRepository;
     }
 
@@ -53,7 +43,7 @@ public class ClassificationService : IClassificationService
 
             return ParseGeminiOutputToVibeType(geminiOutput);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }

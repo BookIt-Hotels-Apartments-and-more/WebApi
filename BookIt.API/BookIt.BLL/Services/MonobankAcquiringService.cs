@@ -1,5 +1,5 @@
-using BookIt.BLL.Configuration;
 using BookIt.BLL.Models;
+using BookIt.DAL.Configuration.Settings;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;

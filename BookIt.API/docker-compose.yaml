@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  bookit:
+    build:
+        context: .
+        dockerfile: Dockerfile
+    ports:
+      - "7065:7065"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=https://*:7065
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${CERT_PASSWORD}
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - DB_CONNECTION_STRING=${DB_CONNECTION_STRING}
+      - AZURE_BLOB_STORAGE_CONNECTION_STRING=${AZURE_BLOB_STORAGE_CONNECTION_STRING}
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - CLIENT_URL=${CLIENT_URL}
+      - BASE_URL=${BASE_URL}
+      - MONOBANK_TOKEN=${MONOBANK_TOKEN}
+      - MONOBANK_WEBHOOK_SECRET=${MONOBANK_WEBHOOK_SECRET}
+      - GEOCODING_API_KEY=${GEOCODING_API_KEY}
+      - GEMINI_AI_API_KEY=${GEMINI_AI_API_KEY}
+    volumes:
+      - ~/.aspnet/https:/https:ro
+      - bookit-dataprotection:/root/.aspnet/DataProtection-Keys
+
+volumes:
+  bookit-dataprotection:

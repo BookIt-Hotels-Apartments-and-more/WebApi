@@ -5,7 +5,7 @@ namespace BookIt.BLL.Services;
 
 public interface IUserService
 {
-    Task<User> RegisterAsync(string username, string email, string password, UserRole role);
+    Task<User> RegisterAsync(string username, string email, string? password, UserRole role);
     Task<bool> IsAdmin(int userId);
     Task<List<User>> GetUsersAsync();
     Task<User?> LoginAsync(string email, string password);

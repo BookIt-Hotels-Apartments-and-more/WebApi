@@ -5,6 +5,8 @@ using BookIt.API.Models.Requests;
 using BookIt.BLL.Models.Responses;
 using BookIt.BLL.Interfaces;
 using BookIt.DAL.Enums;
+using Microsoft.Extensions.Options;
+using BookIt.DAL.Configuration.Settings;
 
 namespace BookIt.API.Controllers;
 
@@ -15,25 +17,25 @@ public class AuthorizationController : ControllerBase
     private readonly IUserService _userService;
     private readonly IJWTService _jwtService;
     private readonly IEmailSenderService _emailSenderService;
-    private readonly IConfiguration _configuration;
+    private readonly IOptions<AppSettings> _appSettingsOptions;
 
     public AuthorizationController(
         IUserService userService,
         IJWTService jwtService,
         IEmailSenderService emailSenderService,
-        IConfiguration configuration
+        IOptions<AppSettings> appSettingsOptions
     )
     {
         _userService = userService;
         _jwtService = jwtService;
         _emailSenderService = emailSenderService;
-        _configuration = configuration;
+        _appSettingsOptions = appSettingsOptions;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var baseUrl = _configuration.GetValue<string>("AppSettings:BaseUrl");
+        var baseUrl = _appSettingsOptions.Value.BaseUrl;
 
         try
         {
@@ -67,7 +69,7 @@ public class AuthorizationController : ControllerBase
     [HttpPost("reset-password/generate-token")]
     public async Task<IActionResult> ResetPasswordToken([FromBody] GenerateResetPasswordTokenRequest request)
     {
-        var baseUrl = _configuration.GetValue<string>("AppSettings:BaseUrl");
+        var baseUrl = _appSettingsOptions.Value.BaseUrl;
 
         try
         {

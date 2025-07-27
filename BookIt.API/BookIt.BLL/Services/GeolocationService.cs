@@ -2,9 +2,10 @@
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
 using BookIt.BLL.Models.Geocoding;
+using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace BookIt.BLL.Services;
@@ -13,22 +14,19 @@ public class GeolocationService : IGeolocationService, IDisposable
 {
     private const double _closeGeoThreshold = 1e-5;
 
-    private readonly string _host;
-    private readonly string _apiKey;
-    private readonly string _reverseGeocodingBaseUrl;
-    private readonly HttpClient _httpClient = new();
-
     private readonly IMapper _mapper;
+    private readonly HttpClient _httpClient = new();
+    private readonly string _reverseGeocodingBaseUrl;
     private readonly GeolocationRepository _repository;
+    private readonly IOptions<GeocodingSettings> _geocodingSettingsOptions;
 
     public GeolocationService(
         IMapper mapper,
-        IConfiguration configuration,
-        GeolocationRepository repository)
+        GeolocationRepository repository,
+        IOptions<GeocodingSettings> geocodingSettingsOptions)
     {
-        _host = configuration["Geocoding:Host"]!;
-        _apiKey = configuration["Geocoding:ApiKey"] ?? throw new ArgumentNullException("Geocoding API key is not configured.");
-        _reverseGeocodingBaseUrl = string.Join("/", [configuration["Geocoding:BaseUrl"], "reverse"]);
+        _geocodingSettingsOptions = geocodingSettingsOptions;
+        _reverseGeocodingBaseUrl = string.Join("/", [geocodingSettingsOptions.Value.BaseUrl, "reverse"]);
 
         _mapper = mapper;
         _repository = repository;
@@ -121,8 +119,8 @@ public class GeolocationService : IGeolocationService, IDisposable
 
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
-        request.Headers.Add("x-rapidapi-host", _host);
-        request.Headers.Add("x-rapidapi-key", _apiKey);
+        request.Headers.Add("x-rapidapi-host", _geocodingSettingsOptions.Value.Host);
+        request.Headers.Add("x-rapidapi-key", _geocodingSettingsOptions.Value.ApiKey);
 
         using var response = await _httpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();

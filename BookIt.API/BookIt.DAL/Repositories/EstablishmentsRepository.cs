@@ -79,6 +79,7 @@ public class EstablishmentsRepository
             .Where(predicate)
             .Include(e => e.Owner)
             .Include(e => e.Geolocation)
+            .Include(e => e.Photos)
             .OrderByDescending(e => e.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

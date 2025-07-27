@@ -2,33 +2,32 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
+using BookIt.DAL.Configuration.Settings;
 
 namespace BookIt.BLL.Services;
 
-public class GoogleOAuthSettings
-{
-    public string ClientId { get; set; } = null!;
-    public string ClientSecret { get; set; } = null!;
-    public string RedirectUri { get; set; } = null!;
-}
-
 public class GoogleAuthService : IGoogleAuthService
 {
-    private readonly GoogleOAuthSettings _settings;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly HttpClient _httpClient;
+    private readonly GoogleOAuthSettings _googleOAuthSettings;
 
-    public GoogleAuthService(IOptions<GoogleOAuthSettings> settings, IHttpClientFactory httpClientFactory)
+    public GoogleAuthService(
+        HttpClient httpClient,
+        IOptions<GoogleOAuthSettings> googleOAuthSettings)
     {
-        _settings = settings.Value;
-        _httpClientFactory = httpClientFactory;
+        _httpClient = httpClient;
+        _googleOAuthSettings = googleOAuthSettings.Value;
+
+        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        _httpClient.DefaultRequestHeaders.Add("User-Agent", "BookIt/1.0");
     }
 
     public string GetLoginUrl()
     {
         var query = new Dictionary<string, string>
         {
-            ["client_id"] = "932606301370-0cip35440rogmahvu5o3lpcp64q3h7fn.apps.googleusercontent.com",
-            ["redirect_uri"] = "http://localhost:5290/google-auth/callback",
+            ["client_id"] = _googleOAuthSettings.ClientId,
+            ["redirect_uri"] = _googleOAuthSettings.RedirectUri,
             ["response_type"] = "code",
             ["scope"] = "openid email profile",
             ["access_type"] = "offline",
@@ -40,35 +39,75 @@ public class GoogleAuthService : IGoogleAuthService
 
     public async Task<(string Email, string Name)> GetUserEmailAndNameAsync(string code)
     {
-        var client = _httpClientFactory.CreateClient();
+        if (string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Authorization code is required", nameof(code));
 
-        var tokenResponse = await client.PostAsync("https://oauth2.googleapis.com/token",
-            new FormUrlEncodedContent(new Dictionary<string, string>
+        try
+        {
+            var tokenResponse = await _httpClient.PostAsync("https://oauth2.googleapis.com/token",
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["code"] = code,
+                    ["client_id"] = _googleOAuthSettings.ClientId,
+                    ["client_secret"] = _googleOAuthSettings.ClientSecret,
+                    ["redirect_uri"] = _googleOAuthSettings.RedirectUri,
+                    ["grant_type"] = "authorization_code"
+                }));
+
+            if (!tokenResponse.IsSuccessStatusCode)
             {
-                ["code"] = code,
-                ["client_id"] = "932606301370-0cip35440rogmahvu5o3lpcp64q3h7fn.apps.googleusercontent.com",
-                ["client_secret"] = "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",
-                ["redirect_uri"] = "http://localhost:5290/google-auth/callback",
-                ["grant_type"] = "authorization_code"
-            }));
+                throw new HttpRequestException($"Failed to exchange code for token: {tokenResponse.StatusCode}");
+            }
 
-        if (!tokenResponse.IsSuccessStatusCode)
-            throw new Exception("Failed to get token");
+            var tokenJson = await tokenResponse.Content.ReadAsStringAsync();
+            using var tokenDoc = JsonDocument.Parse(tokenJson);
 
-        var tokenData = JsonDocument.Parse(await tokenResponse.Content.ReadAsStringAsync());
-        var accessToken = tokenData.RootElement.GetProperty("access_token").GetString();
+            if (!tokenDoc.RootElement.TryGetProperty("access_token", out var accessTokenElement))
+            {
+                throw new InvalidOperationException("Access token not found in response");
+            }
 
-        var req = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v2/userinfo");
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var accessToken = accessTokenElement.GetString();
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                throw new InvalidOperationException("Access token is empty");
+            }
 
-        var userResponse = await client.SendAsync(req);
-        if (!userResponse.IsSuccessStatusCode)
-            throw new Exception("Failed to get user info");
+            using var userRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v3/userinfo");
+            userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var userInfo = JsonDocument.Parse(await userResponse.Content.ReadAsStringAsync());
-        var email = userInfo.RootElement.GetProperty("email").GetString();
-        var name = userInfo.RootElement.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : "";
+            var userResponse = await _httpClient.SendAsync(userRequest);
+            if (!userResponse.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Failed to get user info: {userResponse.StatusCode}");
+            }
 
-        return (email, name);
+            var userJson = await userResponse.Content.ReadAsStringAsync();
+            using var userDoc = JsonDocument.Parse(userJson);
+            var root = userDoc.RootElement;
+
+            if (!root.TryGetProperty("email", out var emailElement))
+            {
+                throw new InvalidOperationException("Email not found in user info");
+            }
+
+            var email = emailElement.GetString();
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw new InvalidOperationException("Email is empty in user info");
+            }
+
+            var name = root.TryGetProperty("name", out var nameElement) ? nameElement.GetString() : string.Empty;
+
+            return (email, name ?? string.Empty);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException("Invalid response format from Google", ex);
+        }
+        catch (TaskCanceledException ex)
+        {
+            throw new TimeoutException("Google OAuth request timed out", ex);
+        }
     }
 }
