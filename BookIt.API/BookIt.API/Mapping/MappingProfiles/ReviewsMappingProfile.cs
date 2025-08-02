@@ -13,7 +13,10 @@ public class ReviewsMappingProfile : Profile
         CreateMap<ReviewRequest, ReviewDTO>()
             .ForMember(dto => dto.Photos,
                        o => o.MapFrom(req => req.ExistingPhotosIds.Select(id => new ImageDTO { Id = id })
-                                             .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 }))));
+                                             .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 }))))
+            .ForMember(dto => dto.Rating, opt => opt.MapFrom(req =>
+                CalculateAverageRating(req.StaffRating, req.PurityRating, req.PriceQualityRating,
+                                       req.ComfortRating, req.FacilitiesRating, req.LocationRating)));
 
         CreateMap<Review, ReviewDTO>()
             .ForMember(dto => dto.CustomerId, o => o.MapFrom(r => r.UserId))
@@ -26,5 +29,10 @@ public class ReviewsMappingProfile : Profile
             .ForMember(r => r.UserId, o => o.MapFrom(dto => dto.CustomerId));
 
         CreateMap<ReviewDTO, ReviewResponse>();
+    }
+
+    private static float CalculateAverageRating(float staff, float purity, float priceQuality, float comfort, float facilities, float location)
+    {
+        return (staff + purity + priceQuality + comfort + facilities + location) / 6.0f;
     }
 }

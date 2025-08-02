@@ -1,21 +1,16 @@
 ﻿namespace BookIt.API.Models.Responses;
 
-public record ReviewResponse
+public record RatingResponse
 {
     public int Id { get; set; }
-    public string Text { get; set; } = null!;
-
-    public float Rating { get; set; }
-
     public float StaffRating { get; set; }
     public float PurityRating { get; set; }
     public float PriceQualityRating { get; set; }
     public float ComfortRating { get; set; }
     public float FacilitiesRating { get; set; }
     public float LocationRating { get; set; }
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public int BookingId { get; set; }
-    public BookingResponse Booking { get; set; } = null!;
-    public List<ImageResponse> Photos { get; set; } = new();
+    public float GeneralRating { get; set; }
+    public int ReviewCount { get; set; } = 0;
+    public DateTime CreatedAt { get; set; }
+    public DateTime? LastUpdatedAt { get; set; }
 }

@@ -25,8 +25,10 @@ public class BookingsMappingProfile : Profile
         CreateMap<BookingDTO, BookingResponse>();
 
         CreateMap<User, CustomerDTO>()
-            .ForMember(dto => dto.Photos, o => o.MapFrom(u => u.Photos.Select(im => im.BlobUrl)));
+            .ForMember(dto => dto.Photos, o => o.MapFrom(u => u.Photos.Select(im => im.BlobUrl)))
+            .ForMember(dto => dto.Rating, o => o.MapFrom(u => u.Rating));
 
-        CreateMap<CustomerDTO, CustomerResponse>();
+        CreateMap<CustomerDTO, CustomerResponse>()
+            .ForMember(res => res.Rating, o => o.MapFrom(dto => dto.Rating));
     }
 }

@@ -3,19 +3,23 @@ using BookIt.DAL.Models;
 using System.Security.Cryptography;
 using System.Text;
 using BookIt.DAL.Enums;
+using AutoMapper;
+using BookIt.BLL.DTOs;
 
 namespace BookIt.BLL.Services;
 
 public class UserService : IUserService
 {
+    private readonly IMapper _mapper;
     private readonly UserRepository _userRepository;
 
-    public UserService(UserRepository userRepository)
+    public UserService(IMapper mapper, UserRepository userRepository)
     {
+        _mapper = mapper;
         _userRepository = userRepository;
     }
 
-    public async Task<User> RegisterAsync(string username, string email, string? password, UserRole role)
+    public async Task<UserDTO> RegisterAsync(string username, string email, string? password, UserRole role)
     {
         var existingUser = await _userRepository.ExistsByEmailAsync(email);
         if (existingUser)
@@ -35,7 +39,9 @@ public class UserService : IUserService
             EmailConfirmationToken = token
         };
 
-        return await _userRepository.CreateAsync(user);
+        var registeredUser = await _userRepository.CreateAsync(user);
+        var userDto = _mapper.Map<UserDTO>(registeredUser);
+        return userDto;
     }
     
     public async Task<bool> IsAdmin(int userId)
@@ -50,70 +56,93 @@ public class UserService : IUserService
         return user.Role == UserRole.Admin;
     }
 
-    public async Task<List<User>> GetUsersAsync()
+    public async Task<IEnumerable<UserDTO>> GetUsersAsync()
     {
-        return await _userRepository.GetAllAsync();
+        var usersDomain = await _userRepository.GetAllAsync();
+        var usersDto = _mapper.Map<IEnumerable<UserDTO>>(usersDomain);
+        return usersDto;
     }
 
-    public async Task<User?> AuthByGoogleAsync(string username, string email)
+    public async Task<UserDTO?> AuthByGoogleAsync(string username, string email)
     {
         var existingUser = await _userRepository.ExistsByEmailAsync(email);
 
         if (existingUser)
         {
-            return await _userRepository.GetByEmailAsync(email);
+            var existingUserDomain = await _userRepository.GetByEmailAsync(email);
+            var userDto = _mapper.Map<UserDTO>(existingUserDomain);
+            return userDto;
         }
         else
         {
-            return await RegisterAsync(username, email, null, UserRole.Tenant);
+            var registeredUser = await RegisterAsync(username, email, null, UserRole.Tenant);
+            var userDto = _mapper.Map<UserDTO>(registeredUser);
+            return userDto;
         }
     }
 
-    public async Task<User?> VerifyEmailAsync(string token)
+    public async Task<UserDTO?> VerifyEmailAsync(string token)
     {
-        User? user = await _userRepository.GetByEmailTokenAsync(token) ?? throw new Exception("Invalid email token");
+        var userDomain = await _userRepository.GetByEmailTokenAsync(token) ?? throw new Exception("Invalid email token");
 
-        user.EmailConfirmationToken = null;
-        user.IsEmailConfirmed = true;
+        userDomain.EmailConfirmationToken = null;
+        userDomain.IsEmailConfirmed = true;
 
-        await _userRepository.UpdateAsync(user);
+        await _userRepository.UpdateAsync(userDomain);
 
-        return user;
+        var userDto = _mapper.Map<UserDTO>(userDomain);
+        return userDto;
     }
 
-    public async Task<User?> GenerateResetPasswordTokenAsync(string email)
+    public async Task<UserDTO?> GenerateResetPasswordTokenAsync(string email)
     {
         var token = Guid.NewGuid().ToString();
-        User? user = await _userRepository.GetByEmailAsync(email) ?? throw new Exception("Invalid email");
+        var userDomain = await _userRepository.GetByEmailAsync(email) ?? throw new Exception("Invalid email");
 
-        user.ResetPasswordToken = token;
+        userDomain.ResetPasswordToken = token;
 
-        await _userRepository.UpdateAsync(user);
+        await _userRepository.UpdateAsync(userDomain);
 
-        return user;
+        var userDto = _mapper.Map<UserDTO>(userDomain);
+        return userDto;
     }
 
-    public async Task<User?> ResetPasswordAsync(string token, string newPassword)
+    public async Task<UserDTO?> ResetPasswordAsync(string token, string newPassword)
     {
-        User? user = await _userRepository.GetByResetPasswordTokenAsync(token) ?? throw new Exception("Invalid email token");
+        var userDomain = await _userRepository.GetByResetPasswordTokenAsync(token) ?? throw new Exception("Invalid email token");
 
-        user.ResetPasswordToken = null;
-        user.PasswordHash = HashPassword(newPassword);
+        userDomain.ResetPasswordToken = null;
+        userDomain.PasswordHash = HashPassword(newPassword);
 
-        await _userRepository.UpdateAsync(user);
+        await _userRepository.UpdateAsync(userDomain);
 
-        return user;
+        var userDto = _mapper.Map<UserDTO>(userDomain);
+        return userDto;
     }
 
-    public async Task<User?> LoginAsync(string email, string password)
+    public async Task<UserDTO?> LoginAsync(string email, string password)
     {
         var hashedPassword = HashPassword(password);
-        return await _userRepository.GetByEmailAndPasswordHashAsync(email, hashedPassword);
+        var userDomain = await _userRepository.GetByEmailAndPasswordHashAsync(email, hashedPassword);
+        var userDto = _mapper.Map<UserDTO>(userDomain);
+        return userDto;
     }
 
-    public async Task<User?> GetUserByIdAsync(int id)
+    public async Task<UserDTO?> GetUserByIdAsync(int id)
     {
-        return await _userRepository.GetByIdAsync(id);
+        var userDomain = await _userRepository.GetByIdAsync(id);
+        var userDto = _mapper.Map<UserDTO>(userDomain);
+        return userDto;
+    }
+
+    public async Task<IEnumerable<UserDTO>> GetAllUsersAsync(UserRole? role = null)
+    {
+        var usersDomain = role.HasValue
+            ? await _userRepository.GetAllByRoleAsync(role.Value)
+            : await _userRepository.GetAllAsync();
+
+        var usersDto = _mapper.Map<IEnumerable<UserDTO>>(usersDomain);
+        return usersDto;
     }
 
     private string HashPassword(string password)
@@ -122,12 +151,5 @@ public class UserService : IUserService
         var bytes = Encoding.UTF8.GetBytes(password);
         var hash = sha256.ComputeHash(bytes);
         return Convert.ToBase64String(hash);
-    }
-
-    public async Task<IEnumerable<User>> GetAllUsersAsync(UserRole? role = null)
-    {
-        if (role.HasValue)
-            return await _userRepository.GetAllByRoleAsync(role.Value);
-        return await _userRepository.GetAllAsync();
     }
 }

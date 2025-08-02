@@ -15,25 +15,33 @@ public class ApartmentsMappingProfile : Profile
             .ForMember(dto => dto.Photos,
                        o => o.MapFrom(req => req.ExistingPhotosIds.Select(id => new ImageDTO { Id = id })
                                              .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 }))));
-        
-        CreateMap<Apartment, ApartmentDTO>();
+
+        CreateMap<Apartment, ApartmentDTO>()
+            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => src.Rating));
 
         CreateMap<ApartmentDTO, Apartment>()
             .ForMember(a => a.Id, o => o.Ignore())
             .ForMember(a => a.Photos, o => o.Ignore())
-            .ForMember(a => a.CreatedAt, o => o.Ignore());
+            .ForMember(a => a.CreatedAt, o => o.Ignore())
+            .ForMember(a => a.Rating, o => o.Ignore());
 
         CreateMap<ApartmentDTO, ApartmentResponse>()
-            .ForMember(dest => dest.Features, opt => opt.MapFrom(src => new ApartmentFeaturesResponse
+            .ForMember(res => res.Rating, opt => opt.MapFrom(dto => dto.Rating))
+            .ForMember(res => res.Features, opt => opt.MapFrom(dto => new ApartmentFeaturesResponse
             {
-                FreeWifi = (src.Features & ApartmentFeatures.FreeWifi) != 0,
-                AirConditioning = (src.Features & ApartmentFeatures.AirConditioning) != 0,
-                Breakfast = (src.Features & ApartmentFeatures.Breakfast) != 0,
-                Kitchen = (src.Features & ApartmentFeatures.Kitchen) != 0,
-                TV = (src.Features & ApartmentFeatures.TV) != 0,
-                Balcony = (src.Features & ApartmentFeatures.Balcony) != 0,
-                Bathroom = (src.Features & ApartmentFeatures.Bathroom) != 0,
-                PetsAllowed = (src.Features & ApartmentFeatures.PetsAllowed) != 0
+                FreeWifi = (dto.Features & ApartmentFeatures.FreeWifi) != 0,
+                AirConditioning = (dto.Features & ApartmentFeatures.AirConditioning) != 0,
+                Breakfast = (dto.Features & ApartmentFeatures.Breakfast) != 0,
+                Kitchen = (dto.Features & ApartmentFeatures.Kitchen) != 0,
+                TV = (dto.Features & ApartmentFeatures.TV) != 0,
+                Balcony = (dto.Features & ApartmentFeatures.Balcony) != 0,
+                Bathroom = (dto.Features & ApartmentFeatures.Bathroom) != 0,
+                PetsAllowed = (dto.Features & ApartmentFeatures.PetsAllowed) != 0
             }));
+
+        CreateMap<User, OwnerDTO>()
+            .ForMember(dto => dto.Photos, o => o.MapFrom(u => u.Photos.Select(im => im.BlobUrl)));
+
+        CreateMap<OwnerDTO, OwnerResponse>();
     }
 }

@@ -11,9 +11,29 @@ public record ReviewRequest : IHasPhotos
     [StringLength(2000, MinimumLength = 10, ErrorMessage = "Review text must be between 10 and 2000 characters")]
     public string Text { get; set; } = null!;
 
-    [Required(ErrorMessage = "Rating is required")]
-    [Range(RatingConstants.MinRating, RatingConstants.MaxRating, ErrorMessage = "Rating must be between 1.0 and 10.0")]
-    public float Rating { get; set; }
+    [Required(ErrorMessage = "Staff rating is required")]
+    [Range(RatingConstants.MinRating, RatingConstants.MaxRating, ErrorMessage = "Staff rating must be between 1.0 and 10.0")]
+    public float StaffRating { get; set; } = RatingConstants.MaxRating;
+
+    [Required(ErrorMessage = "Purity rating is required")]
+    [Range(RatingConstants.MinRating, RatingConstants.MaxRating, ErrorMessage = "Purity rating must be between 1.0 and 10.0")]
+    public float PurityRating { get; set; } = RatingConstants.MaxRating;
+
+    [Required(ErrorMessage = "Price/Quality rating is required")]
+    [Range(RatingConstants.MinRating, RatingConstants.MaxRating, ErrorMessage = "Price/Quality rating must be between 1.0 and 10.0")]
+    public float PriceQualityRating { get; set; } = RatingConstants.MaxRating;
+
+    [Required(ErrorMessage = "Comfort rating is required")]
+    [Range(RatingConstants.MinRating, RatingConstants.MaxRating, ErrorMessage = "Comfort rating must be between 1.0 and 10.0")]
+    public float ComfortRating { get; set; } = RatingConstants.MaxRating;
+
+    [Required(ErrorMessage = "Facilities rating is required")]
+    [Range(RatingConstants.MinRating, RatingConstants.MaxRating, ErrorMessage = "Facilities rating must be between 1.0 and 10.0")]
+    public float FacilitiesRating { get; set; } = RatingConstants.MaxRating;
+
+    [Required(ErrorMessage = "Location rating is required")]
+    [Range(RatingConstants.MinRating, RatingConstants.MaxRating, ErrorMessage = "Location rating must be between 1.0 and 10.0")]
+    public float LocationRating { get; set; } = RatingConstants.MaxRating;
 
     [Required(ErrorMessage = "Booking ID is required")]
     [Range(1, int.MaxValue, ErrorMessage = "Booking ID must be a positive number")]

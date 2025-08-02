@@ -20,6 +20,7 @@ public class EstablishmentsRepository
             .Establishments
             .Include(e => e.Owner)
             .Include(e => e.Photos)
+            .Include(u => u.Rating)
             .Include(e => e.Geolocation)
             .Include(e => e.Apartments).ThenInclude(a => a.Reviews)
             .ToListAsync();
@@ -30,6 +31,7 @@ public class EstablishmentsRepository
         return await _context.Establishments
             .Include(e => e.Owner)
             .Include(e => e.Photos)
+            .Include(u => u.Rating)
             .Include(e => e.Geolocation)
             .Include(e => e.Apartments).ThenInclude(a => a.Reviews)
             .FirstOrDefaultAsync(e => e.Id == id);
@@ -78,6 +80,7 @@ public class EstablishmentsRepository
         var establishments = await _context.Establishments
             .Where(predicate)
             .Include(e => e.Owner)
+            .Include(u => u.Rating)
             .Include(e => e.Geolocation)
             .Include(e => e.Photos)
             .OrderByDescending(e => e.CreatedAt)

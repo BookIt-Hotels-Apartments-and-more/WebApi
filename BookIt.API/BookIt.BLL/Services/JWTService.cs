@@ -2,9 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using BookIt.DAL.Models;
 using Microsoft.Extensions.Options;
 using BookIt.DAL.Configuration.Settings;
+using BookIt.BLL.DTOs;
 
 namespace BookIt.BLL.Services;
 
@@ -17,7 +17,7 @@ public class JWTService : IJWTService
         _jwtSettingsOptions = jwtSettingsOptions;
     }
 
-    public string GenerateToken(User user)
+    public string GenerateToken(UserDTO user)
     {
         var claims = new[]
         {
