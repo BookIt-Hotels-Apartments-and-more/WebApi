@@ -1,6 +1,6 @@
-﻿namespace BookIt.API.Models.Responses;
+﻿using BookIt.BLL.DTOs;
 
-using BookIt.BLL.DTOs;
+namespace BookIt.API.Models.Responses;
 
 public record ApartmentFeaturesResponse
 {
@@ -21,9 +21,9 @@ public record ApartmentResponse
     public double Price { get; set; }
     public int Capacity { get; set; }
     public double Area { get; set; }
-    public float? Rating { get; set; }
     public string Description { get; set; } = null!;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public RatingResponse? Rating { get; set; }
     public EstablishmentResponse Establishment { get; set; } = null!;
     public List<ImageDTO> Photos { get; set; } = new();
     public ApartmentFeaturesResponse Features { get; set; } = new();

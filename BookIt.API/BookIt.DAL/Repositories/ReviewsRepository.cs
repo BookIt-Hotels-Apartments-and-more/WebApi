@@ -39,7 +39,7 @@ public class ReviewsRepository
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
-    public async Task<IEnumerable<Review>> GetByApartmentId(int apartmentId)
+    public async Task<IEnumerable<Review>> GetByApartmentIdAsync(int apartmentId)
     {
         return await _context.Reviews
             .Include(a => a.Photos)
@@ -48,11 +48,23 @@ public class ReviewsRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Review>> GetByEstablishmentId(int establishmentId)
+    public async Task<IEnumerable<Review>> GetByEstablishmentIdAsync(int establishmentId)
     {
         return await _context.Reviews
             .Include(r => r.Apartment)
-            .Where(r => r.Apartment.EstablishmentId == establishmentId)
+            .Include(r => r.User).ThenInclude(u => u.Photos)
+            .Include(a => a.Photos)
+            .Where(r => r.Apartment != null && r.Apartment.EstablishmentId == establishmentId)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Review>> GetByUserIdAsync(int userId)
+    {
+        return await _context.Reviews
+            .Include(a => a.Photos)
+            .Include(r => r.Apartment).ThenInclude(a => a.Photos)
+            .Include(r => r.Apartment).ThenInclude(a => a.Establishment)
+            .Where(r => r.UserId == userId)
             .ToListAsync();
     }
 
@@ -63,6 +75,8 @@ public class ReviewsRepository
 
     public async Task<Review> AddAsync(Review review)
     {
+        review.UpdateOverallRating();
+
         await _context.Reviews.AddAsync(review);
         await _context.SaveChangesAsync();
         return review;
@@ -70,6 +84,8 @@ public class ReviewsRepository
 
     public async Task<Review> UpdateAsync(Review review)
     {
+        review.UpdateOverallRating();
+
         _context.Reviews.Update(review);
         await _context.SaveChangesAsync();
         return review;
@@ -85,5 +101,30 @@ public class ReviewsRepository
             _context.Reviews.Remove(review);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<IEnumerable<Review>> GetReviewsForApartmentRatingAsync(int apartmentId)
+    {
+        return await _context.Reviews
+            .AsNoTracking()
+            .Where(r => r.ApartmentId == apartmentId)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Review>> GetReviewsForEstablishmentRatingAsync(int establishmentId)
+    {
+        return await _context.Reviews
+            .AsNoTracking()
+            .Include(r => r.Apartment)
+            .Where(r => r.Apartment != null && r.Apartment.EstablishmentId == establishmentId)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Review>> GetReviewsForUserRatingAsync(int userId)
+    {
+        return await _context.Reviews
+            .AsNoTracking()
+            .Where(r => r.UserId == userId)
+            .ToListAsync();
     }
 }

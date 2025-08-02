@@ -1,8 +1,8 @@
-namespace BookIt.BLL.Services;
+using BookIt.BLL.DTOs;
 
-using BookIt.DAL.Models;
+namespace BookIt.BLL.Services;
 
 public interface IJWTService
 {
-    string GenerateToken(User user);
+    string GenerateToken(UserDTO user);
 }

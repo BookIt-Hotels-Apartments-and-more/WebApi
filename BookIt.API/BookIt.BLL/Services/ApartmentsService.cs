@@ -34,10 +34,6 @@ public class ApartmentsService : IApartmentsService
     {
         var apartmentsDomain = await _apartmentsRepository.GetAllAsync();
         var apartmentsDto = _mapper.Map<IEnumerable<ApartmentDTO>>(apartmentsDomain);
-
-        foreach (var apartment in apartmentsDto)
-            apartment.Rating = await _ratingsService.CalculateRating(apartment);
-
         return apartmentsDto;
     }
 
@@ -46,7 +42,6 @@ public class ApartmentsService : IApartmentsService
         var apartmentDomain = await _apartmentsRepository.GetByIdAsync(id);
         if (apartmentDomain is null) return null;
         var apartmentDto = _mapper.Map<ApartmentDTO>(apartmentDomain);
-        apartmentDto.Rating = await _ratingsService.CalculateRating(apartmentDto);
         return apartmentDto;
     }
 
@@ -126,12 +121,6 @@ public class ApartmentsService : IApartmentsService
     {
         var (apartments, totalCount) = await _apartmentsRepository.GetPagedByEstablishmentIdAsync(establishmentId, page, pageSize);
         var apartmentsDto = _mapper.Map<IEnumerable<ApartmentDTO>>(apartments);
-
-        // Calculate rating for each apartment
-        foreach (var apartment in apartmentsDto)
-        {
-            apartment.Rating = await _ratingsService.CalculateRating(apartment);
-        }
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 

@@ -12,19 +12,25 @@ public class ReviewsService : IReviewsService
 
     private readonly IMapper _mapper;
     private readonly IImagesService _imagesService;
+    private readonly IRatingsService _ratingsService;
     private readonly ImagesRepository _imagesRepository;
     private readonly ReviewsRepository _reviewsRepository;
+    private readonly ApartmentsRepository _apartmentsRepository;
 
     public ReviewsService(
         IMapper mapper,
         IImagesService imagesService,
+        IRatingsService ratingsService,
         ImagesRepository imagesRepository,
-        ReviewsRepository reviewsRepository)
+        ReviewsRepository reviewsRepository,
+        ApartmentsRepository apartmentsRepository)
     {
         _mapper = mapper;
         _imagesService = imagesService;
+        _ratingsService = ratingsService;
         _imagesRepository = imagesRepository;
         _reviewsRepository = reviewsRepository;
+        _apartmentsRepository = apartmentsRepository;
     }
 
     public async Task<IEnumerable<ReviewDTO>> GetAllAsync()
@@ -49,7 +55,20 @@ public class ReviewsService : IReviewsService
 
         Action<Image> setReviewIdDelegate = image => image.ReviewId = addedReview.Id;
 
-        await _imagesService.SaveImagesAsync(dto.Photos, BlobContainerName, setReviewIdDelegate);
+        Task<List<ImageDTO>> saveImagesTask = _imagesService.SaveImagesAsync(dto.Photos, BlobContainerName, setReviewIdDelegate);
+
+        if (dto.ApartmentId.HasValue)
+        {
+            await _ratingsService.UpdateApartmentRatingAsync(dto.ApartmentId.Value);
+
+            var apartment = await _apartmentsRepository.GetByIdAsync(dto.ApartmentId.Value);
+            if (apartment is not null)
+                await _ratingsService.UpdateEstablishmentRatingAsync(apartment.EstablishmentId);
+        }
+        else if (dto.CustomerId.HasValue)
+        {
+            await _ratingsService.UpdateUserRatingAsync(dto.CustomerId.Value);
+        }
 
         return await GetByIdAsync(addedReview.Id);
     }
@@ -78,21 +97,52 @@ public class ReviewsService : IReviewsService
             .Where(id => !idsOfPhotosToKeep.Contains(id))
             .ToList();
 
-        await _imagesService.DeleteImagesAsync(idsOfPhotosToRemove, BlobContainerName);
-
         var photosToAdd = dto.Photos
             .Where(photo => photo.Id is null && photo.Base64Image is not null)
             .ToList();
 
-        await _imagesService.SaveImagesAsync(photosToAdd, BlobContainerName, setReviewIdDelegate);
+        var oldReview = await _reviewsRepository.GetByIdAsync(id);
+
+        if (dto.ApartmentId.HasValue)
+        {
+            await _ratingsService.UpdateApartmentRatingAsync(dto.ApartmentId.Value);
+
+            var apartment = await _apartmentsRepository.GetByIdAsync(dto.ApartmentId.Value);
+            if (apartment is not null)
+                await _ratingsService.UpdateEstablishmentRatingAsync(apartment.EstablishmentId);
+        }
+        else if (dto.CustomerId.HasValue)
+        {
+            await _ratingsService.UpdateUserRatingAsync(dto.CustomerId.Value);
+        }
+
+        if (oldReview is not null)
+        {
+            if (oldReview.ApartmentId.HasValue && oldReview.ApartmentId != dto.ApartmentId)
+            {
+                await _ratingsService.UpdateApartmentRatingAsync(oldReview.ApartmentId.Value);
+
+                var oldApartment = await _apartmentsRepository.GetByIdAsync(oldReview.ApartmentId.Value);
+                if (oldApartment is not null)
+                    await _ratingsService.UpdateEstablishmentRatingAsync(oldApartment.EstablishmentId);
+            }
+
+            if (oldReview.UserId.HasValue && oldReview.UserId != dto.CustomerId)
+                await _ratingsService.UpdateUserRatingAsync(oldReview.UserId.Value);
+        }
+
+        Task<bool> deleteImagesTask = _imagesService.DeleteImagesAsync(idsOfPhotosToRemove, BlobContainerName);
+        Task<List<ImageDTO>> saveImagesTask = _imagesService.SaveImagesAsync(photosToAdd, BlobContainerName, setReviewIdDelegate);
+
+        await Task.WhenAll(deleteImagesTask, saveImagesTask);
 
         return await GetByIdAsync(id);
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        var reviewExists = await _reviewsRepository.ExistsAsync(id);
-        if (!reviewExists) return false;
+        var reviewDomain = await _reviewsRepository.GetByIdAsync(id);
+        if (reviewDomain is null) return false;
 
         var idsOfReviewImages = (await _imagesRepository
             .GetReviewImagesAsync(id))
@@ -101,7 +151,28 @@ public class ReviewsService : IReviewsService
 
         await _imagesService.DeleteImagesAsync(idsOfReviewImages, BlobContainerName);
 
+        var apartmentId = reviewDomain.ApartmentId;
+        var userId = reviewDomain.UserId;
+        int? establishmentId = null;
+
+        if (apartmentId.HasValue)
+        {
+            var apartment = await _apartmentsRepository.GetByIdAsync(apartmentId.Value);
+            establishmentId = apartment?.EstablishmentId;
+        }
+
         await _reviewsRepository.DeleteAsync(id);
+
+        if (apartmentId.HasValue)
+        {
+            await _ratingsService.UpdateApartmentRatingAsync(apartmentId.Value);
+            if (establishmentId.HasValue)
+                await _ratingsService.UpdateEstablishmentRatingAsync(establishmentId.Value);
+        }
+        else if (userId.HasValue)
+        {
+            await _ratingsService.UpdateUserRatingAsync(userId.Value);
+        }
 
         return true;
     }

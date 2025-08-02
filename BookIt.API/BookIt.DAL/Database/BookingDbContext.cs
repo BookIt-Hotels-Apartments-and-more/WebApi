@@ -17,6 +17,7 @@ public class BookingDbContext : DbContext
     public DbSet<Image> Images { get; set; }
     public DbSet<Favorite> Favorites { get; set; }
     public DbSet<Geolocation> Geolocations { get; set; }
+    public DbSet<Rating> Ratings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,5 +40,23 @@ public class BookingDbContext : DbContext
             .WithMany(a => a.Reviews)
             .HasForeignKey(a => a.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Apartment>()
+            .HasOne(a => a.Rating)
+            .WithMany(r => r.Apartments)
+            .HasForeignKey(a => a.RatingId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Establishment>()
+            .HasOne(e => e.Rating)
+            .WithMany(r => r.Establishments)
+            .HasForeignKey(e => e.RatingId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.Rating)
+            .WithMany(r => r.Users)
+            .HasForeignKey(u => u.RatingId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

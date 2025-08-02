@@ -8,6 +8,8 @@ using BookIt.DAL.Repositories;
 using BookIt.API.Mapping;
 using DotNetEnv;
 using BookIt.DAL.Configuration;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http.Json;
 
 const string CORS_POLICY_NAME = "CORS_ANY";
 
@@ -65,6 +67,7 @@ builder.Services.AddScoped<IApartmentsService, ApartmentsService>();
 builder.Services.AddScoped<BookingsRepository>();
 builder.Services.AddScoped<IBookingsService, BookingsService>();
 
+builder.Services.AddScoped<RatingRepository>();
 builder.Services.AddScoped<IRatingsService, RatingsService>();
 
 builder.Services.AddScoped<ReviewsRepository>();

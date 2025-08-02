@@ -1,18 +1,18 @@
+using BookIt.BLL.DTOs;
 using BookIt.DAL.Enums;
-using BookIt.DAL.Models;
 
 namespace BookIt.BLL.Services;
 
 public interface IUserService
 {
-    Task<User> RegisterAsync(string username, string email, string? password, UserRole role);
+    Task<UserDTO> RegisterAsync(string username, string email, string? password, UserRole role);
     Task<bool> IsAdmin(int userId);
-    Task<List<User>> GetUsersAsync();
-    Task<User?> LoginAsync(string email, string password);
-    Task<User?> GetUserByIdAsync(int id);
-    Task<User?> AuthByGoogleAsync(string username, string email);
-    Task<User?> VerifyEmailAsync(string token);
-    Task<User?> GenerateResetPasswordTokenAsync(string email);
-    Task<User?> ResetPasswordAsync(string token, string newPassword);
-    Task<IEnumerable<User>> GetAllUsersAsync(UserRole? role = null);
+    Task<IEnumerable<UserDTO>> GetUsersAsync();
+    Task<UserDTO?> LoginAsync(string email, string password);
+    Task<UserDTO?> GetUserByIdAsync(int id);
+    Task<UserDTO?> AuthByGoogleAsync(string username, string email);
+    Task<UserDTO?> VerifyEmailAsync(string token);
+    Task<UserDTO?> GenerateResetPasswordTokenAsync(string email);
+    Task<UserDTO?> ResetPasswordAsync(string token, string newPassword);
+    Task<IEnumerable<UserDTO>> GetAllUsersAsync(UserRole? role = null);
 }

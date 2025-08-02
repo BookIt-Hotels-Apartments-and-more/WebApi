@@ -4,6 +4,11 @@ namespace BookIt.BLL.Interfaces;
 
 public interface IRatingsService
 {
-    Task<float> CalculateRating(ApartmentDTO apartment);
-    Task<float> CalculateRating(EstablishmentDTO establishment);
+    Task<RatingDTO> CreateDefaultRatingAsync();
+    Task<RatingDTO?> GetRatingByIdAsync(int ratingId);
+    Task UpdateApartmentRatingAsync(int apartmentId);
+    Task UpdateEstablishmentRatingAsync(int establishmentId);
+    Task UpdateUserRatingAsync(int userId);
+    Task<float?> GetEstablishmentGeneralRating(int establishmentId);
+    Task<float?> GetApartmentGeneralRating(int apartmentId);
 }

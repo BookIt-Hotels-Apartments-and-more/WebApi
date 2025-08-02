@@ -44,8 +44,8 @@ public class FavoritesController : ControllerBase
         return Ok(favoritesResponse);
     }
 
-    [HttpGet("apartment/{bookId:int}")]
-    public async Task<ActionResult<int>> GetCountByBookIdAsync([FromRoute] int apartmentId)
+    [HttpGet("apartment/{apartmentId:int}")]
+    public async Task<ActionResult<int>> GetCountByApartmentIdAsync([FromRoute] int apartmentId)
     {
         var favoritesCount = await _service.GetCountForApartmentAsync(apartmentId);
         return Ok(favoritesCount);

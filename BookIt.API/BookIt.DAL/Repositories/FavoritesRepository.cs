@@ -15,7 +15,10 @@ public class FavoritesRepository
 
     public async Task<IEnumerable<Favorite>> GetAllAsync()
     {
-        return await _context.Favorites.ToListAsync();
+        return await _context.Favorites
+            .Include(a => a.User)
+            .Include(a => a.Apartment).ThenInclude(e => e.Establishment)
+            .ToListAsync();
     }
 
     public async Task<Favorite?> GetByIdAsync(int id)
@@ -30,6 +33,7 @@ public class FavoritesRepository
     {
         return await _context.Favorites
             .Where(f => f.UserId == userId)
+            .Include(a => a.Apartment).ThenInclude(e => e.Establishment)
             .ToListAsync();
     }
 

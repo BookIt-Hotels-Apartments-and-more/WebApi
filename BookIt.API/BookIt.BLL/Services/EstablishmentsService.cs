@@ -42,10 +42,6 @@ public class EstablishmentsService : IEstablishmentsService
     {
         var establishmentsDomain = await _establishmentsRepository.GetAllAsync();
         var establishmentsDto = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishmentsDomain);
-
-        foreach (var establishment in establishmentsDto)
-            establishment.Rating = await _ratingsService.CalculateRating(establishment);
-
         return establishmentsDto;
     }
 
@@ -54,7 +50,6 @@ public class EstablishmentsService : IEstablishmentsService
         var establishmentDomain = await _establishmentsRepository.GetByIdAsync(id);
         if (establishmentDomain is null) return null;
         var establishmentDto = _mapper.Map<EstablishmentDTO>(establishmentDomain);
-        establishmentDto.Rating = await _ratingsService.CalculateRating(establishmentDto);
         return establishmentDto;
     }
 
@@ -186,11 +181,6 @@ public class EstablishmentsService : IEstablishmentsService
 
         var establishmentsDto = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishments);
 
-        foreach (var establishment in establishmentsDto)
-        {
-            establishment.Rating = await _ratingsService.CalculateRating(establishment);
-        }
-
         var filteredEstablishments = establishmentsDto.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(filter.Country))
@@ -209,12 +199,12 @@ public class EstablishmentsService : IEstablishmentsService
 
         if (filter.MinRating.HasValue)
         {
-            filteredEstablishments = filteredEstablishments.Where(e => e.Rating >= filter.MinRating.Value);
+            filteredEstablishments = filteredEstablishments.Where(e => e.Rating?.GeneralRating >= filter.MinRating.Value);
         }
 
         if (filter.MaxRating.HasValue)
         {
-            filteredEstablishments = filteredEstablishments.Where(e => e.Rating <= filter.MaxRating.Value);
+            filteredEstablishments = filteredEstablishments.Where(e => e.Rating?.GeneralRating <= filter.MaxRating.Value);
         }
 
         if (filter.MinPrice.HasValue)
@@ -241,15 +231,5 @@ public class EstablishmentsService : IEstablishmentsService
             HasNextPage = filter.Page < totalPages,
             HasPreviousPage = filter.Page > 1
         };
-    }
-}
-
-public static class ExpressionExtensions
-{
-    public static Expression<Func<T, bool>> And<T>(this Expression<Func<T, bool>> expr1, Expression<Func<T, bool>> expr2)
-    {
-        var invokedExpr = Expression.Invoke(expr2, expr1.Parameters);
-        return Expression.Lambda<Func<T, bool>>(
-            Expression.AndAlso(expr1.Body, invokedExpr), expr1.Parameters);
     }
 }

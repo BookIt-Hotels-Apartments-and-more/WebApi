@@ -1,8 +1,8 @@
-using BookIt.DAL.Enums;
+﻿using BookIt.DAL.Enums;
 
-namespace BookIt.DAL.Models;
+namespace BookIt.BLL.DTOs;
 
-public class User
+public record UserDTO
 {
     public int Id { get; set; }
     public string Username { get; set; } = null!;
@@ -17,12 +17,10 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastActiveAt { get; set; }
 
-    public int? RatingId { get; set; }
-    public Rating? Rating { get; set; }
-
-    public ICollection<Image> Photos { get; set; } = new List<Image>();
-    public ICollection<Review> Reviews { get; set; } = new List<Review>();
-    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
-    public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
-    public ICollection<Establishment> OwnedEstablishments { get; set; } = new List<Establishment>();
+    public RatingDTO? Rating { get; set; }
+    public ICollection<ImageDTO> Photos { get; set; } = new List<ImageDTO>();
+    public ICollection<ReviewDTO> Reviews { get; set; } = new List<ReviewDTO>();
+    public ICollection<BookingDTO> Bookings { get; set; } = new List<BookingDTO>();
+    public ICollection<FavoriteDTO> Favorites { get; set; } = new List<FavoriteDTO>();
+    public ICollection<EstablishmentDTO> OwnedEstablishments { get; set; } = new List<EstablishmentDTO>();
 }
