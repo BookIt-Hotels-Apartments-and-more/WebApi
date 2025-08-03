@@ -44,7 +44,7 @@ public class FavoritesRepository
 
     public async Task<bool> ExistsAsync(int id)
     {
-        return await _context.Apartments.AnyAsync(a => a.Id == id);
+        return await _context.Favorites.AnyAsync(a => a.Id == id);
     }
 
     public async Task<Favorite> AddAsync(Favorite favorite)
