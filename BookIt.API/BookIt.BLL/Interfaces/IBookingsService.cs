@@ -10,4 +10,7 @@ public interface IBookingsService
     Task<BookingDTO?> UpdateAsync(int id, BookingDTO dto);
     Task<BookingDTO?> CheckInAsync(int id);
     Task<bool> DeleteAsync(int id);
+    Task<bool> CheckAvailabilityAsync(int apartmentId, DateTime dateFrom, DateTime dateTo);
+    Task<List<(DateTime DateFrom, DateTime DateTo)>> GetBookedDatesAsync(int apartmentId);
+    Task<ApartmentAvailabilityDTO> GetApartmentAvailabilityAsync(int apartmentId, DateTime? startDate = null, DateTime? endDate = null);
 }

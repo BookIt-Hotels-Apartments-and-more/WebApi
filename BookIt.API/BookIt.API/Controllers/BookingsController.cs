@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using BookIt.BLL.Interfaces;
-using BookIt.BLL.DTOs;
-using AutoMapper;
-using BookIt.API.Models.Responses;
+﻿using AutoMapper;
 using BookIt.API.Models.Requests;
+using BookIt.API.Models.Responses;
+using BookIt.BLL.DTOs;
+using BookIt.BLL.Exceptions;
+using BookIt.BLL.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookIt.API.Controllers;
 
@@ -39,21 +41,57 @@ public class BookingsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<BookingResponse>> CreateAsync([FromBody] BookingRequest request)
     {
-        var bookingDto = _mapper.Map<BookingDTO>(request);
-        var added = await _service.CreateAsync(bookingDto);
-        if (added is null) return BadRequest("Failed to create booking.");
-        var bookingResponse = _mapper.Map<BookingResponse>(added);
-        return Ok(bookingResponse);
+        try
+        {
+            var bookingDto = _mapper.Map<BookingDTO>(request);
+            var added = await _service.CreateAsync(bookingDto);
+            if (added is null) return BadRequest("Failed to create booking.");
+            var bookingResponse = _mapper.Map<BookingResponse>(added);
+            return Ok(bookingResponse);
+        }
+        catch (BookingConflictException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message,
+                apartmentId = ex.ApartmentId,
+                requestedDateFrom = ex.DateFrom,
+                requestedDateTo = ex.DateTo,
+                conflictingBookings = ex.ConflictingBookings
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult<BookingResponse>> UpdateAsync([FromRoute] int id, [FromBody] BookingRequest request)
     {
-        var bookingDto = _mapper.Map<BookingDTO>(request);
-        var updated = await _service.UpdateAsync(id, bookingDto);
-        if (updated is null) return NotFound();
-        var bookingResponse = _mapper.Map<BookingResponse>(updated);
-        return Ok(bookingResponse);
+        try
+        {
+            var bookingDto = _mapper.Map<BookingDTO>(request);
+            var updated = await _service.UpdateAsync(id, bookingDto);
+            if (updated is null) return NotFound();
+            var bookingResponse = _mapper.Map<BookingResponse>(updated);
+            return Ok(bookingResponse);
+        }
+        catch (BookingConflictException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message,
+                apartmentId = ex.ApartmentId,
+                requestedDateFrom = ex.DateFrom,
+                requestedDateTo = ex.DateTo,
+                conflictingBookings = ex.ConflictingBookings
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPatch("check-in/{id:int}")]
@@ -70,5 +108,47 @@ public class BookingsController : ControllerBase
     {
         var deleted = await _service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpGet("apartment/{apartmentId}/availability")]
+    public async Task<ActionResult<ApartmentAvailabilityDTO>> GetApartmentAvailability(
+        int apartmentId,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null)
+    {
+        try
+        {
+            startDate ??= DateTime.UtcNow.Date;
+            endDate ??= DateTime.UtcNow.Date.AddMonths(12);
+
+            if (startDate >= endDate)
+                return BadRequest("Start date must be before end date");
+
+            var availability = await _service.GetApartmentAvailabilityAsync(apartmentId, startDate, endDate);
+            return Ok(availability);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
+    [HttpGet("apartment/{apartmentId:int}/check-availability")]
+    public async Task<ActionResult> CheckAvailability(
+        int apartmentId,
+        [FromQuery, Required] DateTime dateFrom,
+        [FromQuery, Required] DateTime dateTo)
+    {
+        if (dateFrom >= dateTo) return BadRequest("Check-in date must be before check-out date");
+
+        var isAvailable = await _service.CheckAvailabilityAsync(apartmentId, dateFrom, dateTo);
+
+        return Ok(new
+        {
+            apartmentId,
+            dateFrom,
+            dateTo,
+            isAvailable,
+        });
     }
 }
