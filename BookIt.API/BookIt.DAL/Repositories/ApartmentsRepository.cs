@@ -80,6 +80,7 @@ public class ApartmentsRepository
             .Include(u => u.Rating)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
             .Include(a => a.Establishment).ThenInclude(e => e.Rating)
+            .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
             .OrderByDescending(a => a.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync();

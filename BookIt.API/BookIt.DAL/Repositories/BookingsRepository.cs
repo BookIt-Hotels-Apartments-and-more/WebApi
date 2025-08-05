@@ -1,5 +1,6 @@
 ﻿using BookIt.DAL.Database;
 using BookIt.DAL.Models;
+using BookIt.DAL.Models.NonDB;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookIt.DAL.Repositories;
@@ -79,5 +80,75 @@ public class BookingsRepository
             _context.Bookings.Remove(booking);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<bool> IsApartmentAvailableAsync(int apartmentId, DateTime dateFrom, DateTime dateTo, int? excludeBookingId = null)
+    {
+        var conflictingBookings = await _context.Bookings
+            .Where(b => b.ApartmentId == apartmentId)
+            .Where(b => excludeBookingId == null || b.Id != excludeBookingId)
+            .Where(b => b.DateFrom <= dateTo.AddDays(-1) && b.DateTo >= dateFrom.AddDays(1))
+            .AnyAsync();
+
+        return !conflictingBookings;
+    }
+
+    public async Task<List<Booking>> GetConflictingBookingsAsync(int apartmentId, DateTime dateFrom, DateTime dateTo, int? excludeBookingId = null)
+    {
+        return await _context.Bookings
+            .Where(b => b.ApartmentId == apartmentId)
+            .Where(b => excludeBookingId == null || b.Id != excludeBookingId)
+            .Where(b => b.DateFrom < dateTo && b.DateTo > dateFrom)
+            .Include(b => b.User)
+            .OrderBy(b => b.DateFrom)
+            .ToListAsync();
+    }
+
+    public async Task<List<(DateTime DateFrom, DateTime DateTo)>> GetBookedDatesAsync(int apartmentId)
+    {
+        return await _context.Bookings
+            .Where(b => b.ApartmentId == apartmentId)
+            .Select(b => new ValueTuple<DateTime, DateTime>(b.DateFrom, b.DateTo))
+            .OrderBy(b => b.Item1)
+            .ToListAsync();
+    }
+
+    public async Task<List<BookedDateRange>> GetBookedDateRangesAsync(int apartmentId, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var query = _context.Bookings.Where(b => b.ApartmentId == apartmentId);
+
+        if (startDate.HasValue) query = query.Where(b => b.DateTo >= startDate.Value);
+        if (endDate.HasValue)   query = query.Where(b => b.DateFrom <= endDate.Value);
+
+        return await query
+            .Include(b => b.User)
+            .Select(b => new BookedDateRange
+            {
+                BookingId = b.Id,
+                DateFrom = b.DateFrom,
+                DateTo = b.DateTo,
+                CustomerName = b.User.Username,
+                IsCheckedIn = b.IsCheckedIn
+            })
+            .OrderBy(b => b.DateFrom)
+            .ToListAsync();
+    }
+
+    public async Task<List<DateTime>> GetBookedDaysAsync(int apartmentId, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var bookedRanges = await GetBookedDateRangesAsync(apartmentId, startDate, endDate);
+        var bookedDays = new HashSet<DateTime>();
+
+        foreach (var range in bookedRanges)
+        {
+            var currentDate = range.DateFrom.Date;
+            while (currentDate < range.DateTo.Date)
+            {
+                bookedDays.Add(currentDate);
+                currentDate = currentDate.AddDays(1);
+            }
+        }
+
+        return bookedDays.OrderBy(d => d).ToList();
     }
 }
