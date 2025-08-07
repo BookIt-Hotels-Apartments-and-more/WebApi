@@ -4,6 +4,7 @@ using BookIt.DAL.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookIt.DAL.Migrations
 {
     [DbContext(typeof(BookingDbContext))]
-    partial class BookingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250807112918_Separated Apartment And User Ratings")]
+    partial class SeparatedApartmentAndUserRatings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -381,7 +384,8 @@ namespace BookIt.DAL.Migrations
 
                     b.HasIndex("ApartmentId");
 
-                    b.HasIndex("BookingId");
+                    b.HasIndex("BookingId")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -592,8 +596,8 @@ namespace BookIt.DAL.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BookIt.DAL.Models.Booking", "Booking")
-                        .WithMany("Reviews")
-                        .HasForeignKey("BookingId")
+                        .WithOne("Review")
+                        .HasForeignKey("BookIt.DAL.Models.Review", "BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -639,7 +643,7 @@ namespace BookIt.DAL.Migrations
                 {
                     b.Navigation("Payments");
 
-                    b.Navigation("Reviews");
+                    b.Navigation("Review");
                 });
 
             modelBuilder.Entity("BookIt.DAL.Models.Establishment", b =>

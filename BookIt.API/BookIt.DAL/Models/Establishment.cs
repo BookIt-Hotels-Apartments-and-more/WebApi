@@ -16,8 +16,8 @@ public class Establishment
 
     public VibeType? Vibe { get; set; } = VibeType.None;
 
-    public int? RatingId { get; set; }
-    public Rating? Rating { get; set; }
+    public int? ApartmentRatingId { get; set; }
+    public ApartmentRating? ApartmentRating { get; set; }
 
     public int OwnerId { get; set; }
     public User Owner { get; set; } = null!;

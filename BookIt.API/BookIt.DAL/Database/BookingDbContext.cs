@@ -17,7 +17,8 @@ public class BookingDbContext : DbContext
     public DbSet<Image> Images { get; set; }
     public DbSet<Favorite> Favorites { get; set; }
     public DbSet<Geolocation> Geolocations { get; set; }
-    public DbSet<Rating> Ratings { get; set; }
+    public DbSet<ApartmentRating> ApartmentRatings { get; set; }
+    public DbSet<UserRating> UserRatings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,21 +43,27 @@ public class BookingDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Apartment>()
-            .HasOne(a => a.Rating)
+            .HasOne(a => a.ApartmentRating)
             .WithMany(r => r.Apartments)
-            .HasForeignKey(a => a.RatingId)
+            .HasForeignKey(a => a.ApartmentRatingId)
             .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<Establishment>()
-            .HasOne(e => e.Rating)
+            .HasOne(e => e.ApartmentRating)
             .WithMany(r => r.Establishments)
-            .HasForeignKey(e => e.RatingId)
+            .HasForeignKey(e => e.ApartmentRatingId)
             .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<User>()
-            .HasOne(u => u.Rating)
+            .HasOne(u => u.UserRating)
             .WithMany(r => r.Users)
-            .HasForeignKey(u => u.RatingId)
+            .HasForeignKey(u => u.UserRatingId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        var bookingIdIndexOnReviews = modelBuilder.Entity<Review>().Metadata
+            .GetIndexes().FirstOrDefault(i => i.GetDatabaseName() == "IX_Reviews_BookingId");
+        
+        if (bookingIdIndexOnReviews is not null)
+            modelBuilder.Entity<Review>().Metadata.RemoveIndex(bookingIdIndexOnReviews);
     }
 }

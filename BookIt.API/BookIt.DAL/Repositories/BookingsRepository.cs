@@ -21,7 +21,7 @@ public class BookingsRepository
             .ThenInclude(u => u.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner)
-            .Include(b => b.Review).ThenInclude(r => r.Photos)
+            .Include(b => b.Reviews)
             .Include(b => b.Payments)
             .ToListAsync();
     }
@@ -32,7 +32,7 @@ public class BookingsRepository
             .Include(b => b.User).ThenInclude(u => u.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner)
-            .Include(b => b.Review).ThenInclude(r => r.Photos)
+            .Include(b => b.Reviews)
             .Include(b => b.Payments)
             .FirstOrDefaultAsync(a => a.Id == id);
     }

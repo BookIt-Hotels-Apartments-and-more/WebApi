@@ -17,8 +17,8 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastActiveAt { get; set; }
 
-    public int? RatingId { get; set; }
-    public Rating? Rating { get; set; }
+    public int? UserRatingId { get; set; }
+    public UserRating? UserRating { get; set; }
 
     public ICollection<Image> Photos { get; set; } = new List<Image>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();

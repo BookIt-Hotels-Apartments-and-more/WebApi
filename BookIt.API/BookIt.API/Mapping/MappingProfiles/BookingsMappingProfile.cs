@@ -26,7 +26,7 @@ public class BookingsMappingProfile : Profile
 
         CreateMap<User, CustomerDTO>()
             .ForMember(dto => dto.Photos, o => o.MapFrom(u => u.Photos.Select(im => im.BlobUrl)))
-            .ForMember(dto => dto.Rating, o => o.MapFrom(u => u.Rating));
+            .ForMember(dto => dto.Rating, o => o.MapFrom(u => u.UserRating));
 
         CreateMap<CustomerDTO, CustomerResponse>()
             .ForMember(res => res.Rating, o => o.MapFrom(dto => dto.Rating));

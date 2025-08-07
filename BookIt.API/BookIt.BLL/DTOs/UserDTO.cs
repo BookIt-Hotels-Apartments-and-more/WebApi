@@ -17,7 +17,7 @@ public record UserDTO
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastActiveAt { get; set; }
 
-    public RatingDTO? Rating { get; set; }
+    public UserRatingDTO? Rating { get; set; }
     public ICollection<ImageDTO> Photos { get; set; } = new List<ImageDTO>();
     public ICollection<ReviewDTO> Reviews { get; set; } = new List<ReviewDTO>();
     public ICollection<BookingDTO> Bookings { get; set; } = new List<BookingDTO>();
