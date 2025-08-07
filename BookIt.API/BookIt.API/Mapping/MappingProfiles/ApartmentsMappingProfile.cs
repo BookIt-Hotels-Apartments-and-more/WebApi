@@ -17,13 +17,13 @@ public class ApartmentsMappingProfile : Profile
                                              .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 }))));
 
         CreateMap<Apartment, ApartmentDTO>()
-            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => src.Rating));
+            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => src.ApartmentRating));
 
         CreateMap<ApartmentDTO, Apartment>()
             .ForMember(a => a.Id, o => o.Ignore())
             .ForMember(a => a.Photos, o => o.Ignore())
             .ForMember(a => a.CreatedAt, o => o.Ignore())
-            .ForMember(a => a.Rating, o => o.Ignore());
+            .ForMember(a => a.ApartmentRating, o => o.Ignore());
 
         CreateMap<ApartmentDTO, ApartmentResponse>()
             .ForMember(res => res.Rating, opt => opt.MapFrom(dto => dto.Rating))

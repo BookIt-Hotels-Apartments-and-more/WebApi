@@ -17,7 +17,8 @@ public class FavoritesRepository
     {
         return await _context.Favorites
             .Include(a => a.User)
-            .Include(a => a.Apartment).ThenInclude(e => e.Establishment)
+            .Include(a => a.Apartment).ThenInclude(e => e.Photos)
+            .Include(a => a.Apartment).ThenInclude(e => e.Establishment).ThenInclude(e => e.Photos)
             .ToListAsync();
     }
 
@@ -25,7 +26,8 @@ public class FavoritesRepository
     {
         return await _context.Favorites
             .Include(a => a.User)
-            .Include(a => a.Apartment).ThenInclude(e => e.Establishment)
+            .Include(a => a.Apartment).ThenInclude(e => e.Photos)
+            .Include(a => a.Apartment).ThenInclude(e => e.Establishment).ThenInclude(e => e.Photos)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
@@ -33,7 +35,8 @@ public class FavoritesRepository
     {
         return await _context.Favorites
             .Where(f => f.UserId == userId)
-            .Include(a => a.Apartment).ThenInclude(e => e.Establishment)
+            .Include(a => a.Apartment).ThenInclude(e => e.Photos)
+            .Include(a => a.Apartment).ThenInclude(e => e.Establishment).ThenInclude(e => e.Photos)
             .ToListAsync();
     }
 

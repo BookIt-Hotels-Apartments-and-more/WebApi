@@ -17,11 +17,11 @@ public class ApartmentsRepository
     {
         return await _context.Apartments
             .Include(a => a.Photos)
-            .Include(u => u.Rating)
+            .Include(u => u.ApartmentRating)
             .Include(u => u.Reviews)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
-            .Include(a => a.Establishment).ThenInclude(e => e.Rating)
+            .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .ToListAsync();
     }
 
@@ -29,11 +29,11 @@ public class ApartmentsRepository
     {
         return await _context.Apartments
             .Include(a => a.Photos)
-            .Include(u => u.Rating)
+            .Include(u => u.ApartmentRating)
             .Include(u => u.Reviews)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
-            .Include(a => a.Establishment).ThenInclude(e => e.Rating)
+            .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
@@ -77,9 +77,9 @@ public class ApartmentsRepository
         var apartments = await _context.Apartments
             .Where(a => a.EstablishmentId == establishmentId)
             .Include(a => a.Photos)
-            .Include(u => u.Rating)
+            .Include(u => u.ApartmentRating)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
-            .Include(a => a.Establishment).ThenInclude(e => e.Rating)
+            .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
             .OrderByDescending(a => a.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize)

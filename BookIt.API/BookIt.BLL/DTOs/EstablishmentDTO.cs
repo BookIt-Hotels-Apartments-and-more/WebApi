@@ -16,7 +16,7 @@ public record EstablishmentDTO
     public int OwnerId { get; set; }
 
     public int? RatingId { get; set; }
-    public RatingDTO? Rating { get; set; }
+    public ApartmentRatingDTO? Rating { get; set; }
 
     public OwnerDTO Owner { get; set; } = null!;
     public List<ImageDTO> Photos { get; set; } = new();

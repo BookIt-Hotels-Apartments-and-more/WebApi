@@ -14,9 +14,7 @@ public class ReviewsMappingProfile : Profile
             .ForMember(dto => dto.Photos,
                        o => o.MapFrom(req => req.ExistingPhotosIds.Select(id => new ImageDTO { Id = id })
                                              .Union(req.NewPhotosBase64.Select(base64 => new ImageDTO { Base64Image = base64 }))))
-            .ForMember(dto => dto.Rating, opt => opt.MapFrom(req =>
-                CalculateAverageRating(req.StaffRating, req.PurityRating, req.PriceQualityRating,
-                                       req.ComfortRating, req.FacilitiesRating, req.LocationRating)));
+            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => CalculateOverallRating(src)));
 
         CreateMap<Review, ReviewDTO>()
             .ForMember(dto => dto.CustomerId, o => o.MapFrom(r => r.UserId))
@@ -31,8 +29,17 @@ public class ReviewsMappingProfile : Profile
         CreateMap<ReviewDTO, ReviewResponse>();
     }
 
-    private static float CalculateAverageRating(float staff, float purity, float priceQuality, float comfort, float facilities, float location)
+    private static float CalculateOverallRating(ReviewRequest src)
     {
-        return (staff + purity + priceQuality + comfort + facilities + location) / 6.0f;
+        if (src.ApartmentId.HasValue)
+        {
+            var apartmentRatings = new[] {
+                src.StaffRating!.Value, src.PurityRating!.Value, src.PriceQualityRating!.Value,
+                src.ComfortRating!.Value, src.FacilitiesRating!.Value, src.LocationRating!.Value
+            };
+            return apartmentRatings.Average();
+        }
+
+        return src.CustomerStayRating!.Value;
     }
 }

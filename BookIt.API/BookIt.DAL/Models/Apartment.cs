@@ -13,8 +13,8 @@ public class Apartment
     public ApartmentFeatures Features { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public int? RatingId { get; set; }
-    public Rating? Rating { get; set; }
+    public int? ApartmentRatingId { get; set; }
+    public ApartmentRating? ApartmentRating { get; set; }
 
     public int EstablishmentId { get; set; }
     public Establishment Establishment { get; set; } = null!;

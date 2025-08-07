@@ -1,8 +1,7 @@
 ﻿namespace BookIt.API.Models.Responses;
 
-public record RatingResponse
+public record ApartmentRatingResponse : BaseRatingResponse
 {
-    public int Id { get; set; }
     public float StaffRating { get; set; }
     public float PurityRating { get; set; }
     public float PriceQualityRating { get; set; }
@@ -10,7 +9,17 @@ public record RatingResponse
     public float FacilitiesRating { get; set; }
     public float LocationRating { get; set; }
     public float GeneralRating { get; set; }
-    public int ReviewCount { get; set; } = 0;
+}
+
+public record UserRatingResponse : BaseRatingResponse
+{
+    public float CustomerStayRating { get; set; }
+}
+
+public abstract record BaseRatingResponse
+{
+    public int Id { get; set; }
+    public int ReviewCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastUpdatedAt { get; set; }
 }

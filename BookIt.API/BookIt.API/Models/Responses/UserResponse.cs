@@ -14,7 +14,7 @@ public record UserResponse
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastActiveAt { get; set; }
 
-    public RatingResponse? Rating { get; set; }
+    public UserRatingResponse? Rating { get; set; }
     public ICollection<ImageResponse> Photos { get; set; } = new List<ImageResponse>();
     public ICollection<ReviewResponse> Reviews { get; set; } = new List<ReviewResponse>();
     public ICollection<BookingResponse> Bookings { get; set; } = new List<BookingResponse>();

@@ -22,7 +22,7 @@ public class EstablishmentsMappingProfile : Profile
 
         CreateMap<Establishment, EstablishmentDTO>()
             .ForMember(dto => dto.Owner, o => o.MapFrom(e => e.Owner))
-            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => src.Rating));
+            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => src.ApartmentRating));
 
         CreateMap<EstablishmentDTO, Establishment>()
             .ForMember(e => e.Id, o => o.Ignore())
@@ -30,7 +30,7 @@ public class EstablishmentsMappingProfile : Profile
             .ForMember(e => e.Photos, o => o.Ignore())
             .ForMember(e => e.CreatedAt, o => o.Ignore())
             .ForMember(e => e.Geolocation, o => o.Ignore())
-            .ForMember(e => e.Rating, o => o.Ignore());
+            .ForMember(e => e.ApartmentRating, o => o.Ignore());
 
         CreateMap<EstablishmentDTO, EstablishmentResponse>()
             .ForMember(res => res.Rating, opt => opt.MapFrom(dto => dto.Rating))

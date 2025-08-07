@@ -15,7 +15,7 @@ public record ApartmentDTO
     public ApartmentFeatures Features { get; set; } = new();
 
     public int? RatingId { get; set; }
-    public RatingDTO? Rating { get; set; }
+    public ApartmentRatingDTO? Rating { get; set; }
 
     public EstablishmentDTO Establishment { get; set; } = null!;
     public List<ImageDTO> Photos { get; set; } = new();
