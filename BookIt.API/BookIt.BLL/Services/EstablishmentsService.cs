@@ -1,10 +1,10 @@
-﻿using BookIt.DAL.Models;
-using BookIt.BLL.Interfaces;
-using BookIt.DAL.Repositories;
+﻿using AutoMapper;
 using BookIt.BLL.DTOs;
-using AutoMapper;
-using System.Linq.Expressions;
+using BookIt.BLL.Interfaces;
 using BookIt.DAL.Enums;
+using BookIt.DAL.Models;
+using BookIt.DAL.Repositories;
+using System.Linq.Expressions;
 
 namespace BookIt.BLL.Services;
 

@@ -151,4 +151,15 @@ public class BookingsRepository
 
         return bookedDays.OrderBy(d => d).ToList();
     }
+
+    public async Task<IEnumerable<Booking>> GetActiveAndFutureBookingsAsync(int apartmentId)
+    {
+        var currentDate = DateTime.UtcNow.Date;
+
+        return await _context.Bookings
+            .Where(b => b.ApartmentId == apartmentId)
+            .Where(b => b.DateTo.Date >= currentDate)
+            .OrderBy(b => b.DateFrom)
+            .ToListAsync();
+    }
 }
