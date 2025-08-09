@@ -77,9 +77,7 @@ public class ApartmentsService : IApartmentsService
             var addedApartment = await _apartmentsRepository.AddAsync(apartmentDomain);
 
             if (dto.Photos?.Any() == true)
-            {
-                await ProcessApartmentImagesAsync(addedApartment.Id, dto.Photos, isUpdate: false);
-            }
+                await ProcessApartmentImagesAsync(addedApartment.Id, dto.Photos);
 
             return await GetByIdAsync(addedApartment.Id);
         }
@@ -99,22 +97,13 @@ public class ApartmentsService : IApartmentsService
         {
             var apartmentExists = await _apartmentsRepository.ExistsAsync(id);
             if (!apartmentExists)
-            {
                 throw new EntityNotFoundException("Apartment", id);
-            }
 
             var apartmentDomain = _mapper.Map<Apartment>(dto);
             apartmentDomain.Id = id;
             await _apartmentsRepository.UpdateAsync(apartmentDomain);
 
-            if (dto.Photos?.Any() == true)
-            {
-                await ProcessApartmentImagesAsync(id, dto.Photos, isUpdate: true);
-            }
-            else
-            {
-                await RemoveAllApartmentImagesAsync(id);
-            }
+            await ProcessApartmentImagesAsync(id, dto.Photos);
 
             return await GetByIdAsync(id);
         }
@@ -134,9 +123,7 @@ public class ApartmentsService : IApartmentsService
         {
             var apartmentExists = await _apartmentsRepository.ExistsAsync(id);
             if (!apartmentExists)
-            {
                 throw new EntityNotFoundException("Apartment", id);
-            }
 
             await ValidateApartmentCanBeDeletedAsync(id);
 
@@ -238,58 +225,39 @@ public class ApartmentsService : IApartmentsService
         }
     }
 
-    private async Task ProcessApartmentImagesAsync(int apartmentId, IEnumerable<ImageDTO> photos, bool isUpdate)
+    private async Task ProcessApartmentImagesAsync(int apartmentId, IEnumerable<ImageDTO> photos)
     {
-        try
-        {
-            Action<Image> setApartmentIdDelegate = image => image.ApartmentId = apartmentId;
+        if (photos?.Any() != true) return;
 
-            if (isUpdate)
-            {
-                var existingImageIds = (await _imagesRepository.GetApartmentImagesAsync(apartmentId))
-                    .Select(photo => photo.Id)
-                    .ToList();
+        Action<Image> setApartmentIdDelegate = image => image.EstablishmentId = apartmentId;
 
-                var idsOfPhotosToKeep = photos
-                    .Where(photo => photo.Id.HasValue && string.IsNullOrEmpty(photo.Base64Image))
-                    .Select(photo => photo.Id!.Value)
-                    .ToList();
+        var existingImageIds = (await _imagesRepository.GetApartmentImagesAsync(apartmentId))
+            .Select(photo => photo.Id)
+            .ToList();
 
-                var idsOfPhotosToRemove = existingImageIds
-                    .Where(id => !idsOfPhotosToKeep.Contains(id))
-                    .ToList();
+        var idsOfPhotosToKeep = photos
+            .Where(photo => photo.Id.HasValue && string.IsNullOrEmpty(photo.Base64Image))
+            .Select(photo => photo.Id!.Value)
+            .ToList();
 
-                if (idsOfPhotosToRemove.Any())
-                {
-                    await _imagesService.DeleteImagesAsync(idsOfPhotosToRemove, BlobContainerName);
-                }
+        var idsOfPhotosToRemove = existingImageIds
+            .Where(id => !idsOfPhotosToKeep.Contains(id))
+            .ToList();
 
-                var photosToAdd = photos
-                    .Where(photo => !photo.Id.HasValue && !string.IsNullOrEmpty(photo.Base64Image))
-                    .ToList();
+        var photosToAdd = photos
+            .Where(photo => !photo.Id.HasValue && !string.IsNullOrEmpty(photo.Base64Image))
+            .ToList();
 
-                if (photosToAdd.Any())
-                {
-                    await _imagesService.SaveImagesAsync(photosToAdd, BlobContainerName, setApartmentIdDelegate);
-                }
-            }
-            else
-            {
-                var photosToAdd = photos.Where(photo => !string.IsNullOrEmpty(photo.Base64Image)).ToList();
-                if (photosToAdd.Any())
-                {
-                    await _imagesService.SaveImagesAsync(photosToAdd, BlobContainerName, setApartmentIdDelegate);
-                }
-            }
-        }
-        catch (BookItBaseException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new ExternalServiceException("ImageProcessing", "Failed to process apartment images", ex);
-        }
+        var tasks = new List<Task>();
+
+        if (idsOfPhotosToRemove.Any())
+            tasks.Add(_imagesService.DeleteImagesAsync(idsOfPhotosToRemove, BlobContainerName));
+
+        if (photosToAdd.Any())
+            tasks.Add(_imagesService.SaveImagesAsync(photosToAdd, BlobContainerName, setApartmentIdDelegate));
+
+        if (tasks.Any())
+            await Task.WhenAll(tasks);
     }
 
     private async Task RemoveAllApartmentImagesAsync(int apartmentId)

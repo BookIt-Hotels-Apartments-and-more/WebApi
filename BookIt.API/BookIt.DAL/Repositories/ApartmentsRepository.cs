@@ -87,4 +87,11 @@ public class ApartmentsRepository
 
         return (apartments, totalCount);
     }
+
+    public async Task<IEnumerable<Apartment>> GetByEstablishmentIdAsync(int establishmentId)
+    {
+        return await _context.Apartments
+            .Where(a => a.EstablishmentId == establishmentId)
+            .ToListAsync();
+    }
 }

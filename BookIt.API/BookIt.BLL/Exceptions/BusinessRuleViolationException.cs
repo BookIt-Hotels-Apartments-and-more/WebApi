@@ -10,4 +10,14 @@ public class BusinessRuleViolationException : BookItBaseException
         Rule = rule;
         Properties["Rule"] = rule;
     }
+
+    public BusinessRuleViolationException(string rule, string message, Dictionary<string, object> additionalProperties)
+        : base(message, "BUSINESS_RULE_VIOLATION")
+    {
+        Rule = rule;
+        Properties["Rule"] = rule;
+
+        foreach (var property in additionalProperties)
+            Properties[property.Key] = property.Value;
+    }
 }
