@@ -7,4 +7,5 @@ public class MonobankSettings
     public string BaseUrl { get; set; } = string.Empty;
     public string Token { get; set; } = string.Empty;
     public string WebhookSecret { get; set; } = string.Empty;
+    public string WebhookBaseUrl { get; set; } = string.Empty;
 }

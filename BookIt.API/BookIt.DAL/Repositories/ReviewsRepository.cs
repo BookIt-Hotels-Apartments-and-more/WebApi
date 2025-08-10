@@ -68,6 +68,15 @@ public class ReviewsRepository
             .ToListAsync();
     }
 
+    public async Task<Review?> GetExistingReviewAsync(int? userId, int? apartmentId, int? customerId)
+    {
+        return await _context.Reviews
+            .FirstOrDefaultAsync(r =>
+                r.UserId == userId &&
+                r.ApartmentId == apartmentId &&
+                r.UserId == customerId);
+    }
+
     public async Task<bool> ExistsAsync(int id)
     {
         return await _context.Reviews.AnyAsync(a => a.Id == id);

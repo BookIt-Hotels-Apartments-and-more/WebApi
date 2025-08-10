@@ -1,4 +1,6 @@
-﻿using BookIt.API.Models.Requests;
+﻿using AutoMapper;
+using BookIt.API.Models.Requests;
+using BookIt.API.Models.Responses;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -10,10 +12,12 @@ namespace BookIt.API.Controllers;
 [Route("user")]
 public class UserManagementController : ControllerBase
 {
+    private readonly IMapper _mapper;
     private readonly IUserManagementService _userManagementService;
 
-    public UserManagementController(IUserManagementService userManagementService)
+    public UserManagementController(IMapper mapper, IUserManagementService userManagementService)
     {
+        _mapper = mapper;
         _userManagementService = userManagementService;
     }
 
@@ -33,5 +37,32 @@ public class UserManagementController : ControllerBase
         await _userManagementService.SetUserImagesAsync(userId, imagesDto);
 
         return Ok(new { Message = "Images updated successfully." });
+    }
+
+    [HttpGet("images")]
+    [Authorize]
+    public async Task<IActionResult> GetUserImages()
+    {
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.Parse(userIdStr!);
+
+        var imageDtos = await _userManagementService.GetUserImagesAsync(userId);
+        var imagesResponse = _mapper.Map<IEnumerable<ImageResponse>>(imageDtos);
+
+        return Ok(imagesResponse);
+    }
+
+    [HttpDelete("all-images")]
+    [Authorize]
+    public async Task<IActionResult> DeleteUserImage()
+    {
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.Parse(userIdStr!);
+
+        var isDeleted = await _userManagementService.DeleteAllUserImagesAsync(userId);
+
+        return isDeleted
+            ? Ok(new { Message = "All images deleted successfully." })
+            : BadRequest(new { Message = "Failed to delete images." });
     }
 }

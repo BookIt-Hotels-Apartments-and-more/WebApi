@@ -78,6 +78,11 @@ public class UserRepository
         return await _context.Users.AnyAsync(u => u.Username == username);
     }
 
+    public async Task<bool> ExistsByIdAsync(int id)
+    {
+        return await _context.Users.AnyAsync(u => u.Id == id);
+    }
+
     public async Task<User> CreateAsync(User user)
     {
         _context.Users.Add(user);
