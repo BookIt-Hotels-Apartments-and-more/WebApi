@@ -6,6 +6,7 @@ using BookIt.DAL.Constants;
 using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace BookIt.BLL.Services;
@@ -18,6 +19,7 @@ public class EstablishmentsService : IEstablishmentsService
     private readonly IImagesService _imagesService;
     private readonly IRatingsService _ratingsService;
     private readonly ImagesRepository _imagesRepository;
+    private readonly ILogger<EstablishmentsService> _logger;
     private readonly BookingsRepository _bookingsRepository;
     private readonly IGeolocationService _geolocationService;
     private readonly ApartmentsRepository _apartmentsRepository;
@@ -30,12 +32,14 @@ public class EstablishmentsService : IEstablishmentsService
         IRatingsService ratingsService,
         ImagesRepository imagesRepository,
         BookingsRepository bookingsRepository,
+        ILogger<EstablishmentsService> logger,
         IGeolocationService geolocationService,
         ApartmentsRepository apartmentsRepository,
         IClassificationService classificationService,
         EstablishmentsRepository establishmentsRepository)
     {
         _mapper = mapper;
+        _logger = logger;
         _imagesService = imagesService;
         _ratingsService = ratingsService;
         _imagesRepository = imagesRepository;
@@ -48,28 +52,36 @@ public class EstablishmentsService : IEstablishmentsService
 
     public async Task<IEnumerable<EstablishmentDTO>> GetAllAsync()
     {
+        _logger.LogInformation("Start GetAllAsync");
         try
         {
             var establishmentsDomain = await _establishmentsRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<EstablishmentDTO>>(establishmentsDomain);
+            var result = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishmentsDomain);
+            _logger.LogInformation("Successfully retrieved {Count} establishments", result.Count());
+            return result;
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to retrieve establishments");
             throw new ExternalServiceException("Database", "Failed to retrieve establishments", ex);
         }
     }
 
     public async Task<EstablishmentDTO?> GetByIdAsync(int id)
     {
+        _logger.LogInformation("Start GetByIdAsync for Establishment Id: {Id}", id);
         try
         {
             var establishmentDomain = await _establishmentsRepository.GetByIdAsync(id);
             if (establishmentDomain is null)
             {
+                _logger.LogWarning("Establishment with Id {Id} not found", id);
                 throw new EntityNotFoundException("Establishment", id);
             }
 
-            return _mapper.Map<EstablishmentDTO>(establishmentDomain);
+            var result = _mapper.Map<EstablishmentDTO>(establishmentDomain);
+            _logger.LogInformation("Successfully retrieved establishment with Id {Id}", id);
+            return result;
         }
         catch (BookItBaseException)
         {
@@ -77,12 +89,14 @@ public class EstablishmentsService : IEstablishmentsService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to retrieve establishment with Id {Id}", id);
             throw new ExternalServiceException("Database", "Failed to retrieve establishment", ex);
         }
     }
 
     public async Task<EstablishmentDTO?> CreateAsync(EstablishmentDTO dto)
     {
+        _logger.LogInformation("Start CreateAsync for establishment with name: {Name}", dto.Name);
         try
         {
             Task<GeolocationDTO?> addGeolocationTask = _geolocationService.CreateAsync(dto.Geolocation);
@@ -92,7 +106,10 @@ public class EstablishmentsService : IEstablishmentsService
 
             var geolocationResult = addGeolocationTask.Result;
             if (geolocationResult?.Id is null)
+            {
+                _logger.LogError("Failed to create geolocation for establishment");
                 throw new BusinessRuleViolationException("GEOLOCATION_CREATION_FAILED", "Failed to create geolocation for establishment");
+            }
 
             var establishmentDomain = _mapper.Map<Establishment>(dto);
             establishmentDomain.GeolocationId = geolocationResult.Id;
@@ -103,6 +120,8 @@ public class EstablishmentsService : IEstablishmentsService
             if (dto.Photos?.Any() == true)
                 await ProcessEstablishmentImagesAsync(addedEstablishment.Id, dto.Photos);
 
+            _logger.LogInformation("Successfully created establishment with Id {Id}", addedEstablishment.Id);
+
             return await GetByIdAsync(addedEstablishment.Id);
         }
         catch (BookItBaseException)
@@ -111,17 +130,22 @@ public class EstablishmentsService : IEstablishmentsService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create establishment");
             throw new ExternalServiceException("Database", "Failed to create establishment", ex);
         }
     }
 
     public async Task<EstablishmentDTO?> UpdateAsync(int id, EstablishmentDTO dto)
     {
+        _logger.LogInformation("Start UpdateAsync for establishment Id: {Id}", id);
         try
         {
             var establishmentExists = await _establishmentsRepository.ExistsAsync(id);
             if (!establishmentExists)
+            {
+                _logger.LogWarning("Establishment with Id {Id} not found for update", id);
                 throw new EntityNotFoundException("Establishment", id);
+            }
 
             var establishmentDomain = _mapper.Map<Establishment>(dto);
             establishmentDomain.Id = id;
@@ -139,6 +163,8 @@ public class EstablishmentsService : IEstablishmentsService
 
             await ProcessEstablishmentImagesAsync(id, dto.Photos);
 
+            _logger.LogInformation("Successfully updated establishment with Id {Id}", id);
+
             return await GetByIdAsync(id);
         }
         catch (BookItBaseException)
@@ -147,17 +173,22 @@ public class EstablishmentsService : IEstablishmentsService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to update establishment with Id {Id}", id);
             throw new ExternalServiceException("Database", "Failed to update establishment", ex);
         }
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
+        _logger.LogInformation("Start DeleteAsync for establishment Id: {Id}", id);
         try
         {
             var establishmentExists = await _establishmentsRepository.ExistsAsync(id);
             if (!establishmentExists)
+            {
+                _logger.LogWarning("Establishment with Id {Id} not found for deletion", id);
                 throw new EntityNotFoundException("Establishment", id);
+            }
 
             await ValidateEstablishmentCanBeDeletedAsync(id);
 
@@ -167,6 +198,8 @@ public class EstablishmentsService : IEstablishmentsService
 
             await _establishmentsRepository.DeleteAsync(id);
 
+            _logger.LogInformation("Successfully deleted establishment with Id {Id}", id);
+
             return true;
         }
         catch (BookItBaseException)
@@ -175,12 +208,14 @@ public class EstablishmentsService : IEstablishmentsService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to delete establishment with Id {Id}", id);
             throw new ExternalServiceException("Database", "Failed to delete establishment", ex);
         }
     }
 
     public async Task<PagedResultDTO<EstablishmentDTO>> GetFilteredAsync(EstablishmentFilterDTO filter)
     {
+        _logger.LogInformation("Start GetFilteredAsync with filter {@Filter}", filter);
         try
         {
             ValidateFilterParameters(filter);
@@ -199,6 +234,8 @@ public class EstablishmentsService : IEstablishmentsService
             var finalCount = filteredEstablishments.Count();
             var totalPages = (int)Math.Ceiling(finalCount / (double)filter.PageSize);
 
+            _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", finalCount, totalPages);
+
             return new PagedResultDTO<EstablishmentDTO>
             {
                 Items = filteredEstablishments.ToList(),
@@ -216,6 +253,7 @@ public class EstablishmentsService : IEstablishmentsService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to get filtered establishments");
             throw new ExternalServiceException("Database", "Failed to get filtered establishments", ex);
         }
     }

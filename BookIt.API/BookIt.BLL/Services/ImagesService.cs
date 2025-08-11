@@ -44,14 +44,14 @@ public class ImagesService : IImagesService
                 {
                     if (ShouldSkipImage(image))
                     {
-                        _logger.LogDebug("Skipping image processing - already exists or no base64 data");
+                        _logger.LogInformation("Skipping image processing - already exists or no base64 data");
                         continue;
                     }
 
                     var savedImage = await ProcessSingleImageAsync(image, blobContainerName, parentEntityIdSetter);
                     addedImages.Add(savedImage);
 
-                    _logger.LogDebug("Successfully saved image with ID: {ImageId}", savedImage.Id);
+                    _logger.LogInformation("Successfully saved image with ID: {ImageId}", savedImage.Id);
                 }
                 catch (Exception ex)
                 {
@@ -129,7 +129,7 @@ public class ImagesService : IImagesService
                     await _repository.DeleteAsync(id);
                     successCount++;
 
-                    _logger.LogDebug("Successfully deleted image with ID: {ImageId}", id);
+                    _logger.LogInformation("Successfully deleted image with ID: {ImageId}", id);
                 }
                 catch (Exception ex)
                 {
@@ -228,7 +228,7 @@ public class ImagesService : IImagesService
         {
             var randomFileName = GenerateUniqueFileName();
 
-            _logger.LogDebug("Uploading image to blob storage with filename: {FileName}", randomFileName);
+            _logger.LogInformation("Uploading image to blob storage with filename: {FileName}", randomFileName);
 
             var blobUrl = await _blobStorageService.UploadImageAsync(imageDto.Base64Image!, blobContainerName, randomFileName);
 

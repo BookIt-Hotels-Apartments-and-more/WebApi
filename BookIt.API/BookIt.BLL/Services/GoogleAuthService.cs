@@ -132,7 +132,7 @@ public class GoogleAuthService : IGoogleAuthService
     {
         try
         {
-            _logger.LogDebug("Exchanging authorization code for access token");
+            _logger.LogInformation("Exchanging authorization code for access token");
 
             var tokenRequestData = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -174,7 +174,7 @@ public class GoogleAuthService : IGoogleAuthService
                 throw new ExternalServiceException("Google Auth", "Access token is empty in Google response");
             }
 
-            _logger.LogDebug("Successfully exchanged code for access token");
+            _logger.LogInformation("Successfully exchanged code for access token");
             return accessToken;
         }
         catch (JsonException ex)
@@ -207,7 +207,7 @@ public class GoogleAuthService : IGoogleAuthService
     {
         try
         {
-            _logger.LogDebug("Retrieving user info from Google");
+            _logger.LogInformation("Retrieving user info from Google");
 
             using var userRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v3/userinfo");
             userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -251,7 +251,7 @@ public class GoogleAuthService : IGoogleAuthService
                 name = name.Substring(0, 100);
             }
 
-            _logger.LogDebug("Successfully retrieved user info from Google");
+            _logger.LogInformation("Successfully retrieved user info from Google");
             return (email, name ?? string.Empty);
         }
         catch (JsonException ex)

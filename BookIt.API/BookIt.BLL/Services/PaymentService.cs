@@ -223,7 +223,7 @@ public class PaymentService : IPaymentService
                 throw new BusinessRuleViolationException("INVALID_PAYMENT_TYPE",
                     $"Payment {dto.PaymentId} is not a Monobank payment");
 
-            _logger.LogDebug("Checking Monobank payment status for payment {PaymentId}, invoice {InvoiceId}",
+            _logger.LogInformation("Checking Monobank payment status for payment {PaymentId}, invoice {InvoiceId}",
                 dto.PaymentId, dto.InvoiceId);
 
             var statusResponse = await _monobankAcquiringService.GetInvoiceStatusAsync(dto.InvoiceId);

@@ -5,6 +5,7 @@ using BookIt.BLL.Exceptions;
 using BookIt.BLL.Interfaces;
 using BookIt.DAL.Constants;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BookIt.BLL.Services;
 
@@ -15,10 +16,14 @@ public class AzureBlobStorageService : IBlobStorageService
     {
         { "image/jpeg", ".jpeg" }, { "image/jpg", ".jpg" }, { "image/png", ".png" }, { "image/webp", ".webp" }
     };
-    private readonly BlobServiceClient _blobServiceClient;
 
-    public AzureBlobStorageService(IConfiguration configuration)
+    private readonly BlobServiceClient _blobServiceClient;
+    private readonly ILogger<AzureBlobStorageService> _logger;
+
+    public AzureBlobStorageService(IConfiguration configuration, ILogger<AzureBlobStorageService> logger)
     {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
         try
         {
             var connectionString = Environment.GetEnvironmentVariable("AZURE_BLOB_STORAGE_CONNECTION_STRING")
@@ -26,19 +31,24 @@ public class AzureBlobStorageService : IBlobStorageService
 
             if (string.IsNullOrWhiteSpace(connectionString))
             {
+                _logger.LogError("Azure Blob Storage connection string is not configured.");
                 throw new ExternalServiceException("Azure Blob Storage", "Connection string is not configured");
             }
 
             _blobServiceClient = new BlobServiceClient(connectionString);
+            _logger.LogInformation("AzureBlobStorageService initialized successfully.");
         }
         catch (Exception ex) when (!(ex is BookItBaseException))
         {
+            _logger.LogError(ex, "Failed to initialize Azure Blob Storage client.");
             throw new ExternalServiceException("Azure Blob Storage", "Failed to initialize blob storage client", ex);
         }
     }
 
     public async Task<string> UploadImageAsync(string base64Image, string containerName, string fileName)
     {
+        _logger.LogInformation("Starting image upload to container '{Container}' with file name '{FileName}'.", containerName, fileName);
+
         try
         {
             ValidateUploadInputs(base64Image, containerName, fileName);
@@ -51,36 +61,49 @@ public class AzureBlobStorageService : IBlobStorageService
 
             var blobUrl = await UploadToBlobStorageAsync(imageBytes, mimeType, containerName, fileName);
 
+            _logger.LogInformation("Successfully uploaded image to '{BlobUrl}'.", blobUrl);
             return blobUrl;
         }
-        catch (BookItBaseException)
+        catch (BookItBaseException ex)
         {
+            _logger.LogWarning(ex, "Known error occurred while uploading image.");
             throw;
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
         {
+            _logger.LogError(ex, "Azure Blob Storage request failed while uploading image with code {Code}." +
+                "Container '{ContainerName}' not found", ex.Status, containerName);
             throw new ExternalServiceException("Azure Blob Storage", $"Container '{containerName}' not found", ex, ex.Status);
         }
         catch (RequestFailedException ex) when (ex.Status == 403)
         {
+            _logger.LogError(ex, "Azure Blob Storage request failed while uploading image with code {Code}." +
+                "Access denied to blob storage", ex.Status);
             throw new ExternalServiceException("Azure Blob Storage", "Access denied to blob storage", ex, ex.Status);
         }
         catch (RequestFailedException ex) when (ex.Status >= 400 && ex.Status < 500)
         {
+            _logger.LogError(ex, "Azure Blob Storage request failed while uploading image with code {Code}." +
+                "Client error during upload: {Message}", ex.Status, ex.Message);
             throw new ExternalServiceException("Azure Blob Storage", $"Client error during upload: {ex.Message}", ex, ex.Status);
         }
         catch (RequestFailedException ex) when (ex.Status >= 500)
         {
+            _logger.LogError(ex, "Azure Blob Storage request failed while uploading image with code {Code}." +
+                "Server error during upload: {Message}", ex.Status, ex.Message);
             throw new ExternalServiceException("Azure Blob Storage", $"Server error during upload: {ex.Message}", ex, ex.Status);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error occurred while uploading image.");
             throw new ExternalServiceException("Azure Blob Storage", "Failed to upload image", ex);
         }
     }
 
     public async Task<bool> DeleteImageAsync(string blobUrl, string containerName)
     {
+        _logger.LogInformation("Attempting to delete image from container '{Container}' with URL '{BlobUrl}'.", containerName, blobUrl);
+
         try
         {
             ValidateDeleteInputs(blobUrl, containerName);
@@ -90,34 +113,49 @@ public class AzureBlobStorageService : IBlobStorageService
 
             if (string.IsNullOrWhiteSpace(fileName))
             {
+                _logger.LogWarning("Could not extract file name from blob URL: '{BlobUrl}'.", blobUrl);
                 throw new ValidationException("BlobUrl", "Invalid blob URL - cannot extract filename");
             }
 
             var deleteResult = await container.GetBlobClient(fileName).DeleteIfExistsAsync();
+            _logger.LogInformation(deleteResult.Value
+                ? "Successfully deleted blob '{FileName}'."
+                : "Blob '{FileName}' did not exist.", fileName);
+
             return deleteResult.Value;
         }
-        catch (BookItBaseException)
+        catch (BookItBaseException ex)
         {
+            _logger.LogWarning(ex, "Known error occurred while deleting image.");
             throw;
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
         {
+            _logger.LogInformation(ex, "Azure Blob Storage request failed during deletion with code {Code}." +
+                "Blob does not exist", ex.Status);
             return false;
         }
         catch (RequestFailedException ex) when (ex.Status == 403)
         {
+            _logger.LogInformation(ex, "Azure Blob Storage request failed during deletion with code {Code}." +
+                "Access denied to blob storage", ex.Status);
             throw new ExternalServiceException("Azure Blob Storage", "Access denied to blob storage", ex, ex.Status);
         }
         catch (RequestFailedException ex) when (ex.Status >= 400 && ex.Status < 500)
         {
+            _logger.LogInformation(ex, "Azure Blob Storage request failed during deletion with code {Code}." +
+                "Client error during deletion: {Message}", ex.Status, ex.Message);
             throw new ExternalServiceException("Azure Blob Storage", $"Client error during deletion: {ex.Message}", ex, ex.Status);
         }
         catch (RequestFailedException ex) when (ex.Status >= 500)
         {
+            _logger.LogError(ex, "Azure Blob Storage request failed while uploading image with code {Code}." +
+                "Server error during deletion: {Message}", ex.Status, ex.Message);
             throw new ExternalServiceException("Azure Blob Storage", $"Server error during deletion: {ex.Message}", ex, ex.Status);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error occurred while deleting image.");
             throw new ExternalServiceException("Azure Blob Storage", "Failed to delete image", ex);
         }
     }

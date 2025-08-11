@@ -41,11 +41,11 @@ public class UserManagementService : IUserManagementService
 
             await ValidateUserExistsAsync(userId);
 
-            _logger.LogDebug("Retrieving images for user {UserId}", userId);
+            _logger.LogInformation("Retrieving images for user {UserId}", userId);
 
             var userImages = await _imagesRepository.GetUserImagesAsync(userId);
 
-            _logger.LogDebug("Retrieved {Count} images for user {UserId}", userImages.Count(), userId);
+            _logger.LogInformation("Retrieved {Count} images for user {UserId}", userImages.Count(), userId);
 
             return _mapper.Map<IEnumerable<ImageDTO>>(userImages);
         }
@@ -59,7 +59,6 @@ public class UserManagementService : IUserManagementService
             throw new ExternalServiceException("UserManagement", "Failed to retrieve user images", ex);
         }
     }
-
 
     public async Task SetUserImagesAsync(int userId, IEnumerable<ImageDTO> images)
     {
@@ -225,13 +224,13 @@ public class UserManagementService : IUserManagementService
 
             if (idsOfPhotosToRemove.Any())
             {
-                _logger.LogDebug("Removing {Count} images for user {UserId}", idsOfPhotosToRemove.Count, userId);
+                _logger.LogInformation("Removing {Count} images for user {UserId}", idsOfPhotosToRemove.Count, userId);
                 tasks.Add(_imagesService.DeleteImagesAsync(idsOfPhotosToRemove, BlobContainerName));
             }
 
             if (photosToAdd.Any())
             {
-                _logger.LogDebug("Adding {Count} new images for user {UserId}", photosToAdd.Count, userId);
+                _logger.LogInformation("Adding {Count} new images for user {UserId}", photosToAdd.Count, userId);
                 tasks.Add(_imagesService.SaveImagesAsync(photosToAdd, BlobContainerName, setUserIdDelegate));
             }
 

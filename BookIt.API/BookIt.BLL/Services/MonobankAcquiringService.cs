@@ -78,7 +78,7 @@ public class MonobankAcquiringService : IMonobankAcquiringService
         {
             ValidateInvoiceId(invoiceId);
 
-            _logger.LogDebug("Getting Monobank invoice status for ID: {InvoiceId}", invoiceId);
+            _logger.LogInformation("Getting Monobank invoice status for ID: {InvoiceId}", invoiceId);
 
             var response = await _httpClient.GetAsync($"/api/merchant/invoice/status?invoiceId={Uri.EscapeDataString(invoiceId)}");
 
@@ -87,7 +87,7 @@ public class MonobankAcquiringService : IMonobankAcquiringService
 
             var statusResponse = await DeserializeResponseAsync<InvoiceStatusResponse>(response);
 
-            _logger.LogDebug("Successfully retrieved Monobank invoice status for ID: {InvoiceId}, Status: {Status}",
+            _logger.LogInformation("Successfully retrieved Monobank invoice status for ID: {InvoiceId}, Status: {Status}",
                 invoiceId, statusResponse?.Status);
 
             return statusResponse;

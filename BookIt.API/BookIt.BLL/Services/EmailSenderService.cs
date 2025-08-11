@@ -24,11 +24,16 @@ public class EmailSenderService : IEmailSenderService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _emailSettings = emailOptions?.Value ?? throw new ArgumentNullException(nameof(emailOptions));
 
+        _logger.LogInformation("Initializing EmailSenderService with SMTP server {SmtpServer} and port {SmtpPort}",
+            _emailSettings.SmtpServer, _emailSettings.SmtpPort);
+
         ValidateConfiguration();
     }
 
     public void SendEmail(string toEmail, string subject, string body)
     {
+        _logger.LogInformation("Preparing to send email to {ToEmail} with subject {Subject}", toEmail, subject);
+
         try
         {
             ValidateEmailInputs(toEmail, subject, body);
@@ -38,12 +43,15 @@ public class EmailSenderService : IEmailSenderService
             using var smtpClient = CreateSmtpClient();
             using var message = CreateMailMessage(toEmail, subject, body);
 
+            _logger.LogInformation("SMTP client and email message created successfully for recipient {ToEmail}", toEmail);
+
             smtpClient.Send(message);
 
             _logger.LogInformation("Successfully sent email to {ToEmail}", toEmail);
         }
-        catch (BookItBaseException)
+        catch (BookItBaseException ex)
         {
+            _logger.LogWarning(ex, "Business or validation error occurred while sending email to {ToEmail}", toEmail);
             throw;
         }
         catch (SmtpException ex)
@@ -53,13 +61,15 @@ public class EmailSenderService : IEmailSenderService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to {ToEmail}", toEmail);
+            _logger.LogError(ex, "Unexpected failure while sending email to {ToEmail}", toEmail);
             throw new ExternalServiceException("Email", "Failed to send email", ex);
         }
     }
 
     private void ValidateConfiguration()
     {
+        _logger.LogInformation("Validating email configuration settings");
+
         if (string.IsNullOrWhiteSpace(_emailSettings.SmtpServer))
             throw new ValidationException("SmtpServer", "SMTP server is required");
 
@@ -77,10 +87,14 @@ public class EmailSenderService : IEmailSenderService
 
         if (string.IsNullOrWhiteSpace(_emailSettings.Password))
             throw new ValidationException("Password", "Email password is required");
+
+        _logger.LogInformation("Email configuration validated successfully");
     }
 
     private void ValidateEmailInputs(string toEmail, string subject, string body)
     {
+        _logger.LogInformation("Validating email inputs for recipient {ToEmail}", toEmail);
+
         if (string.IsNullOrWhiteSpace(toEmail))
             throw new ValidationException("ToEmail", "Recipient email address is required");
 
@@ -98,10 +112,15 @@ public class EmailSenderService : IEmailSenderService
 
         if (body.Length > 10000)
             throw new BusinessRuleViolationException("BODY_TOO_LONG", "Email body cannot exceed 10,000 characters");
+
+        _logger.LogInformation("Email inputs validated successfully for recipient {ToEmail}", toEmail);
     }
 
     private SmtpClient CreateSmtpClient()
     {
+        _logger.LogInformation("Creating SMTP client for server {SmtpServer}:{SmtpPort}",
+            _emailSettings.SmtpServer, _emailSettings.SmtpPort);
+
         try
         {
             return new SmtpClient
@@ -117,12 +136,16 @@ public class EmailSenderService : IEmailSenderService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create SMTP client for server {SmtpServer}:{SmtpPort}",
+                _emailSettings.SmtpServer, _emailSettings.SmtpPort);
             throw new ExternalServiceException("Email", "Failed to create SMTP client", ex);
         }
     }
 
     private MailMessage CreateMailMessage(string toEmail, string subject, string body)
     {
+        _logger.LogInformation("Creating mail message to {ToEmail} with subject {Subject}", toEmail, subject);
+
         try
         {
             var fromAddress = new MailAddress(_emailSettings.FromEmail, _emailSettings.FromName);
@@ -135,18 +158,23 @@ public class EmailSenderService : IEmailSenderService
                 IsBodyHtml = false
             };
         }
-        catch (FormatException)
+        catch (FormatException ex)
         {
+            _logger.LogWarning(ex, "Invalid email address format for recipient {ToEmail}", toEmail);
             throw new ValidationException("EmailAddress", "Invalid email address format");
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create email message for recipient {ToEmail}", toEmail);
             throw new ExternalServiceException("Email", "Failed to create email message", ex);
         }
     }
 
     private Exception HandleSmtpException(SmtpException ex, string toEmail)
     {
+        _logger.LogWarning(ex, "Handling SMTP exception for recipient {ToEmail} with status code {StatusCode}",
+            toEmail, ex.StatusCode);
+
         return ex.StatusCode switch
         {
             SmtpStatusCode.MailboxBusy =>

@@ -34,7 +34,7 @@ public class JWTService : IJWTService
         {
             ValidateUserData(user);
 
-            _logger.LogDebug("Generating JWT token for user {UserId} with email {Email}", user.Id, user.Email);
+            _logger.LogInformation("Generating JWT token for user {UserId} with email {Email}", user.Id, user.Email);
 
             var claims = CreateUserClaims(user);
             var signingCredentials = new SigningCredentials(_securityKey, SecurityAlgorithms.HmacSha256);
@@ -75,7 +75,7 @@ public class JWTService : IJWTService
             if (string.IsNullOrWhiteSpace(token))
                 throw new ValidationException("Token", "JWT token cannot be null or empty");
 
-            _logger.LogDebug("Validating JWT token");
+            _logger.LogInformation("Validating JWT token");
 
             var tokenValidationParameters = CreateTokenValidationParameters();
 
@@ -87,7 +87,7 @@ public class JWTService : IJWTService
                 throw new ExternalServiceException("JWT", "Invalid token algorithm");
             }
 
-            _logger.LogDebug("Successfully validated JWT token");
+            _logger.LogInformation("Successfully validated JWT token");
             return principal;
         }
         catch (SecurityTokenExpiredException ex)

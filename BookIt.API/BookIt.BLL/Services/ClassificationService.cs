@@ -6,6 +6,7 @@ using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 using GenerativeAI;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text;
 
@@ -16,28 +17,40 @@ public class ClassificationService : IClassificationService
     private readonly GenerativeModel _geminiModel;
     private readonly GeminiAISettings _geminiSettings;
     private readonly EstablishmentsRepository _establishmentsRepository;
+    private readonly ILogger<ClassificationService> _logger;
 
     public ClassificationService(
         IOptions<GeminiAISettings> geminiAiOptions,
-        EstablishmentsRepository establishmentsRepository)
+        EstablishmentsRepository establishmentsRepository,
+        ILogger<ClassificationService> logger)
     {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger.LogInformation("Initializing {ServiceName}", nameof(ClassificationService));
+
         try
         {
             _geminiSettings = geminiAiOptions?.Value ?? throw new ArgumentNullException(nameof(geminiAiOptions));
             _establishmentsRepository = establishmentsRepository ?? throw new ArgumentNullException(nameof(establishmentsRepository));
 
+            _logger.LogInformation("Validating Gemini AI configuration");
             ValidateGeminiConfiguration(_geminiSettings);
 
+            _logger.LogInformation("Creating Gemini AI model instance with model '{Model}'", _geminiSettings.Model);
             _geminiModel = new GenerativeModel(_geminiSettings.ApiKey, _geminiSettings.Model);
+
+            _logger.LogInformation("{ServiceName} initialized successfully", nameof(ClassificationService));
         }
         catch (Exception ex) when (!(ex is BookItBaseException))
         {
+            _logger.LogError(ex, "Failed to initialize {ServiceName}", nameof(ClassificationService));
             throw new ExternalServiceException("Gemini AI", "Failed to initialize classification service", ex);
         }
     }
 
     public async Task<VibeType?> ClassifyEstablishmentVibeAsync(EstablishmentDTO establishment)
     {
+        _logger.LogInformation("Classifying vibe for establishment: {@Establishment}", establishment);
+
         try
         {
             if (establishment is null)
@@ -47,7 +60,10 @@ public class ClassificationService : IClassificationService
 
             string prompt = BuildVibeClassificationPrompt(establishment);
 
-            return await CallGeminiForClassificationAsync(prompt);
+            var result = await CallGeminiForClassificationAsync(prompt);
+            _logger.LogInformation("Classification result for {EstablishmentName}: {Vibe}", establishment.Name, result);
+
+            return result;
         }
         catch (BookItBaseException)
         {
@@ -55,12 +71,15 @@ public class ClassificationService : IClassificationService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error classifying establishment vibe for {EstablishmentName}", establishment?.Name);
             throw new ExternalServiceException("Classification", "Failed to classify establishment vibe", ex);
         }
     }
 
     public async Task<VibeType?> UpdateEstablishmentVibeAsync(int id, EstablishmentDTO dto)
     {
+        _logger.LogInformation("Updating vibe for establishment with ID {Id}", id);
+
         try
         {
             if (dto is null)
@@ -70,9 +89,14 @@ public class ClassificationService : IClassificationService
 
             var currentEstablishment = await GetEstablishmentByIdAsync(id);
 
-            return ShouldReclassifyEstablishment(currentEstablishment, dto)
-                ? await ClassifyEstablishmentVibeAsync(dto)
-                : currentEstablishment.Vibe;
+            if (ShouldReclassifyEstablishment(currentEstablishment, dto))
+            {
+                _logger.LogInformation("Reclassifying vibe for establishment {Id}", id);
+                return await ClassifyEstablishmentVibeAsync(dto);
+            }
+
+            _logger.LogInformation("No classification change needed for establishment {Id}", id);
+            return currentEstablishment.Vibe;
         }
         catch (BookItBaseException)
         {
@@ -80,12 +104,15 @@ public class ClassificationService : IClassificationService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error updating vibe for establishment {Id}", id);
             throw new ExternalServiceException("Classification", "Failed to update establishment vibe", ex);
         }
     }
 
     private void ValidateGeminiConfiguration(GeminiAISettings settings)
     {
+        _logger.LogInformation("Validating Gemini AI settings");
+
         var validationErrors = new Dictionary<string, List<string>>();
 
         if (string.IsNullOrWhiteSpace(settings.ApiKey))
@@ -95,11 +122,16 @@ public class ClassificationService : IClassificationService
             validationErrors.Add("Model", new List<string> { "Gemini AI model name is required" });
 
         if (validationErrors.Any())
+        {
+            _logger.LogWarning("Gemini AI settings validation failed: {@Errors}", validationErrors);
             throw new ValidationException(validationErrors);
+        }
     }
 
     private void ValidateEstablishmentForClassification(EstablishmentDTO establishment)
     {
+        _logger.LogInformation("Validating establishment for classification: {Name}", establishment.Name);
+
         var validationErrors = new Dictionary<string, List<string>>();
 
         if (string.IsNullOrWhiteSpace(establishment.Name))
@@ -112,16 +144,24 @@ public class ClassificationService : IClassificationService
             validationErrors.Add("Geolocation", new List<string> { "Geolocation data is recommended for better classification accuracy" });
 
         if (validationErrors.Any())
+        {
+            _logger.LogWarning("Validation failed for establishment: {@Errors}", validationErrors);
             throw new ValidationException(validationErrors);
+        }
     }
 
     private async Task<Establishment> GetEstablishmentByIdAsync(int id)
     {
+        _logger.LogInformation("Fetching establishment by ID: {Id}", id);
+
         try
         {
             var establishment = await _establishmentsRepository.GetByIdAsync(id);
             if (establishment is null)
+            {
+                _logger.LogWarning("Establishment with ID {Id} not found", id);
                 throw new EntityNotFoundException("Establishment", id);
+            }
 
             return establishment;
         }
@@ -131,30 +171,36 @@ public class ClassificationService : IClassificationService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error retrieving establishment {Id}", id);
             throw new ExternalServiceException("Database", "Failed to retrieve establishment for classification", ex);
         }
     }
 
     private bool ShouldReclassifyEstablishment(Establishment currentEstablishment, EstablishmentDTO updatedDto)
     {
-        if (currentEstablishment.Vibe is null || currentEstablishment.Vibe == VibeType.None)
-            return true;
+        var shouldReclassify = currentEstablishment.Vibe is null || currentEstablishment.Vibe == VibeType.None ||
+                               EstablishmentDetailsChanged(currentEstablishment, updatedDto);
 
-        return EstablishmentDetailsChanged(currentEstablishment, updatedDto);
+        _logger.LogInformation("Should reclassify establishment {Id}? {Result}", currentEstablishment.Id, shouldReclassify);
+        return shouldReclassify;
     }
 
     private async Task<VibeType?> CallGeminiForClassificationAsync(string prompt)
     {
+        _logger.LogInformation("Sending classification request to Gemini AI");
+
         try
         {
             var response = await _geminiModel.GenerateContentAsync(prompt);
 
             if (response?.Text is null)
-                throw new ExternalServiceException(
-                    "Gemini AI",
-                    "Received null or empty response from Gemini AI");
+            {
+                _logger.LogWarning("Gemini AI returned null/empty response");
+                throw new ExternalServiceException("Gemini AI", "Received null or empty response from Gemini AI");
+            }
 
             string geminiOutput = response.Text.Trim();
+            _logger.LogInformation("Gemini AI response: {Output}", geminiOutput);
 
             if (string.IsNullOrWhiteSpace(geminiOutput))
                 return VibeType.None;
@@ -167,37 +213,30 @@ public class ClassificationService : IClassificationService
         }
         catch (HttpRequestException ex)
         {
-            throw new ExternalServiceException(
-                "Gemini AI",
-                "Network error while calling Gemini AI service",
-                ex);
+            _logger.LogWarning(ex, "Network error while calling Gemini AI service");
+            throw new ExternalServiceException("Gemini AI", "Network error while calling Gemini AI service", ex);
         }
         catch (TaskCanceledException ex)
         {
-            throw new ExternalServiceException(
-                "Gemini AI",
-                "Request to Gemini AI service timed out",
-                ex);
+            _logger.LogWarning(ex, "Request to Gemini AI service timed out");
+            throw new ExternalServiceException("Gemini AI", "Request to Gemini AI service timed out", ex);
         }
         catch (UnauthorizedAccessException ex)
         {
-            throw new ExternalServiceException(
-                "Gemini AI",
-                "Invalid API key or unauthorized access to Gemini AI",
-                ex,
-                401);
+            _logger.LogWarning(ex, "Unauthorized access to Gemini AI service");
+            throw new ExternalServiceException("Gemini AI", "Invalid API key or unauthorized access to Gemini AI", ex, 401);
         }
         catch (Exception ex)
         {
-            throw new ExternalServiceException(
-                "Gemini AI",
-                "Unexpected error while calling Gemini AI service",
-                ex);
+            _logger.LogError(ex, "Unexpected error while calling Gemini AI service");
+            throw new ExternalServiceException("Gemini AI", "Unexpected error while calling Gemini AI service", ex);
         }
     }
 
     private string BuildVibeClassificationPrompt(EstablishmentDTO establishment)
     {
+        _logger.LogInformation("Building vibe classification prompt for {Name}", establishment.Name);
+
         try
         {
             var promptBuilder = new StringBuilder();
@@ -206,7 +245,6 @@ public class ClassificationService : IClassificationService
             promptBuilder.AppendLine("If none of these are clearly applicable, respond with 'None'.");
             promptBuilder.AppendLine("Return only the name of the vibe type (e.g., 'Beach', 'City', 'None'). Do not include any other text, explanations, or punctuation.");
             promptBuilder.AppendLine();
-
             promptBuilder.AppendLine("Establishment Details:");
             promptBuilder.AppendLine($"Name: {establishment.Name}");
             promptBuilder.AppendLine($"Type: {establishment.Type}");
@@ -224,9 +262,8 @@ public class ClassificationService : IClassificationService
 
             if (prompt.Length > 10_000)
             {
-                throw new BusinessRuleViolationException(
-                    "PROMPT_TOO_LONG",
-                    "Establishment description is too long for classification");
+                _logger.LogError("Prompt too long: {Length} characters", prompt.Length);
+                throw new BusinessRuleViolationException("PROMPT_TOO_LONG", "Establishment description is too long for classification");
             }
 
             return prompt;
@@ -237,12 +274,15 @@ public class ClassificationService : IClassificationService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error building classification prompt");
             throw new ExternalServiceException("PromptGeneration", "Failed to build classification prompt", ex);
         }
     }
 
     private List<string> BuildFeaturesList(EstablishmentFeatures features)
     {
+        _logger.LogInformation("Processing features for establishment");
+
         try
         {
             var featuresList = new List<string>();
@@ -262,16 +302,20 @@ public class ClassificationService : IClassificationService
                 }
             }
 
+            _logger.LogInformation("Extracted features: {Features}", featuresList);
             return featuresList;
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error processing establishment features");
             throw new ExternalServiceException("FeatureProcessing", "Failed to process establishment features", ex);
         }
     }
 
     private VibeType ParseGeminiOutputToVibeType(string geminiOutput)
     {
+        _logger.LogInformation("Parsing Gemini output to VibeType: {Output}", geminiOutput);
+
         try
         {
             if (string.IsNullOrWhiteSpace(geminiOutput))
@@ -296,12 +340,15 @@ public class ClassificationService : IClassificationService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error parsing Gemini output: {Output}", geminiOutput);
             throw new ExternalServiceException("OutputParsing", $"Failed to parse Gemini output: '{geminiOutput}'", ex);
         }
     }
 
     private bool EstablishmentDetailsChanged(Establishment dbEntity, EstablishmentDTO updatedDto)
     {
+        _logger.LogInformation("Comparing establishment details for ID {Id}", dbEntity.Id);
+
         try
         {
             return dbEntity.Features != updatedDto.Features ||
@@ -311,6 +358,7 @@ public class ClassificationService : IClassificationService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error comparing establishment details for ID {Id}", dbEntity.Id);
             throw new ExternalServiceException("Comparison", "Failed to compare establishment details", ex);
         }
     }
