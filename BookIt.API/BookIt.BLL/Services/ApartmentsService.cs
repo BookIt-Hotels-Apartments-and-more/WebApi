@@ -87,11 +87,10 @@ public class ApartmentsService : IApartmentsService
             var apartmentDomain = _mapper.Map<Apartment>(dto);
             var addedApartment = await _apartmentsRepository.AddAsync(apartmentDomain);
 
-            if (dto.Photos?.Any() == true)
-            {
-                _logger.LogInformation("Processing {Count} images for new apartment ID {ApartmentId}", dto.Photos.Count(), addedApartment.Id);
-                await ProcessApartmentImagesAsync(addedApartment.Id, dto.Photos);
-            }
+            dto.Photos ??= [];
+
+            _logger.LogInformation("Processing {Count} images for new apartment ID {ApartmentId}", dto.Photos.Count(), addedApartment.Id);
+            await ProcessApartmentImagesAsync(addedApartment.Id, dto.Photos);
 
             _logger.LogInformation("Successfully created apartment with ID {ApartmentId}", addedApartment.Id);
             return await GetByIdAsync(addedApartment.Id);
@@ -250,11 +249,11 @@ public class ApartmentsService : IApartmentsService
 
     private async Task ProcessApartmentImagesAsync(int apartmentId, IEnumerable<ImageDTO> photos)
     {
-        if (photos?.Any() != true) return;
+        photos ??= [];
 
         _logger.LogInformation("Processing apartment images for apartment ID {ApartmentId}", apartmentId);
 
-        Action<Image> setApartmentIdDelegate = image => image.EstablishmentId = apartmentId;
+        Action<Image> setApartmentIdDelegate = image => image.ApartmentId = apartmentId;
 
         var existingImageIds = (await _imagesRepository.GetApartmentImagesAsync(apartmentId))
             .Select(photo => photo.Id)

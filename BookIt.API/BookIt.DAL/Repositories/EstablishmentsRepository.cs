@@ -37,9 +37,17 @@ public class EstablishmentsRepository
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
+    public async Task<Establishment?> GetByIdForVibeComparisonAsync(int id)
+    {
+        return await _context.Establishments
+            .AsNoTracking()
+            .Include(e => e.Geolocation)
+            .FirstOrDefaultAsync(e => e.Id == id);
+    }
+
     public async Task<bool> ExistsAsync(int id)
     {
-        return await _context.Establishments.AnyAsync(e => e.Id == id);
+        return await _context.Establishments.AsNoTracking().AnyAsync(e => e.Id == id);
     }
 
     public async Task<Establishment> AddAsync(Establishment establishment)
@@ -89,5 +97,11 @@ public class EstablishmentsRepository
             .ToListAsync();
 
         return (establishments, totalCount);
+    }
+
+    public async Task<int?> GetEstablishmentRatingAsync(int id)
+    {
+        return (await _context.Establishments.AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == id))?.ApartmentRatingId;
     }
 }

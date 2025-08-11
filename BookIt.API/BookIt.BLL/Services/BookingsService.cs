@@ -118,15 +118,15 @@ public class BookingsService : IBookingsService
                 throw new EntityNotFoundException("Booking", id);
             }
 
-            var apartment = await _apartmentsRepository.GetByIdAsync(dto.ApartmentId);
-            if (apartment is null)
+            var checkInAndCheckOutTimes = await _apartmentsRepository.GetCheckInAndCheckOutTimeForApartment(dto.ApartmentId);
+            if (checkInAndCheckOutTimes is null)
             {
                 _logger.LogWarning("Apartment with ID {ApartmentId} not found", dto.ApartmentId);
                 throw new EntityNotFoundException("Apartment", dto.ApartmentId);
             }
 
-            dto.DateFrom = ConfigureDateTimeForBooking(dto.DateFrom, apartment.Establishment.CheckInTime);
-            dto.DateTo = ConfigureDateTimeForBooking(dto.DateTo, apartment.Establishment.CheckOutTime);
+            dto.DateFrom = ConfigureDateTimeForBooking(dto.DateFrom, checkInAndCheckOutTimes.Value.CheckInTime);
+            dto.DateTo = ConfigureDateTimeForBooking(dto.DateTo, checkInAndCheckOutTimes.Value.CheckOutTime);
 
             ValidateBookingDates(dto.DateFrom, dto.DateTo);
             await ValidateBookingAvailabilityAsync(dto.ApartmentId, dto.DateFrom, dto.DateTo, id);
@@ -275,7 +275,7 @@ public class BookingsService : IBookingsService
             var adjustedDateFrom = ConfigureDateTimeForBooking(dateFrom, apartment.Establishment.CheckInTime);
             var adjustedDateTo = ConfigureDateTimeForBooking(dateTo, apartment.Establishment.CheckOutTime);
 
-            ValidateBookingDates(adjustedDateFrom, adjustedDateTo);
+            ValidateBookingFilterDates(adjustedDateFrom, adjustedDateTo);
 
             var isAvailable = await _bookingsRepository.IsApartmentAvailableAsync(apartmentId, adjustedDateFrom, adjustedDateTo);
             _logger.LogInformation("Availability check for apartment {ApartmentId}: {IsAvailable}", apartmentId, isAvailable);
@@ -342,7 +342,7 @@ public class BookingsService : IBookingsService
 
             if (adjustedStartDate.HasValue && adjustedEndDate.HasValue)
             {
-                ValidateBookingDates(adjustedStartDate.Value, adjustedEndDate.Value);
+                ValidateBookingFilterDates(adjustedStartDate.Value, adjustedEndDate.Value);
             }
 
             var bookedDays = await _bookingsRepository.GetBookedDaysAsync(apartmentId, adjustedStartDate, adjustedEndDate);
@@ -418,6 +418,23 @@ public class BookingsService : IBookingsService
             throw new BusinessRuleViolationException(
                 "INSUFFICIENT_ADVANCE_BOOKING",
                 "Booking must be made at least 1 hour in advance");
+        }
+    }
+
+    private void ValidateBookingFilterDates(DateTime dateFrom, DateTime dateTo)
+    {
+        if (dateFrom >= dateTo)
+        {
+            throw new BusinessRuleViolationException(
+                "INVALID_DATE_RANGE",
+                "DateTo date must be after DateFrom date");
+        }
+
+        if (dateFrom.Date < DateTime.UtcNow.Date)
+        {
+            throw new BusinessRuleViolationException(
+                "PAST_DATE_BOOKING",
+                "Cannot check apartment availability for past dates");
         }
     }
 

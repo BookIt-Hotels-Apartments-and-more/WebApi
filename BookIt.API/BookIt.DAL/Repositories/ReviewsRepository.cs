@@ -39,6 +39,12 @@ public class ReviewsRepository
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    public async Task<Review?> GetByIdForReviewUpdateAsync(int id)
+    {
+        return await _context.Reviews.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id);
+    }
+
     public async Task<IEnumerable<Review>> GetByApartmentIdAsync(int apartmentId)
     {
         return await _context.Reviews
@@ -79,7 +85,7 @@ public class ReviewsRepository
 
     public async Task<bool> ExistsAsync(int id)
     {
-        return await _context.Reviews.AnyAsync(a => a.Id == id);
+        return await _context.Reviews.AsNoTracking().AnyAsync(a => a.Id == id);
     }
 
     public async Task<Review> AddAsync(Review review)

@@ -1,4 +1,5 @@
-﻿using BookIt.BLL.DTOs;
+﻿using AutoMapper;
+using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
 using BookIt.BLL.Interfaces;
 using BookIt.DAL.Configuration.Settings;
@@ -14,16 +15,19 @@ namespace BookIt.BLL.Services;
 
 public class ClassificationService : IClassificationService
 {
+    private readonly IMapper _mapper;
     private readonly GenerativeModel _geminiModel;
     private readonly GeminiAISettings _geminiSettings;
-    private readonly EstablishmentsRepository _establishmentsRepository;
     private readonly ILogger<ClassificationService> _logger;
+    private readonly EstablishmentsRepository _establishmentsRepository;
 
     public ClassificationService(
+        IMapper mapper,
+        ILogger<ClassificationService> logger,
         IOptions<GeminiAISettings> geminiAiOptions,
-        EstablishmentsRepository establishmentsRepository,
-        ILogger<ClassificationService> logger)
+        EstablishmentsRepository establishmentsRepository)
     {
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _logger.LogInformation("Initializing {ServiceName}", nameof(ClassificationService));
 
@@ -89,14 +93,16 @@ public class ClassificationService : IClassificationService
 
             var currentEstablishment = await GetEstablishmentByIdAsync(id);
 
-            if (ShouldReclassifyEstablishment(currentEstablishment, dto))
+            var currentEstablishmentDto = _mapper.Map<EstablishmentDTO>(currentEstablishment);
+
+            if (ShouldReclassifyEstablishment(currentEstablishmentDto, dto))
             {
                 _logger.LogInformation("Reclassifying vibe for establishment {Id}", id);
                 return await ClassifyEstablishmentVibeAsync(dto);
             }
 
             _logger.LogInformation("No classification change needed for establishment {Id}", id);
-            return currentEstablishment.Vibe;
+            return currentEstablishmentDto.Vibe;
         }
         catch (BookItBaseException)
         {
@@ -156,7 +162,7 @@ public class ClassificationService : IClassificationService
 
         try
         {
-            var establishment = await _establishmentsRepository.GetByIdAsync(id);
+            var establishment = await _establishmentsRepository.GetByIdForVibeComparisonAsync(id);
             if (establishment is null)
             {
                 _logger.LogWarning("Establishment with ID {Id} not found", id);
@@ -176,7 +182,7 @@ public class ClassificationService : IClassificationService
         }
     }
 
-    private bool ShouldReclassifyEstablishment(Establishment currentEstablishment, EstablishmentDTO updatedDto)
+    private bool ShouldReclassifyEstablishment(EstablishmentDTO currentEstablishment, EstablishmentDTO updatedDto)
     {
         var shouldReclassify = currentEstablishment.Vibe is null || currentEstablishment.Vibe == VibeType.None ||
                                EstablishmentDetailsChanged(currentEstablishment, updatedDto);
@@ -345,20 +351,20 @@ public class ClassificationService : IClassificationService
         }
     }
 
-    private bool EstablishmentDetailsChanged(Establishment dbEntity, EstablishmentDTO updatedDto)
+    private bool EstablishmentDetailsChanged(EstablishmentDTO currentDto, EstablishmentDTO updatedDto)
     {
-        _logger.LogInformation("Comparing establishment details for ID {Id}", dbEntity.Id);
+        _logger.LogInformation("Comparing establishment details for ID {Id}", currentDto.Id);
 
         try
         {
-            return dbEntity.Features != updatedDto.Features ||
-                   !string.Equals(dbEntity.Description, updatedDto.Description, StringComparison.Ordinal) ||
-                   !string.Equals(dbEntity.Geolocation?.City, updatedDto.Geolocation?.City, StringComparison.OrdinalIgnoreCase) ||
-                   !string.Equals(dbEntity.Geolocation?.Country, updatedDto.Geolocation?.Country, StringComparison.OrdinalIgnoreCase);
+            return currentDto.Features != updatedDto.Features ||
+                   !string.Equals(currentDto.Description, updatedDto.Description, StringComparison.Ordinal) ||
+                   !string.Equals(currentDto.Geolocation?.City, updatedDto.Geolocation?.City, StringComparison.OrdinalIgnoreCase) ||
+                   !string.Equals(currentDto.Geolocation?.Country, updatedDto.Geolocation?.Country, StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error comparing establishment details for ID {Id}", dbEntity.Id);
+            _logger.LogError(ex, "Error comparing establishment details for ID {Id}", currentDto.Id);
             throw new ExternalServiceException("Comparison", "Failed to compare establishment details", ex);
         }
     }

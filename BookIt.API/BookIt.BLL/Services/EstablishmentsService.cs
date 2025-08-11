@@ -117,8 +117,8 @@ public class EstablishmentsService : IEstablishmentsService
 
             var addedEstablishment = await _establishmentsRepository.AddAsync(establishmentDomain);
 
-            if (dto.Photos?.Any() == true)
-                await ProcessEstablishmentImagesAsync(addedEstablishment.Id, dto.Photos);
+            dto.Photos ??= [];
+            await ProcessEstablishmentImagesAsync(addedEstablishment.Id, dto.Photos);
 
             _logger.LogInformation("Successfully created establishment with Id {Id}", addedEstablishment.Id);
 
@@ -158,6 +158,9 @@ public class EstablishmentsService : IEstablishmentsService
 
             if (updateVibeTask is not null)
                 establishmentDomain.Vibe = updateVibeTask;
+
+            var currentEstablishmentRatingId = await _establishmentsRepository.GetEstablishmentRatingAsync(id);
+            establishmentDomain.ApartmentRatingId = currentEstablishmentRatingId;
 
             await _establishmentsRepository.UpdateAsync(establishmentDomain);
 
@@ -320,7 +323,7 @@ public class EstablishmentsService : IEstablishmentsService
 
     private async Task ProcessEstablishmentImagesAsync(int establishmentId, IEnumerable<ImageDTO>? photos)
     {
-        if (photos?.Any() != true) return;
+        photos ??= [];
 
         Action<Image> setEstablishmentIdDelegate = image => image.EstablishmentId = establishmentId;
 
@@ -400,7 +403,7 @@ public class EstablishmentsService : IEstablishmentsService
                 var apartment = apartments.First(a => a.Id == apartmentId);
 
                 var bookingDetails = activeBookings.Select(b =>
-                    $"Apartment '{apartment.Name}' - Booking #{b.Id}: {b.DateFrom:yyyy-MM-dd} to {b.DateTo:yyyy-MM-dd} (User: {b.User.Username})");
+                    $"Apartment '{apartment.Name}' - Booking #{b.Id}: {b.DateFrom:yyyy-MM-dd} to {b.DateTo:yyyy-MM-dd}");
 
                 activeBookingDetails.AddRange(bookingDetails);
             }

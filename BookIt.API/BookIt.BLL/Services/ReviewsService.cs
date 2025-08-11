@@ -97,12 +97,10 @@ public class ReviewsService : IReviewsService
             var addedReview = await _reviewsRepository.AddAsync(reviewDomain);
             _logger.LogInformation("Review created with Id {ReviewId}", addedReview.Id);
 
-            if (dto.Photos?.Any() == true)
-            {
-                Action<Image> setReviewIdDelegate = image => image.ReviewId = addedReview.Id;
-                await _imagesService.SaveImagesAsync(dto.Photos, BlobContainerName, setReviewIdDelegate);
-                _logger.LogInformation("Saved {PhotoCount} photos for review {ReviewId}", dto.Photos.Count(), addedReview.Id);
-            }
+            dto.Photos ??= [];
+            Action<Image> setReviewIdDelegate = image => image.ReviewId = addedReview.Id;
+            await _imagesService.SaveImagesAsync(dto.Photos, BlobContainerName, setReviewIdDelegate);
+            _logger.LogInformation("Saved {PhotoCount} photos for review {ReviewId}", dto.Photos.Count(), addedReview.Id);
 
             await UpdateRatingsAfterReviewChangeAsync(dto.ApartmentId, dto.CustomerId);
 
@@ -134,7 +132,7 @@ public class ReviewsService : IReviewsService
 
             ValidateReviewData(dto);
 
-            var oldReview = await _reviewsRepository.GetByIdAsync(id);
+            var oldReview = await _reviewsRepository.GetByIdForReviewUpdateAsync(id);
             if (oldReview is null)
             {
                 _logger.LogWarning("Review with Id {ReviewId} not found for update", id);
@@ -307,8 +305,8 @@ public class ReviewsService : IReviewsService
     {
         if (dto.ApartmentId.HasValue)
         {
-            var apartment = await _apartmentsRepository.GetByIdAsync(dto.ApartmentId.Value);
-            if (apartment is null)
+            var apartmentExists = await _apartmentsRepository.ExistsAsync(dto.ApartmentId.Value);
+            if (!apartmentExists)
             {
                 _logger.LogWarning("Validation failed: Apartment with Id {ApartmentId} not found for review update", dto.ApartmentId.Value);
                 throw new EntityNotFoundException("Apartment", dto.ApartmentId.Value);
@@ -317,8 +315,8 @@ public class ReviewsService : IReviewsService
 
         if (dto.CustomerId.HasValue)
         {
-            var customer = await _userRepository.GetByIdAsync(dto.CustomerId.Value);
-            if (customer is null)
+            var customerExists = await _userRepository.ExistsByIdAsync(dto.CustomerId.Value);
+            if (!customerExists)
             {
                 _logger.LogWarning("Validation failed: Customer with Id {CustomerId} not found for review update", dto.CustomerId.Value);
                 throw new EntityNotFoundException("Customer", dto.CustomerId.Value);
@@ -386,7 +384,7 @@ public class ReviewsService : IReviewsService
 
     private async Task ProcessReviewImagesAsync(int reviewId, IEnumerable<ImageDTO>? photos)
     {
-        if (photos?.Any() != true) return;
+        photos ??= [];
 
         _logger.LogInformation("Processing images for review {ReviewId}, photo count: {PhotoCount}", reviewId, photos.Count());
 

@@ -39,7 +39,7 @@ public class BookingsRepository
 
     public async Task<bool> ExistsAsync(int id)
     {
-        return await _context.Bookings.AnyAsync(a => a.Id == id);
+        return await _context.Bookings.AsNoTracking().AnyAsync(a => a.Id == id);
     }
 
     public async Task<Booking> AddAsync(Booking booking)
@@ -84,10 +84,10 @@ public class BookingsRepository
 
     public async Task<bool> IsApartmentAvailableAsync(int apartmentId, DateTime dateFrom, DateTime dateTo, int? excludeBookingId = null)
     {
-        var conflictingBookings = await _context.Bookings
+        var conflictingBookings = await _context.Bookings.AsNoTracking()
             .Where(b => b.ApartmentId == apartmentId)
             .Where(b => excludeBookingId == null || b.Id != excludeBookingId)
-            .Where(b => b.DateFrom <= dateTo.AddDays(-1) && b.DateTo >= dateFrom.AddDays(1))
+            .Where(b => b.DateFrom.Date < dateTo.Date && b.DateTo.Date > dateFrom.Date)
             .AnyAsync();
 
         return !conflictingBookings;
@@ -95,7 +95,7 @@ public class BookingsRepository
 
     public async Task<List<Booking>> GetConflictingBookingsAsync(int apartmentId, DateTime dateFrom, DateTime dateTo, int? excludeBookingId = null)
     {
-        return await _context.Bookings
+        return await _context.Bookings.AsNoTracking()
             .Where(b => b.ApartmentId == apartmentId)
             .Where(b => excludeBookingId == null || b.Id != excludeBookingId)
             .Where(b => b.DateFrom < dateTo && b.DateTo > dateFrom)
@@ -106,7 +106,7 @@ public class BookingsRepository
 
     public async Task<List<(DateTime DateFrom, DateTime DateTo)>> GetBookedDatesAsync(int apartmentId)
     {
-        return await _context.Bookings
+        return await _context.Bookings.AsNoTracking()
             .Where(b => b.ApartmentId == apartmentId)
             .Select(b => new ValueTuple<DateTime, DateTime>(b.DateFrom, b.DateTo))
             .OrderBy(b => b.Item1)
@@ -115,7 +115,7 @@ public class BookingsRepository
 
     public async Task<List<BookedDateRange>> GetBookedDateRangesAsync(int apartmentId, DateTime? startDate = null, DateTime? endDate = null)
     {
-        var query = _context.Bookings.Where(b => b.ApartmentId == apartmentId);
+        var query = _context.Bookings.AsNoTracking().Where(b => b.ApartmentId == apartmentId);
 
         if (startDate.HasValue) query = query.Where(b => b.DateTo >= startDate.Value);
         if (endDate.HasValue)   query = query.Where(b => b.DateFrom <= endDate.Value);
@@ -156,7 +156,7 @@ public class BookingsRepository
     {
         var currentDate = DateTime.UtcNow.Date;
 
-        return await _context.Bookings
+        return await _context.Bookings.AsNoTracking()
             .Where(b => b.ApartmentId == apartmentId)
             .Where(b => b.DateTo.Date >= currentDate)
             .OrderBy(b => b.DateFrom)
