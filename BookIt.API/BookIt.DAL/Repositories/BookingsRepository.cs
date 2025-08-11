@@ -20,7 +20,10 @@ public class BookingsRepository
             .Include(b => b.User)
             .ThenInclude(u => u.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.Photos)
+            .Include(b => b.Apartment).ThenInclude(a => a.ApartmentRating)
             .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner)
+            .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Geolocation)
+            .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .Include(b => b.Reviews)
             .Include(b => b.Payments)
             .ToListAsync();
@@ -31,7 +34,10 @@ public class BookingsRepository
         return await _context.Bookings
             .Include(b => b.User).ThenInclude(u => u.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.Photos)
+            .Include(b => b.Apartment).ThenInclude(a => a.ApartmentRating)
             .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner)
+            .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Geolocation)
+            .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .Include(b => b.Reviews)
             .Include(b => b.Payments)
             .FirstOrDefaultAsync(a => a.Id == id);
@@ -118,7 +124,7 @@ public class BookingsRepository
         var query = _context.Bookings.AsNoTracking().Where(b => b.ApartmentId == apartmentId);
 
         if (startDate.HasValue) query = query.Where(b => b.DateTo >= startDate.Value);
-        if (endDate.HasValue)   query = query.Where(b => b.DateFrom <= endDate.Value);
+        if (endDate.HasValue) query = query.Where(b => b.DateFrom <= endDate.Value);
 
         return await query
             .Include(b => b.User)
