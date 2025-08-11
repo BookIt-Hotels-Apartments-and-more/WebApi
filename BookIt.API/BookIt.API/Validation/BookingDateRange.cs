@@ -20,8 +20,8 @@ public class BookingDateRangeValidationAttribute : ValidationAttribute
         if (stayDuration.TotalDays < 1)
             return new ValidationResult("Minimum stay is 1 night");
 
-        if (stayDuration.TotalDays > 365)
-            return new ValidationResult("Maximum stay is 365 days");
+        if (stayDuration.TotalDays > 30)
+            return new ValidationResult("Maximum stay is 30 days");
 
         var today = DateTime.Today;
         var maxAdvanceBooking = today.AddYears(2);

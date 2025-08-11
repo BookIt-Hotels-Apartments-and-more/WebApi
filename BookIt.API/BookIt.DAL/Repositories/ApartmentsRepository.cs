@@ -21,6 +21,7 @@ public class ApartmentsRepository
             .Include(u => u.Reviews)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
+            .Include(a => a.Establishment).ThenInclude(e => e.Photos)
             .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
             .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .ToListAsync();
@@ -34,6 +35,7 @@ public class ApartmentsRepository
             .Include(u => u.Reviews)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
+            .Include(a => a.Establishment).ThenInclude(e => e.Photos)
             .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
             .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .FirstOrDefaultAsync(a => a.Id == id);
@@ -81,6 +83,7 @@ public class ApartmentsRepository
             .Include(a => a.Photos)
             .Include(u => u.ApartmentRating)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
+            .Include(a => a.Establishment).ThenInclude(e => e.Photos)
             .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
             .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .OrderByDescending(a => a.CreatedAt)
@@ -88,5 +91,22 @@ public class ApartmentsRepository
             .ToListAsync();
 
         return (apartments, totalCount);
+    }
+
+    public async Task<IEnumerable<Apartment>> GetByEstablishmentIdAsync(int establishmentId)
+    {
+        return await _context.Apartments
+            .Where(a => a.EstablishmentId == establishmentId)
+            .ToListAsync();
+    }
+
+    public async Task<(TimeOnly CheckInTime, TimeOnly CheckOutTime)?> GetCheckInAndCheckOutTimeForApartment(int id)
+    {
+        var apartment = await _context.Apartments.AsNoTracking()
+            .Where(a => a.Id == id)
+            .Include(a => a.Establishment)
+            .FirstOrDefaultAsync();
+
+        return apartment is null ? null : (apartment.Establishment.CheckInTime, apartment.Establishment.CheckOutTime);
     }
 }

@@ -43,6 +43,15 @@ public static class ConfigurationHelper
                 options.ClientSecret = clientSecret;
         });
 
+        services.Configure<EmailSMTPSettings>(options =>
+        {
+            configuration.GetSection(EmailSMTPSettings.SectionName).Bind(options);
+
+            var password = Environment.GetEnvironmentVariable("EMAIL_SMTP_PASSWORD");
+            if (!string.IsNullOrEmpty(password))
+                options.Password = password;
+        });
+
         services.Configure<UrlSettings>(options =>
         {
             configuration.GetSection(UrlSettings.SectionName).Bind(options);

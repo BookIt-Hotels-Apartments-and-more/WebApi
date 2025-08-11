@@ -40,6 +40,14 @@ public class FavoritesRepository
             .ToListAsync();
     }
 
+    public async Task<Favorite?> GetByUserAndApartmentAsync(int userId, int apartmentId)
+    {
+        return await _context.Favorites
+            .Include(f => f.User)
+            .Include(f => f.Apartment)
+            .FirstOrDefaultAsync(f => f.UserId == userId && f.ApartmentId == apartmentId);
+    }
+
     public async Task<int> GetCountForApartmentAsync(int apartmentId)
     {
         return await _context.Favorites.CountAsync(f => f.ApartmentId == apartmentId);

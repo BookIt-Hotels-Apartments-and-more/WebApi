@@ -1,4 +1,6 @@
 using BookIt.API.Mapping;
+using BookIt.API.Middleware;
+using BookIt.API.Models.Responses;
 using BookIt.BLL.Interfaces;
 using BookIt.BLL.Services;
 using BookIt.DAL.Configuration;
@@ -6,9 +8,11 @@ using BookIt.DAL.Database;
 using BookIt.DAL.Repositories;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Net;
 using System.Text;
 
 const string CORS_POLICY_NAME = "CORS_ANY";
@@ -18,6 +22,31 @@ var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
 builder.Services.AddControllers();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(x => x.Value?.Errors.Count > 0)
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList() ?? []
+            );
+
+        var errorResponse = new ErrorResponse
+        {
+            StatusCode = (int)HttpStatusCode.BadRequest,
+            Error = "Model Validation Failed",
+            Message = "One or more model validation errors occurred",
+            ErrorCode = "MODEL_VALIDATION_ERROR",
+            Details = new Dictionary<string, object> { { "modelValidationErrors", errors } }
+        };
+
+        return new BadRequestObjectResult(errorResponse);
+    };
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(CORS_POLICY_NAME, p =>
@@ -133,6 +162,8 @@ builder.Services.AddAuthentication("Bearer")
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();
