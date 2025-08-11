@@ -21,6 +21,7 @@ public class ApartmentsRepository
             .Include(u => u.Reviews)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
+            .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
             .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .ToListAsync();
     }
@@ -33,6 +34,7 @@ public class ApartmentsRepository
             .Include(u => u.Reviews)
             .Include(a => a.Bookings)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
+            .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
             .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
@@ -79,8 +81,8 @@ public class ApartmentsRepository
             .Include(a => a.Photos)
             .Include(u => u.ApartmentRating)
             .Include(a => a.Establishment).ThenInclude(e => e.Owner)
-            .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
+            .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .OrderByDescending(a => a.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync();
