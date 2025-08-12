@@ -60,6 +60,18 @@ public class BookingDbContext : DbContext
             .HasForeignKey(u => u.UserRatingId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.PhoneNumber)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Username)
+            .IsUnique();
+
         var bookingIdIndexOnReviews = modelBuilder.Entity<Review>().Metadata
             .GetIndexes().FirstOrDefault(i => i.GetDatabaseName() == "IX_Reviews_BookingId");
         

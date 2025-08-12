@@ -65,4 +65,19 @@ public class UserManagementController : ControllerBase
             ? Ok(new { Message = "All images deleted successfully." })
             : BadRequest(new { Message = "Failed to delete images." });
     }
+
+    [HttpPut("details")]
+    [Authorize]
+    public async Task<IActionResult> UpdateUserDetails([FromBody] UserDetailsRequest request)
+    {
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.Parse(userIdStr!);
+
+        var userDetailsDto = _mapper.Map<UserDetailsDTO>(request);
+        userDetailsDto.Id = userId;
+
+        await _userManagementService.UpdateUserDetailsAsync(userDetailsDto);
+
+        return Ok(new { Message = "User details updated successfully." });
+    }
 }

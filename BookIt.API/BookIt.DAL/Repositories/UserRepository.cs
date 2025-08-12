@@ -73,11 +73,6 @@ public class UserRepository
         return await _context.Users.AnyAsync(u => u.Email == email);
     }
 
-    public async Task<bool> ExistsByUsernameAsync(string username)
-    {
-        return await _context.Users.AnyAsync(u => u.Username == username);
-    }
-
     public async Task<bool> ExistsByIdAsync(int id)
     {
         return await _context.Users.AnyAsync(u => u.Id == id);
@@ -103,10 +98,20 @@ public class UserRepository
         user.Role = updatedUser.Role;
         user.EmailConfirmationToken = updatedUser.EmailConfirmationToken;
         user.IsEmailConfirmed = updatedUser.IsEmailConfirmed;
-        user.LastActiveAt = updatedUser.LastActiveAt;
 
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task UpdateUserLastActivityAt(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+
+        if (user is null) return;
+
+        user.LastActiveAt = DateTime.UtcNow;
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
     }
 
     public async Task<bool> DeleteAsync(int id)

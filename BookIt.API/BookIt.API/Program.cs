@@ -20,6 +20,7 @@ const string CORS_POLICY_NAME = "CORS_ANY";
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
+builder.Services.ConfigureSettings(builder.Configuration);
 
 builder.Services.AddControllers();
 
@@ -50,14 +51,15 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(CORS_POLICY_NAME, p =>
-        p.WithOrigins
-        (
-            "http://localhost:5173",
-            "https://localhost:5173"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials());
+            p.WithOrigins
+            (
+                Environment.GetEnvironmentVariable("CLIENT_URL") ?? string.Empty,
+                Environment.GetEnvironmentVariable("CLIENT_URL")?.Replace("http", "https") ?? string.Empty,
+                Environment.GetEnvironmentVariable("CLIENT_URL")?.Replace("https", "http") ?? string.Empty
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -100,11 +102,9 @@ builder.Services.AddDbContext<BookingDbContext>(options =>
 builder.Services.AddMapping();
 builder.Services.AddHttpClient();
 
-builder.Services.ConfigureSettings(builder.Configuration);
-
 builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<IJWTService, JWTService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddSingleton<IJWTService, JWTService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();

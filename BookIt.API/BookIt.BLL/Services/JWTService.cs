@@ -1,6 +1,7 @@
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
 using BookIt.DAL.Configuration.Settings;
+using BookIt.DAL.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -14,13 +15,18 @@ public class JWTService : IJWTService
 {
     private readonly JwtSettings _jwtSettings;
     private readonly ILogger<JWTService> _logger;
+    private readonly UserRepository _userRepository;
     private readonly SymmetricSecurityKey _securityKey;
     private readonly JwtSecurityTokenHandler _tokenHandler;
 
-    public JWTService(IOptions<JwtSettings> jwtSettingsOptions, ILogger<JWTService> logger)
+    public JWTService(
+        ILogger<JWTService> logger,
+        UserRepository userRepository,
+        IOptions<JwtSettings> jwtSettingsOptions)
     {
-        _jwtSettings = jwtSettingsOptions?.Value ?? throw new ArgumentNullException(nameof(jwtSettingsOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _jwtSettings = jwtSettingsOptions?.Value ?? throw new ArgumentNullException(nameof(jwtSettingsOptions));
 
         ValidateJwtConfiguration();
 
@@ -42,6 +48,8 @@ public class JWTService : IJWTService
             var tokenDescriptor = CreateTokenDescriptor(claims, signingCredentials);
             var token = _tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = _tokenHandler.WriteToken(token);
+
+            _userRepository.UpdateUserLastActivityAt(user.Id);
 
             _logger.LogInformation("Successfully generated JWT token for user {UserId}", user.Id);
 
