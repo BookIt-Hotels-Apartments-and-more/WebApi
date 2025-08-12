@@ -15,4 +15,5 @@ public interface IUserService
     Task<UserDTO?> GenerateResetPasswordTokenAsync(string email);
     Task<UserDTO?> ResetPasswordAsync(string token, string newPassword);
     Task<IEnumerable<UserDTO>> GetAllUsersAsync(UserRole? role = null);
+    Task ChangeUserRoleAsync(int userId, UserRole role);
 }

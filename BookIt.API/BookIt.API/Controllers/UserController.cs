@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
-using BookIt.BLL.Services;
 using AutoMapper;
 using BookIt.API.Models.Responses;
+using BookIt.BLL.Services;
+using BookIt.DAL.Enums;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BookIt.API.Controllers;
 
@@ -26,13 +27,20 @@ public class UserController : ControllerBase
         return Ok(usersResponse);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById([FromRoute] int id)
     {
         var userDto = await _userService.GetUserByIdAsync(id);
         if (userDto is null) return NotFound();
         var usersResponse = _mapper.Map<UserResponse>(userDto);
         return Ok(usersResponse);
+    }
+
+    [HttpPatch("{id:int}/role/{role:int}")]
+    public async Task<IActionResult> ChangeRole([FromRoute] int id, [FromRoute] UserRole role)
+    {
+        await _userService.ChangeUserRoleAsync(id, role);
+        return Ok();
     }
 
     // [HttpDelete("{id}")]

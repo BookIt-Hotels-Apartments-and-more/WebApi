@@ -322,6 +322,31 @@ public class UserService : IUserService
         }
     }
 
+    public async Task ChangeUserRoleAsync(int userId, UserRole role)
+    {
+        _logger.LogInformation("Changing user {UserId} role to {Role}", userId, role);
+        try
+        {
+            var currentUser = await _userRepository.GetByIdAsync(userId);
+            if (currentUser is null)
+            {
+                _logger.LogWarning("User with ID {UserId} not found", userId);
+                throw new EntityNotFoundException("User", userId);
+            }
+
+            await _userRepository.SetUserRoleAsync(userId, role);
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to change user {UserId} role to {Role}", userId, role);
+            throw new ExternalServiceException("Database", "Failed to change user role", ex);
+        }
+    }
+
     private string HashPassword(string password)
     {
         _logger.LogInformation("HashPassword started");
