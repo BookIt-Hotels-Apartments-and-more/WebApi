@@ -18,18 +18,21 @@ public class AuthorizationController : ControllerBase
     private readonly IJWTService _jwtService;
     private readonly IEmailSenderService _emailSenderService;
     private readonly IOptions<AppSettings> _appSettingsOptions;
+    private readonly IOptions<UrlSettings> _urlSettingsOptions;
 
     public AuthorizationController(
         IUserService userService,
         IJWTService jwtService,
         IEmailSenderService emailSenderService,
-        IOptions<AppSettings> appSettingsOptions
+        IOptions<AppSettings> appSettingsOptions,
+        IOptions<UrlSettings> urlSettingsOptions
     )
     {
         _userService = userService;
         _jwtService = jwtService;
         _emailSenderService = emailSenderService;
         _appSettingsOptions = appSettingsOptions;
+        _urlSettingsOptions = urlSettingsOptions;
     }
 
     [HttpPost("register")]
@@ -37,33 +40,19 @@ public class AuthorizationController : ControllerBase
     {
         var baseUrl = _appSettingsOptions.Value.BaseUrl;
 
-        try
-        {
-            var user = await _userService.RegisterAsync(request.Username, request.Email, request.Password, UserRole.Tenant);
-            var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
-            var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
+        var user = await _userService.RegisterAsync(request.Username, request.Email, request.Password, UserRole.Tenant);
+        var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
+        var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
 
-            _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
-            return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
+        return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt });
     }
 
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
-        try
-        {
-            var user = await _userService.ResetPasswordAsync(request.Token, request.NewPassword);
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var user = await _userService.ResetPasswordAsync(request.Token, request.NewPassword);
+        return Ok();
     }
 
     [HttpPost("reset-password/generate-token")]
@@ -71,19 +60,12 @@ public class AuthorizationController : ControllerBase
     {
         var baseUrl = _appSettingsOptions.Value.BaseUrl;
 
-        try
-        {
-            var user = await _userService.GenerateResetPasswordTokenAsync(request.Email);
-            var confirmationLink = $"{baseUrl}/auth/reset-token?token={user.ResetPasswordToken}";
-            var body = $"Password Reset: {confirmationLink}";
+        var user = await _userService.GenerateResetPasswordTokenAsync(request.Email);
+        var confirmationLink = $"{baseUrl}/auth/reset-token?token={user.ResetPasswordToken}";
+        var body = $"Password Reset: {confirmationLink}";
 
-            _emailSenderService.SendEmail(user.Email, "Password Reset", body);
-            return Ok();
-        }
-        catch (Exception)
-        {
-            return BadRequest();
-        }
+        _emailSenderService.SendEmail(user.Email, "Password Reset", body);
+        return Ok();
     }
 
     [HttpPost("login")]
@@ -103,23 +85,24 @@ public class AuthorizationController : ControllerBase
             Id = user.Id,
             Username = user.Username,
             Email = user.Email,
-            Token = token
+            Token = token,
+            Role = (int)user.Role,
         });
     }
 
     [HttpGet("verify-email")]
     public async Task<IActionResult> VerifyEmail()
     {
-        string token = HttpContext.Request.Query["token"];
-
+        var clientUrl = _urlSettingsOptions.Value.ClientUrl;
         try
         {
+            var token = HttpContext.Request.Query["token"];
             await _userService.VerifyEmailAsync(token);
-            return Redirect("https://localhost:5173/email-confirmed");
+            return Redirect($"{clientUrl}/email-confirmed");
         }
         catch
         {
-            return Redirect("https://localhost:5173/email-not-confirm");
+            return Redirect($"{clientUrl}/email-not-confirm");
         }
 
     }
@@ -131,18 +114,16 @@ public class AuthorizationController : ControllerBase
         var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         int userId = int.Parse(userIdStr);
 
-        var _user = await _userService.GetUserByIdAsync(userId);
+        var user = await _userService.GetUserByIdAsync(userId);
 
-        if (_user is null)
-        {
-            return Unauthorized();
-        }
+        if (user is null) return Unauthorized();
 
         return Ok(new UserAuthResponse
         {
-            Id = _user.Id,
-            Username = _user.Username,
-            Email = _user.Email,
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Role = (int)user.Role,
         });
     }
 }

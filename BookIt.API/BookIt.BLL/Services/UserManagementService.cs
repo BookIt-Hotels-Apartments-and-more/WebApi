@@ -4,6 +4,7 @@ using BookIt.BLL.Exceptions;
 using BookIt.BLL.Interfaces;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace BookIt.BLL.Services;
@@ -150,6 +151,64 @@ public class UserManagementService : IUserManagementService
         {
             _logger.LogError(ex, "Failed to delete all images for user {UserId}", userId);
             throw new ExternalServiceException("UserManagement", "Failed to delete user images", ex);
+        }
+    }
+
+
+    public async Task UpdateUserDetailsAsync(UserDetailsDTO dto)
+    {
+        _logger.LogInformation("Updating user details for user {UserId}. Provided values: {Details}", dto.Id, dto.ToString());
+        try
+        {
+            var currentUser = await _userRepository.GetByIdAsync(dto.Id);
+            if (currentUser is null)
+            {
+                _logger.LogWarning("User with ID {UserId} not found", dto.Id);
+                throw new EntityNotFoundException("User", dto.Id);
+            }
+
+            currentUser.Bio = dto.Bio;
+            currentUser.Username = dto.Username;
+            currentUser.PhoneNumber = dto.PhoneNumber;
+
+            if (currentUser.Email.Trim() != dto.Email.Trim())
+            {
+                currentUser.Email = dto.Email;
+                currentUser.IsEmailConfirmed = false;
+                currentUser.EmailConfirmationToken = null;
+            }
+
+            await _userRepository.UpdateAsync(currentUser);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogInformation(ex, "SQL error while updating user details for user {UserId}. Reason: {Message}", dto.Id, ex.InnerException?.Message);
+
+            var duplicateProperties = new List<string>();
+
+            if (ex.InnerException?.Message?.Contains($"The duplicate key value is ({dto.Email})") ?? false)
+                duplicateProperties.Add(nameof(dto.Email));
+
+            if (ex.InnerException?.Message?.Contains($"The duplicate key value is ({dto.Username})") ?? false)
+                duplicateProperties.Add(nameof(dto.Username));
+
+            if (ex.InnerException?.Message?.Contains($"The duplicate key value is ({dto.PhoneNumber})") ?? false)
+                duplicateProperties.Add(nameof(dto.PhoneNumber));
+
+            throw new BusinessRuleViolationException(
+                "USER_DETAILS_ARE_NOT_UNIQUE",
+                "Some of user details should be unique",
+                 new Dictionary<string, object>
+                 { { "DuplicateProperties", duplicateProperties }});
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update user details for user {UserId}", dto.Id);
+            throw new ExternalServiceException("UserManagement", "Failed to update user details", ex);
         }
     }
 

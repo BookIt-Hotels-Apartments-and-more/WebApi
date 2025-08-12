@@ -7,6 +7,7 @@ using AutoMapper;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookIt.BLL.Services;
 
@@ -50,6 +51,24 @@ public class UserService : IUserService
             var registeredUser = await _userRepository.CreateAsync(user);
             _logger.LogInformation("User registered successfully with Id={UserId}", registeredUser.Id);
             return _mapper.Map<UserDTO>(registeredUser);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogInformation(ex, "SQL error while registering user {UserId}. Reason: {Message}", username, ex.InnerException?.Message);
+
+            var duplicateProperties = new List<string>();
+
+            if (ex.InnerException?.Message?.Contains($"The duplicate key value is ({email})") ?? false)
+                duplicateProperties.Add(nameof(email));
+
+            if (ex.InnerException?.Message?.Contains($"The duplicate key value is ({username})") ?? false)
+                duplicateProperties.Add(nameof(username));
+
+            throw new BusinessRuleViolationException(
+                "USER_DETAILS_ARE_NOT_UNIQUE",
+                "Some of user details should be unique",
+                 new Dictionary<string, object>
+                 { { "DuplicateProperties", duplicateProperties }});
         }
         catch (BookItBaseException)
         {

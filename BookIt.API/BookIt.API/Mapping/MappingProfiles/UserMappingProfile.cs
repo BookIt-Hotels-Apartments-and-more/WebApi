@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BookIt.API.Models.Requests;
 using BookIt.API.Models.Responses;
 using BookIt.BLL.DTOs;
 using BookIt.DAL.Models;
@@ -12,5 +13,7 @@ public class UserMappingProfile : Profile
         CreateMap<User, UserDTO>();
 
         CreateMap<UserDTO, UserResponse>();
+
+        CreateMap<UserDetailsRequest, UserDetailsDTO>();
     }
 }
