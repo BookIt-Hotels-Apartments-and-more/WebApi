@@ -1,7 +1,6 @@
 using BookIt.API.Models.Requests;
 using BookIt.BLL.Interfaces;
 using BookIt.BLL.Models.Responses;
-using BookIt.BLL.Services;
 using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Enums;
 using Microsoft.AspNetCore.Authorization;

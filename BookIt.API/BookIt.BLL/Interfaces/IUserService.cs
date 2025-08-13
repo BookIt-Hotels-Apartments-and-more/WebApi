@@ -1,7 +1,7 @@
 using BookIt.BLL.DTOs;
 using BookIt.DAL.Enums;
 
-namespace BookIt.BLL.Services;
+namespace BookIt.BLL.Interfaces;
 
 public interface IUserService
 {
@@ -14,6 +14,7 @@ public interface IUserService
     Task<UserDTO?> VerifyEmailAsync(string token);
     Task<UserDTO?> GenerateResetPasswordTokenAsync(string email);
     Task<UserDTO?> ResetPasswordAsync(string token, string newPassword);
+    Task ChangeUserPasswordAsync(int userId, string currentPassword, string newPassword);
     Task<IEnumerable<UserDTO>> GetAllUsersAsync(UserRole? role = null);
     Task ChangeUserRoleAsync(int userId, UserRole role);
 }

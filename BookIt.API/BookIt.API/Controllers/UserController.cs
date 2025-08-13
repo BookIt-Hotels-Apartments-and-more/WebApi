@@ -1,6 +1,6 @@
 using AutoMapper;
 using BookIt.API.Models.Responses;
-using BookIt.BLL.Services;
+using BookIt.BLL.Interfaces;
 using BookIt.DAL.Enums;
 using Microsoft.AspNetCore.Mvc;
 

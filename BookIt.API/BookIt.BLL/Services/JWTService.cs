@@ -1,5 +1,6 @@
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
+using BookIt.BLL.Interfaces;
 using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Repositories;
 using Microsoft.Extensions.Logging;

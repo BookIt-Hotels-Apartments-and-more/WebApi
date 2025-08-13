@@ -1,13 +1,14 @@
-using BookIt.DAL.Repositories;
-using BookIt.DAL.Models;
-using System.Security.Cryptography;
-using System.Text;
-using BookIt.DAL.Enums;
 using AutoMapper;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
-using Microsoft.Extensions.Logging;
+using BookIt.BLL.Interfaces;
+using BookIt.DAL.Enums;
+using BookIt.DAL.Models;
+using BookIt.DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace BookIt.BLL.Services;
 
@@ -241,6 +242,48 @@ public class UserService : IUserService
         {
             _logger.LogError(ex, "Failed to reset password for Token={Token}", token);
             throw new ExternalServiceException("Database", "Failed to reset password", ex);
+        }
+    }
+
+    public async Task ChangeUserPasswordAsync(int userId, string currentPassword, string newPassword)
+    {
+        _logger.LogInformation("Changing password for user {UserId}", userId);
+        try
+        {
+            var userDomain = await _userRepository.GetByIdAsync(userId);
+            if (userDomain is null)
+            {
+                _logger.LogWarning("ChangeUserPasswordAsync failed: user with Id={UserId} not found", userId);
+                throw new EntityNotFoundException("User", userId);
+            }
+
+            var hashedCurrentPassword = HashPassword(currentPassword);
+            if (userDomain.PasswordHash != hashedCurrentPassword)
+            {
+                _logger.LogWarning("ChangeUserPasswordAsync failed: incorrect current password");
+                throw new UnauthorizedOperationException("Incorrect current password");
+            }
+
+            var hashedNewPassword = HashPassword(newPassword);
+            if (hashedCurrentPassword == hashedNewPassword)
+            {
+                _logger.LogWarning("ChangeUserPasswordAsync failed: new password cannot be the same as current password");
+                throw new BusinessRuleViolationException("NEW_PASSWORD_SAME_AS_CURRENT", "New password cannot be the same as current password");
+            }
+
+            await _userRepository.ChangeUserPasswordAsync(userId, hashedNewPassword);
+
+            _logger.LogInformation("Password changed successfully for UserId={UserId}", userId);
+        }
+        catch (BookItBaseException ex)
+        {
+            _logger.LogError(ex, "Failed to change password for user {UserId}", userId);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to change password for user {UserId}", userId);
+            throw new ExternalServiceException("UserManagement", "Failed to change user password", ex);
         }
     }
 

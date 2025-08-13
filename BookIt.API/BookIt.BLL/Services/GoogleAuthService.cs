@@ -1,4 +1,5 @@
 using BookIt.BLL.Exceptions;
+using BookIt.BLL.Interfaces;
 using BookIt.DAL.Configuration.Settings;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;

@@ -1,4 +1,4 @@
-using BookIt.BLL.Services;
+using BookIt.BLL.Interfaces;
 using BookIt.DAL.Configuration.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
