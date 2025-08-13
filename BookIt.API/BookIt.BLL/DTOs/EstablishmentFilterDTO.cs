@@ -5,6 +5,7 @@ namespace BookIt.BLL.DTOs;
 public class EstablishmentFilterDTO
 {
     public string? Name { get; set; }
+    public VibeType? Vibe { get; set; }
     public EstablishmentType? Type { get; set; }
     public EstablishmentFeatures? Features { get; set; }
     public int? OwnerId { get; set; }

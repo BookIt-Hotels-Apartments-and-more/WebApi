@@ -232,16 +232,14 @@ public class EstablishmentsService : IEstablishmentsService
 
             var establishmentsDto = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishments);
 
-            var filteredEstablishments = ApplyInMemoryFilters(establishmentsDto, filter);
-
-            var finalCount = filteredEstablishments.Count();
+            var finalCount = establishmentsDto.Count();
             var totalPages = (int)Math.Ceiling(finalCount / (double)filter.PageSize);
 
             _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", finalCount, totalPages);
 
             return new PagedResultDTO<EstablishmentDTO>
             {
-                Items = filteredEstablishments.ToList(),
+                Items = establishmentsDto,
                 PageNumber = filter.Page,
                 PageSize = filter.PageSize,
                 TotalCount = finalCount,
@@ -295,30 +293,34 @@ public class EstablishmentsService : IEstablishmentsService
     {
         Expression<Func<Establishment, bool>> predicate = e => true;
 
-        if (!string.IsNullOrWhiteSpace(filter.Name)) predicate = predicate.And(e => e.Name.Contains(filter.Name));
-        if (filter.Type.HasValue) predicate = predicate.And(e => e.Type == filter.Type.Value);
-        if (filter.Features.HasValue) predicate = predicate.And(e => (e.Features & filter.Features.Value) == filter.Features.Value);
         if (filter.OwnerId.HasValue) predicate = predicate.And(e => e.OwnerId == filter.OwnerId.Value);
 
+        if (!string.IsNullOrWhiteSpace(filter.Country)) predicate = predicate.And(e => e.Geolocation != null &&
+                                                                                       e.Geolocation.Country != null &&
+                                                                                       e.Geolocation.Country.ToLower().Contains(filter.Country));
+        if (!string.IsNullOrWhiteSpace(filter.City))    predicate = predicate.And(e => e.Geolocation != null &&
+                                                                                       e.Geolocation.City != null &&
+                                                                                       e.Geolocation.City.ToLower().Contains(filter.City));
+
+        if (!string.IsNullOrWhiteSpace(filter.Name)) predicate = predicate.And(e => e.Name.ToLower().Contains(filter.Name));
+
+        if (filter.Vibe.HasValue) predicate = predicate.And(e => e.Vibe == filter.Vibe.Value);
+
+        if (filter.Type.HasValue) predicate = predicate.And(e => e.Type == filter.Type.Value);
+
+        if (filter.Features.HasValue) predicate = predicate.And(e => (e.Features & filter.Features.Value) == filter.Features.Value);
+
+        if (filter.MinRating.HasValue) predicate = predicate.And(e => e.ApartmentRating != null &&
+                                                                      e.ApartmentRating.GeneralRating >= filter.MinRating.Value);
+        if (filter.MaxRating.HasValue) predicate = predicate.And(e => e.ApartmentRating != null &&
+                                                                      e.ApartmentRating.GeneralRating <= filter.MaxRating.Value);
+
+        if (filter.MinPrice.HasValue) predicate = predicate.And(e => e.Apartments.Any() &&
+                                                                     e.Apartments.Max(a => a.Price) >= (double)filter.MinPrice.Value);
+        if (filter.MaxPrice.HasValue) predicate = predicate.And(e => e.Apartments.Any() &&
+                                                                     e.Apartments.Min(a => a.Price) <= (double)filter.MaxPrice.Value);
+
         return predicate;
-    }
-
-    private IEnumerable<EstablishmentDTO> ApplyInMemoryFilters(IEnumerable<EstablishmentDTO> establishments, EstablishmentFilterDTO filter)
-    {
-        var filteredEstablishments = establishments;
-
-        if (!string.IsNullOrWhiteSpace(filter.Country)) filteredEstablishments = filteredEstablishments
-                .Where(e => e.Geolocation?.Country != null && e.Geolocation.Country.Contains(filter.Country, StringComparison.OrdinalIgnoreCase));
-
-        if (!string.IsNullOrWhiteSpace(filter.City)) filteredEstablishments = filteredEstablishments
-                .Where(e => e.Geolocation?.City != null && e.Geolocation.City.Contains(filter.City, StringComparison.OrdinalIgnoreCase));
-
-        if (filter.MinRating.HasValue) filteredEstablishments = filteredEstablishments.Where(e => e.Rating?.GeneralRating >= filter.MinRating.Value);
-        if (filter.MaxRating.HasValue) filteredEstablishments = filteredEstablishments.Where(e => e.Rating?.GeneralRating <= filter.MaxRating.Value);
-        if (filter.MinPrice.HasValue) filteredEstablishments = filteredEstablishments.Where(e => e.Price >= filter.MinPrice.Value);
-        if (filter.MaxPrice.HasValue) filteredEstablishments = filteredEstablishments.Where(e => e.Price <= filter.MaxPrice.Value);
-
-        return filteredEstablishments;
     }
 
     private async Task ProcessEstablishmentImagesAsync(int establishmentId, IEnumerable<ImageDTO>? photos)

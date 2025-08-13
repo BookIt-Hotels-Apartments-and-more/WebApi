@@ -11,7 +11,10 @@ public class EstablishmentsMappingProfile : Profile
 {
     public EstablishmentsMappingProfile()
     {
-        CreateMap<EstablishmentFilterRequest, EstablishmentFilterDTO>();
+        CreateMap<EstablishmentFilterRequest, EstablishmentFilterDTO>()
+            .ForMember(dto => dto.Name, opt => opt.MapFrom(req => req.Name == null ? req.Name : req.Name.ToLower()))
+            .ForMember(dto => dto.City, opt => opt.MapFrom(req => req.City == null ? req.City : req.City.ToLower()))
+            .ForMember(dto => dto.Country, opt => opt.MapFrom(req => req.Country == null ? req.Country : req.Country.ToLower()));
 
         CreateMap<EstablishmentRequest, EstablishmentDTO>()
             .ForMember(dto => dto.Geolocation,
