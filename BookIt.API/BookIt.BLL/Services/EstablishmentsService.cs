@@ -218,7 +218,7 @@ public class EstablishmentsService : IEstablishmentsService
 
     public async Task<PagedResultDTO<EstablishmentDTO>> GetFilteredAsync(EstablishmentFilterDTO filter)
     {
-        _logger.LogInformation("Start GetFilteredAsync with filter {@Filter}", filter);
+        _logger.LogInformation("Start filtering establishments with filter {@Filter}", filter);
         try
         {
             ValidateFilterParameters(filter);

@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using BookIt.BLL.Interfaces;
-using BookIt.BLL.DTOs;
-using AutoMapper;
-using BookIt.API.Models.Responses;
+﻿using AutoMapper;
 using BookIt.API.Models.Requests;
+using BookIt.API.Models.Responses;
+using BookIt.BLL.DTOs;
+using BookIt.BLL.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BookIt.API.Controllers;
 
@@ -61,5 +61,25 @@ public class ReviewsController : ControllerBase
     {
         var deleted = await _service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpGet("filter")]
+    public async Task<ActionResult<PaginatedResponse<ReviewResponse>>> GetFilteredAsync([FromQuery] ReviewFilterRequest request)
+    {
+        var filterDto = _mapper.Map<ReviewFilterDTO>(request);
+        var pagedResult = await _service.GetFilteredAsync(filterDto);
+
+        var response = new PaginatedResponse<ReviewResponse>
+        {
+            Items = _mapper.Map<IEnumerable<ReviewResponse>>(pagedResult.Items),
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize,
+            TotalCount = pagedResult.TotalCount,
+            TotalPages = pagedResult.TotalPages,
+            HasNextPage = pagedResult.HasNextPage,
+            HasPreviousPage = pagedResult.HasPreviousPage
+        };
+
+        return Ok(response);
     }
 }

@@ -6,6 +6,7 @@ using BookIt.DAL.Constants;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 using Microsoft.Extensions.Logging;
+using System.Linq.Expressions;
 
 namespace BookIt.BLL.Services;
 
@@ -455,5 +456,71 @@ public class ReviewsService : IReviewsService
             _logger.LogError(ex, "Failed to remove all review images for review {ReviewId}", reviewId);
             throw new ExternalServiceException("ImageProcessing", "Failed to remove review images", ex);
         }
+    }
+
+    public async Task<PagedResultDTO<ReviewDTO>> GetFilteredAsync(ReviewFilterDTO filter)
+    {
+        _logger.LogInformation("Start filtering reviews with filter {@Filter}", filter);
+        try
+        {
+            ValidateFilterParameters(filter);
+
+            Expression<Func<Review, bool>> predicate = BuildDatabasePredicate(filter);
+
+            var (reviews, totalCount) = await _reviewsRepository.GetFilteredAsync(
+                predicate,
+                filter.Page,
+                filter.PageSize);
+
+            var reviewsDto = _mapper.Map<IEnumerable<ReviewDTO>>(reviews);
+
+            var finalCount = reviewsDto.Count();
+            var totalPages = (int)Math.Ceiling(finalCount / (double)filter.PageSize);
+
+            _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", finalCount, totalPages);
+
+            return new PagedResultDTO<ReviewDTO>
+            {
+                Items = reviewsDto,
+                PageNumber = filter.Page,
+                PageSize = filter.PageSize,
+                TotalCount = finalCount,
+                TotalPages = totalPages,
+                HasNextPage = filter.Page < totalPages,
+                HasPreviousPage = filter.Page > 1
+            };
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get filtered establishments");
+            throw new ExternalServiceException("Database", "Failed to get filtered establishments", ex);
+        }
+    }
+
+    private void ValidateFilterParameters(ReviewFilterDTO filter)
+    {
+        if (filter.Page <= 0)
+            throw new BusinessRuleViolationException("INVALID_PAGE", "Page number must be greater than 0");
+
+        if (filter.PageSize <= 0)
+            throw new BusinessRuleViolationException("INVALID_PAGE_SIZE", "Page size must be greater than 0");
+
+        if (filter.PageSize > 100)
+            throw new BusinessRuleViolationException("PAGE_SIZE_TOO_LARGE", "Page size cannot exceed 100 items");
+    }
+
+    private Expression<Func<Review, bool>> BuildDatabasePredicate(ReviewFilterDTO filter)
+    {
+        Expression<Func<Review, bool>> predicate = e => true;
+
+        if (filter.TenantId.HasValue) predicate = predicate.And(r => r.UserId == filter.TenantId.Value);
+        if (filter.ApartmentId.HasValue) predicate = predicate.And(r => r.ApartmentId == filter.ApartmentId.Value);
+        if (filter.EstablishmentId.HasValue) predicate = predicate.And(r => r.Apartment != null && r.Apartment.EstablishmentId == filter.EstablishmentId.Value);
+
+        return predicate;
     }
 }
