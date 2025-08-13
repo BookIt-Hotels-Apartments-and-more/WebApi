@@ -103,13 +103,35 @@ public class UserRepository
         return true;
     }
 
-    public async Task UpdateUserLastActivityAt(int id)
+    public async Task UpdateUserLastActivityAtAsync(int id)
     {
         var user = await _context.Users.FindAsync(id);
 
         if (user is null) return;
 
         user.LastActiveAt = DateTime.UtcNow;
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task SetUserRoleAsync(int id, UserRole role)
+    {
+        var user = await _context.Users.FindAsync(id);
+
+        if (user is null) return;
+
+        user.Role = role;
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ChangeUserPasswordAsync(int id, string newPasswordHash)
+    {
+        var user = await _context.Users.FindAsync(id);
+
+        if (user is null) return;
+
+        user.PasswordHash = newPasswordHash;
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
     }

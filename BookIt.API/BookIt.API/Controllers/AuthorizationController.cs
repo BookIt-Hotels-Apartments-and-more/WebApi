@@ -1,12 +1,11 @@
-using BookIt.BLL.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using BookIt.API.Models.Requests;
-using BookIt.BLL.Models.Responses;
 using BookIt.BLL.Interfaces;
-using BookIt.DAL.Enums;
-using Microsoft.Extensions.Options;
+using BookIt.BLL.Models.Responses;
 using BookIt.DAL.Configuration.Settings;
+using BookIt.DAL.Enums;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace BookIt.API.Controllers;
 
@@ -41,6 +40,33 @@ public class AuthorizationController : ControllerBase
         var baseUrl = _appSettingsOptions.Value.BaseUrl;
 
         var user = await _userService.RegisterAsync(request.Username, request.Email, request.Password, UserRole.Tenant);
+        var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
+        var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
+
+        _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
+        return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt });
+    }
+
+    [HttpPost("register-landlord")]
+    public async Task<IActionResult> RegisterLandlord([FromBody] RegisterRequest request)
+    {
+        var baseUrl = _appSettingsOptions.Value.BaseUrl;
+
+        var user = await _userService.RegisterAsync(request.Username, request.Email, request.Password, UserRole.Landlord);
+        var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
+        var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
+
+        _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
+        return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt });
+    }
+
+    [HttpPost("register-admin")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequest request)
+    {
+        var baseUrl = _appSettingsOptions.Value.BaseUrl;
+
+        var user = await _userService.RegisterAsync(request.Username, request.Email, request.Password, UserRole.Admin);
         var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
 

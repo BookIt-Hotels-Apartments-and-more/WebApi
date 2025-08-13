@@ -1,7 +1,7 @@
 using BookIt.BLL.DTOs;
 using System.Security.Claims;
 
-namespace BookIt.BLL.Services;
+namespace BookIt.BLL.Interfaces;
 
 public interface IJWTService
 {

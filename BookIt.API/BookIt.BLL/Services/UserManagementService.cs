@@ -154,7 +154,6 @@ public class UserManagementService : IUserManagementService
         }
     }
 
-
     public async Task UpdateUserDetailsAsync(UserDetailsDTO dto)
     {
         _logger.LogInformation("Updating user details for user {UserId}. Provided values: {Details}", dto.Id, dto.ToString());

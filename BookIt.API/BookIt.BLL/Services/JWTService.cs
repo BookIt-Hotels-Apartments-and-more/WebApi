@@ -1,5 +1,6 @@
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
+using BookIt.BLL.Interfaces;
 using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Repositories;
 using Microsoft.Extensions.Logging;
@@ -49,7 +50,7 @@ public class JWTService : IJWTService
             var token = _tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = _tokenHandler.WriteToken(token);
 
-            _userRepository.UpdateUserLastActivityAt(user.Id);
+            _userRepository.UpdateUserLastActivityAtAsync(user.Id);
 
             _logger.LogInformation("Successfully generated JWT token for user {UserId}", user.Id);
 

@@ -1,4 +1,4 @@
-namespace BookIt.BLL.Services;
+namespace BookIt.BLL.Interfaces;
 
 public interface IGoogleAuthService
 {

@@ -1,13 +1,14 @@
-using BookIt.DAL.Repositories;
-using BookIt.DAL.Models;
-using System.Security.Cryptography;
-using System.Text;
-using BookIt.DAL.Enums;
 using AutoMapper;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
-using Microsoft.Extensions.Logging;
+using BookIt.BLL.Interfaces;
+using BookIt.DAL.Enums;
+using BookIt.DAL.Models;
+using BookIt.DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace BookIt.BLL.Services;
 
@@ -124,7 +125,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserDTO?> AuthByGoogleAsync(string username, string email)
+    public async Task<UserDTO?> AuthByGoogleAsync(string username, string email, UserRole role = UserRole.Tenant)
     {
         _logger.LogInformation("AuthByGoogleAsync started for Email={Email}, Username={Username}", email, username);
         try
@@ -140,7 +141,7 @@ public class UserService : IUserService
             else
             {
                 _logger.LogInformation("AuthByGoogleAsync: no existing user, registering new user for Email={Email}", email);
-                return await RegisterAsync(username, email, null, UserRole.Tenant);
+                return await RegisterAsync(username, email, null, role);
             }
         }
         catch (BookItBaseException)
@@ -244,6 +245,48 @@ public class UserService : IUserService
         }
     }
 
+    public async Task ChangeUserPasswordAsync(int userId, string currentPassword, string newPassword)
+    {
+        _logger.LogInformation("Changing password for user {UserId}", userId);
+        try
+        {
+            var userDomain = await _userRepository.GetByIdAsync(userId);
+            if (userDomain is null)
+            {
+                _logger.LogWarning("ChangeUserPasswordAsync failed: user with Id={UserId} not found", userId);
+                throw new EntityNotFoundException("User", userId);
+            }
+
+            var hashedCurrentPassword = HashPassword(currentPassword);
+            if (userDomain.PasswordHash != hashedCurrentPassword)
+            {
+                _logger.LogWarning("ChangeUserPasswordAsync failed: incorrect current password");
+                throw new UnauthorizedOperationException("Incorrect current password");
+            }
+
+            var hashedNewPassword = HashPassword(newPassword);
+            if (hashedCurrentPassword == hashedNewPassword)
+            {
+                _logger.LogWarning("ChangeUserPasswordAsync failed: new password cannot be the same as current password");
+                throw new BusinessRuleViolationException("NEW_PASSWORD_SAME_AS_CURRENT", "New password cannot be the same as current password");
+            }
+
+            await _userRepository.ChangeUserPasswordAsync(userId, hashedNewPassword);
+
+            _logger.LogInformation("Password changed successfully for UserId={UserId}", userId);
+        }
+        catch (BookItBaseException ex)
+        {
+            _logger.LogError(ex, "Failed to change password for user {UserId}", userId);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to change password for user {UserId}", userId);
+            throw new ExternalServiceException("UserManagement", "Failed to change user password", ex);
+        }
+    }
+
     public async Task<UserDTO?> LoginAsync(string email, string password)
     {
         _logger.LogInformation("LoginAsync started for Email={Email}", email);
@@ -319,6 +362,31 @@ public class UserService : IUserService
         {
             _logger.LogError(ex, "Failed to retrieve users");
             throw new ExternalServiceException("Database", "Failed to retrieve users", ex);
+        }
+    }
+
+    public async Task ChangeUserRoleAsync(int userId, UserRole role)
+    {
+        _logger.LogInformation("Changing user {UserId} role to {Role}", userId, role);
+        try
+        {
+            var currentUser = await _userRepository.GetByIdAsync(userId);
+            if (currentUser is null)
+            {
+                _logger.LogWarning("User with ID {UserId} not found", userId);
+                throw new EntityNotFoundException("User", userId);
+            }
+
+            await _userRepository.SetUserRoleAsync(userId, role);
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to change user {UserId} role to {Role}", userId, role);
+            throw new ExternalServiceException("Database", "Failed to change user role", ex);
         }
     }
 

@@ -9,15 +9,20 @@ using Microsoft.AspNetCore.Mvc;
 namespace BookIt.API.Controllers;
 
 [ApiController]
-[Route("user")]
+[Route("api/[controller]")]
 public class UserManagementController : ControllerBase
 {
     private readonly IMapper _mapper;
+    private readonly IUserService _userService;
     private readonly IUserManagementService _userManagementService;
 
-    public UserManagementController(IMapper mapper, IUserManagementService userManagementService)
+    public UserManagementController(
+        IMapper mapper,
+        IUserService userService,
+        IUserManagementService userManagementService)
     {
         _mapper = mapper;
+        _userService = userService;
         _userManagementService = userManagementService;
     }
 
@@ -79,5 +84,17 @@ public class UserManagementController : ControllerBase
         await _userManagementService.UpdateUserDetailsAsync(userDetailsDto);
 
         return Ok(new { Message = "User details updated successfully." });
+    }
+
+    [HttpPut("password")]
+    [Authorize]
+    public async Task<IActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
+    {
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.Parse(userIdStr!);
+
+        await _userService.ChangeUserPasswordAsync(userId, request.CurrentPassword, request.NewPassword);
+
+        return Ok(new { Message = "Password changed successfully." });
     }
 }
