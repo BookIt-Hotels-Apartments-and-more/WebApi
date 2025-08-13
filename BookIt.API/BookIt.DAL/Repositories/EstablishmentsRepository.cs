@@ -104,4 +104,46 @@ public class EstablishmentsRepository
         return (await _context.Establishments.AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == id))?.ApartmentRatingId;
     }
+
+    public async Task<IEnumerable<(Establishment Establishment, int BookingCount)>> GetTrendingAsync(int count, int? periodInDays = null)
+    {
+        var fromDate = periodInDays.HasValue ? DateTime.UtcNow.AddDays(-periodInDays.Value) : (DateTime?)null;
+
+        var topEstablishmentsQuery = _context.Establishments
+            .Select(e => new
+            {
+                e.Id,
+                BookingCount = e.Apartments
+                    .SelectMany(a => a.Bookings)
+                    .Where(b => !fromDate.HasValue || b.DateFrom >= fromDate.Value && b.DateFrom <= DateTime.UtcNow)
+                    .Count()
+            })
+            .OrderByDescending(x => x.BookingCount)
+            .Take(count);
+
+        var topEstablishments = await topEstablishmentsQuery.ToListAsync();
+
+        var ids = topEstablishments.Select(x => x.Id).ToList();
+
+        var establishmentsWithIncludes = await _context.Establishments
+            .Where(e => ids.Contains(e.Id))
+            .Include(e => e.Owner)
+            .Include(e => e.Photos)
+            .Include(e => e.ApartmentRating)
+            .Include(e => e.Geolocation)
+            .Include(e => e.Apartments).ThenInclude(a => a.Reviews)
+            .Include(e => e.Apartments).ThenInclude(a => a.Bookings)
+            .ToListAsync();
+
+        var result = establishmentsWithIncludes
+            .Join(topEstablishments,
+                  e => e.Id,
+                  t => t.Id,
+                  (e, t) => (Establishment: e, t.BookingCount))
+            .OrderByDescending(x => x.BookingCount)
+            .ThenByDescending(x => x.Establishment?.ApartmentRating?.GeneralRating)
+            .ToList();
+
+        return result;
+    }
 }

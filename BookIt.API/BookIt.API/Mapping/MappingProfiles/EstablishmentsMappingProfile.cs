@@ -50,5 +50,24 @@ public class EstablishmentsMappingProfile : Profile
                 ElectricCarCharging = (dto.Features & EstablishmentFeatures.ElectricCarCharging) != 0,
                 Elevator = (dto.Features & EstablishmentFeatures.Elevator) != 0
             }));
+
+        CreateMap<Establishment, TrendingEstablishmentDTO>()
+            .ForMember(dto => dto.Owner, o => o.MapFrom(e => e.Owner))
+            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => src.ApartmentRating));
+
+        CreateMap<TrendingEstablishmentDTO, TrendingEstablishmentResponse>()
+            .ForMember(res => res.Features, opt => opt.MapFrom(dto => new EstablishmentFeaturesResponse
+            {
+                Parking = (dto.Features & EstablishmentFeatures.Parking) != 0,
+                Pool = (dto.Features & EstablishmentFeatures.Pool) != 0,
+                Beach = (dto.Features & EstablishmentFeatures.Beach) != 0,
+                Fishing = (dto.Features & EstablishmentFeatures.Fishing) != 0,
+                Sauna = (dto.Features & EstablishmentFeatures.Sauna) != 0,
+                Restaurant = (dto.Features & EstablishmentFeatures.Restaurant) != 0,
+                Smoking = (dto.Features & EstablishmentFeatures.Smoking) != 0,
+                AccessibleForDisabled = (dto.Features & EstablishmentFeatures.AccessibleForDisabled) != 0,
+                ElectricCarCharging = (dto.Features & EstablishmentFeatures.ElectricCarCharging) != 0,
+                Elevator = (dto.Features & EstablishmentFeatures.Elevator) != 0
+            }));
     }
 }

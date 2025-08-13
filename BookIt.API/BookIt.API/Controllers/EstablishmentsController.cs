@@ -40,6 +40,14 @@ public class EstablishmentsController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("trending")]
+    public async Task<ActionResult<IEnumerable<TrendingEstablishmentResponse>>> GetTrendingAsync([FromQuery] TrendingEstablishmentsRequest request)
+    {
+        var trendingEstablishmentsDto = await _service.GetTrendingAsync(request.Count, request.PastDays);
+        var trendingEstablishmentsResponse = _mapper.Map<IEnumerable<TrendingEstablishmentResponse>>(trendingEstablishmentsDto);
+        return Ok(trendingEstablishmentsResponse);
+    }
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<EstablishmentResponse>>> GetAllAsync()
     {

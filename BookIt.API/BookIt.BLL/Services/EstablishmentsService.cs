@@ -259,6 +259,43 @@ public class EstablishmentsService : IEstablishmentsService
         }
     }
 
+    public async Task<IEnumerable<TrendingEstablishmentDTO>> GetTrendingAsync(int count = 10, int? periodInDays = null)
+    {
+        try
+        {
+            _logger.LogInformation("Start getting top {Count} trending establishments {Period} ",
+                count, periodInDays is null ? "ever" : $"for the past {periodInDays} days");
+
+            if (count <= 0)
+                throw new BusinessRuleViolationException("INVALID_COUNT", "Count must be greater than 0");
+
+            if (periodInDays.HasValue && periodInDays <= 0)
+                throw new BusinessRuleViolationException("INVALID_PERIOD", "Period in days must be greater than 0");
+
+            var establishmentsAndBookingsCount = await _establishmentsRepository.GetTrendingAsync(count, periodInDays);
+            var trendingEstablishmentsDto = establishmentsAndBookingsCount
+                .Select(x =>
+                {
+                    var dto = _mapper.Map<TrendingEstablishmentDTO>(x.Establishment);
+                    dto.BookingsCount = x.BookingCount;
+                    return dto;
+                })
+                .ToList();
+
+            _logger.LogInformation("Successfully retrieved top {Count} trending establishments", trendingEstablishmentsDto.Count());
+            return trendingEstablishmentsDto;
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve trending establishments");
+            throw new ExternalServiceException("Database", "Failed to retrieve trending establishments", ex);
+        }
+    }
+
     private void ValidateFilterParameters(EstablishmentFilterDTO filter)
     {
         if (filter.Page <= 0)
