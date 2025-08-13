@@ -1,6 +1,7 @@
 ﻿using BookIt.DAL.Database;
 using BookIt.DAL.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace BookIt.DAL.Repositories;
 
@@ -141,5 +142,29 @@ public class ReviewsRepository
             .AsNoTracking()
             .Where(r => r.UserId == userId)
             .ToListAsync();
+    }
+
+    public async Task<(IEnumerable<Review>, int)> GetFilteredAsync(
+        Expression<Func<Review, bool>> predicate,
+        int page,
+        int pageSize)
+    {
+        var totalCount = await _context.Reviews
+            .Where(predicate)
+            .CountAsync();
+
+        var reviews = await _context.Reviews
+            .Where(predicate)
+            .Include(r => r.Photos)
+            .Include(r => r.Booking)
+            .Include(r => r.User).ThenInclude(u => u.Photos)
+            .Include(r => r.Apartment).ThenInclude(a => a.Photos)
+            .Include(r => r.Apartment).ThenInclude(a => a.Establishment)
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (reviews, totalCount);
     }
 }

@@ -11,7 +11,10 @@ public class EstablishmentsMappingProfile : Profile
 {
     public EstablishmentsMappingProfile()
     {
-        CreateMap<EstablishmentFilterRequest, EstablishmentFilterDTO>();
+        CreateMap<EstablishmentFilterRequest, EstablishmentFilterDTO>()
+            .ForMember(dto => dto.Name, opt => opt.MapFrom(req => req.Name == null ? req.Name : req.Name.ToLower()))
+            .ForMember(dto => dto.City, opt => opt.MapFrom(req => req.City == null ? req.City : req.City.ToLower()))
+            .ForMember(dto => dto.Country, opt => opt.MapFrom(req => req.Country == null ? req.Country : req.Country.ToLower()));
 
         CreateMap<EstablishmentRequest, EstablishmentDTO>()
             .ForMember(dto => dto.Geolocation,
@@ -34,6 +37,25 @@ public class EstablishmentsMappingProfile : Profile
 
         CreateMap<EstablishmentDTO, EstablishmentResponse>()
             .ForMember(res => res.Rating, opt => opt.MapFrom(dto => dto.Rating))
+            .ForMember(res => res.Features, opt => opt.MapFrom(dto => new EstablishmentFeaturesResponse
+            {
+                Parking = (dto.Features & EstablishmentFeatures.Parking) != 0,
+                Pool = (dto.Features & EstablishmentFeatures.Pool) != 0,
+                Beach = (dto.Features & EstablishmentFeatures.Beach) != 0,
+                Fishing = (dto.Features & EstablishmentFeatures.Fishing) != 0,
+                Sauna = (dto.Features & EstablishmentFeatures.Sauna) != 0,
+                Restaurant = (dto.Features & EstablishmentFeatures.Restaurant) != 0,
+                Smoking = (dto.Features & EstablishmentFeatures.Smoking) != 0,
+                AccessibleForDisabled = (dto.Features & EstablishmentFeatures.AccessibleForDisabled) != 0,
+                ElectricCarCharging = (dto.Features & EstablishmentFeatures.ElectricCarCharging) != 0,
+                Elevator = (dto.Features & EstablishmentFeatures.Elevator) != 0
+            }));
+
+        CreateMap<Establishment, TrendingEstablishmentDTO>()
+            .ForMember(dto => dto.Owner, o => o.MapFrom(e => e.Owner))
+            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => src.ApartmentRating));
+
+        CreateMap<TrendingEstablishmentDTO, TrendingEstablishmentResponse>()
             .ForMember(res => res.Features, opt => opt.MapFrom(dto => new EstablishmentFeaturesResponse
             {
                 Parking = (dto.Features & EstablishmentFeatures.Parking) != 0,

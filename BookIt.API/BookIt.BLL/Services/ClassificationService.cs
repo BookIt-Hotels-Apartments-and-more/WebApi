@@ -130,7 +130,7 @@ public class ClassificationService : IClassificationService
         if (validationErrors.Any())
         {
             _logger.LogWarning("Gemini AI settings validation failed: {@Errors}", validationErrors);
-            throw new ValidationException(validationErrors);
+            throw new Exception("Invalid Gemini configuration");
         }
     }
 

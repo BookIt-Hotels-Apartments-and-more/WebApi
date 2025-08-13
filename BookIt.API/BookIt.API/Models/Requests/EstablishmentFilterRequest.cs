@@ -6,6 +6,7 @@ namespace BookIt.API.Models.Requests;
 public class EstablishmentFilterRequest
 {
     public string? Name { get; set; }
+    public VibeType? Vibe { get; set; }
     public EstablishmentType? Type { get; set; }
     public EstablishmentFeatures? Features { get; set; }
     public int? OwnerId { get; set; }

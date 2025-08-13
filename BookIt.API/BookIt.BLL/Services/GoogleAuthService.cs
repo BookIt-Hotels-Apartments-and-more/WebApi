@@ -104,7 +104,7 @@ public class GoogleAuthService : IGoogleAuthService
         }
 
         if (validationErrors.Any())
-            throw new ValidationException(validationErrors);
+            throw new Exception("Invalid Geoogle OAuth configuration");
     }
 
     private void ValidateAuthorizationCode(string code)

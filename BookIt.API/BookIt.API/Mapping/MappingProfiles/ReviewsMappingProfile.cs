@@ -10,6 +10,8 @@ public class ReviewsMappingProfile : Profile
 {
     public ReviewsMappingProfile()
     {
+        CreateMap<ReviewFilterRequest, ReviewFilterDTO>();
+
         CreateMap<ReviewRequest, ReviewDTO>()
             .ForMember(dto => dto.Photos,
                        o => o.MapFrom(req => req.ExistingPhotosIds.Select(id => new ImageDTO { Id = id })

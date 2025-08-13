@@ -218,7 +218,7 @@ public class EstablishmentsService : IEstablishmentsService
 
     public async Task<PagedResultDTO<EstablishmentDTO>> GetFilteredAsync(EstablishmentFilterDTO filter)
     {
-        _logger.LogInformation("Start GetFilteredAsync with filter {@Filter}", filter);
+        _logger.LogInformation("Start filtering establishments with filter {@Filter}", filter);
         try
         {
             ValidateFilterParameters(filter);
@@ -232,16 +232,14 @@ public class EstablishmentsService : IEstablishmentsService
 
             var establishmentsDto = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishments);
 
-            var filteredEstablishments = ApplyInMemoryFilters(establishmentsDto, filter);
-
-            var finalCount = filteredEstablishments.Count();
+            var finalCount = establishmentsDto.Count();
             var totalPages = (int)Math.Ceiling(finalCount / (double)filter.PageSize);
 
             _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", finalCount, totalPages);
 
             return new PagedResultDTO<EstablishmentDTO>
             {
-                Items = filteredEstablishments.ToList(),
+                Items = establishmentsDto,
                 PageNumber = filter.Page,
                 PageSize = filter.PageSize,
                 TotalCount = finalCount,
@@ -258,6 +256,43 @@ public class EstablishmentsService : IEstablishmentsService
         {
             _logger.LogError(ex, "Failed to get filtered establishments");
             throw new ExternalServiceException("Database", "Failed to get filtered establishments", ex);
+        }
+    }
+
+    public async Task<IEnumerable<TrendingEstablishmentDTO>> GetTrendingAsync(int count = 10, int? periodInDays = null)
+    {
+        try
+        {
+            _logger.LogInformation("Start getting top {Count} trending establishments {Period} ",
+                count, periodInDays is null ? "ever" : $"for the past {periodInDays} days");
+
+            if (count <= 0)
+                throw new BusinessRuleViolationException("INVALID_COUNT", "Count must be greater than 0");
+
+            if (periodInDays.HasValue && periodInDays <= 0)
+                throw new BusinessRuleViolationException("INVALID_PERIOD", "Period in days must be greater than 0");
+
+            var establishmentsAndBookingsCount = await _establishmentsRepository.GetTrendingAsync(count, periodInDays);
+            var trendingEstablishmentsDto = establishmentsAndBookingsCount
+                .Select(x =>
+                {
+                    var dto = _mapper.Map<TrendingEstablishmentDTO>(x.Establishment);
+                    dto.BookingsCount = x.BookingCount;
+                    return dto;
+                })
+                .ToList();
+
+            _logger.LogInformation("Successfully retrieved top {Count} trending establishments", trendingEstablishmentsDto.Count());
+            return trendingEstablishmentsDto;
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve trending establishments");
+            throw new ExternalServiceException("Database", "Failed to retrieve trending establishments", ex);
         }
     }
 
@@ -295,30 +330,34 @@ public class EstablishmentsService : IEstablishmentsService
     {
         Expression<Func<Establishment, bool>> predicate = e => true;
 
-        if (!string.IsNullOrWhiteSpace(filter.Name)) predicate = predicate.And(e => e.Name.Contains(filter.Name));
-        if (filter.Type.HasValue) predicate = predicate.And(e => e.Type == filter.Type.Value);
-        if (filter.Features.HasValue) predicate = predicate.And(e => (e.Features & filter.Features.Value) == filter.Features.Value);
         if (filter.OwnerId.HasValue) predicate = predicate.And(e => e.OwnerId == filter.OwnerId.Value);
 
+        if (!string.IsNullOrWhiteSpace(filter.Country)) predicate = predicate.And(e => e.Geolocation != null &&
+                                                                                       e.Geolocation.Country != null &&
+                                                                                       e.Geolocation.Country.ToLower().Contains(filter.Country));
+        if (!string.IsNullOrWhiteSpace(filter.City))    predicate = predicate.And(e => e.Geolocation != null &&
+                                                                                       e.Geolocation.City != null &&
+                                                                                       e.Geolocation.City.ToLower().Contains(filter.City));
+
+        if (!string.IsNullOrWhiteSpace(filter.Name)) predicate = predicate.And(e => e.Name.ToLower().Contains(filter.Name));
+
+        if (filter.Vibe.HasValue) predicate = predicate.And(e => e.Vibe == filter.Vibe.Value);
+
+        if (filter.Type.HasValue) predicate = predicate.And(e => e.Type == filter.Type.Value);
+
+        if (filter.Features.HasValue) predicate = predicate.And(e => (e.Features & filter.Features.Value) == filter.Features.Value);
+
+        if (filter.MinRating.HasValue) predicate = predicate.And(e => e.ApartmentRating != null &&
+                                                                      e.ApartmentRating.GeneralRating >= filter.MinRating.Value);
+        if (filter.MaxRating.HasValue) predicate = predicate.And(e => e.ApartmentRating != null &&
+                                                                      e.ApartmentRating.GeneralRating <= filter.MaxRating.Value);
+
+        if (filter.MinPrice.HasValue) predicate = predicate.And(e => e.Apartments.Any() &&
+                                                                     e.Apartments.Max(a => a.Price) >= (double)filter.MinPrice.Value);
+        if (filter.MaxPrice.HasValue) predicate = predicate.And(e => e.Apartments.Any() &&
+                                                                     e.Apartments.Min(a => a.Price) <= (double)filter.MaxPrice.Value);
+
         return predicate;
-    }
-
-    private IEnumerable<EstablishmentDTO> ApplyInMemoryFilters(IEnumerable<EstablishmentDTO> establishments, EstablishmentFilterDTO filter)
-    {
-        var filteredEstablishments = establishments;
-
-        if (!string.IsNullOrWhiteSpace(filter.Country)) filteredEstablishments = filteredEstablishments
-                .Where(e => e.Geolocation?.Country != null && e.Geolocation.Country.Contains(filter.Country, StringComparison.OrdinalIgnoreCase));
-
-        if (!string.IsNullOrWhiteSpace(filter.City)) filteredEstablishments = filteredEstablishments
-                .Where(e => e.Geolocation?.City != null && e.Geolocation.City.Contains(filter.City, StringComparison.OrdinalIgnoreCase));
-
-        if (filter.MinRating.HasValue) filteredEstablishments = filteredEstablishments.Where(e => e.Rating?.GeneralRating >= filter.MinRating.Value);
-        if (filter.MaxRating.HasValue) filteredEstablishments = filteredEstablishments.Where(e => e.Rating?.GeneralRating <= filter.MaxRating.Value);
-        if (filter.MinPrice.HasValue) filteredEstablishments = filteredEstablishments.Where(e => e.Price >= filter.MinPrice.Value);
-        if (filter.MaxPrice.HasValue) filteredEstablishments = filteredEstablishments.Where(e => e.Price <= filter.MaxPrice.Value);
-
-        return filteredEstablishments;
     }
 
     private async Task ProcessEstablishmentImagesAsync(int establishmentId, IEnumerable<ImageDTO>? photos)

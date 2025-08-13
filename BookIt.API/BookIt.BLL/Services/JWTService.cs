@@ -188,7 +188,7 @@ public class JWTService : IJWTService
             validationErrors.Add("ExpiryInHours", new List<string> { "JWT expiry cannot exceed 7 days (168 hours)" });
 
         if (validationErrors.Any())
-            throw new ValidationException(validationErrors);
+            throw new Exception("Invalid JWT configuration");
     }
 
     private void ValidateUserData(UserDTO user)
