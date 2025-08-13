@@ -136,9 +136,7 @@ public class MonobankAcquiringService : IMonobankAcquiringService
             validationErrors.Add("WebhookBaseUrl", new List<string> { "Webhook base URL must be a valid absolute URL" });
 
         if (validationErrors.Any())
-        {
-            throw new ValidationException(validationErrors);
-        }
+            throw new Exception("Invalid Monobank configuration");
     }
 
     private void ConfigureHttpClient()

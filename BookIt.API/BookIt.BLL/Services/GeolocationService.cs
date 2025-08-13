@@ -162,7 +162,7 @@ public class GeolocationService : IGeolocationService, IDisposable
         if (validationErrors.Any())
         {
             _logger.LogError("Geocoding configuration validation failed: {Errors}", validationErrors);
-            throw new ValidationException(validationErrors);
+            throw new Exception("Invalid Geocoding configuration");
         }
         _logger.LogInformation("Geocoding configuration validated successfully");
     }

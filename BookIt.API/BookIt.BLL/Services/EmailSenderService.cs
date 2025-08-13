@@ -71,22 +71,22 @@ public class EmailSenderService : IEmailSenderService
         _logger.LogInformation("Validating email configuration settings");
 
         if (string.IsNullOrWhiteSpace(_emailSettings.SmtpServer))
-            throw new ValidationException("SmtpServer", "SMTP server is required");
+            throw new Exception("Invalid SMTP configuration");
 
         if (_emailSettings.SmtpPort <= 0 || _emailSettings.SmtpPort > 65535)
-            throw new ValidationException("SmtpPort", "SMTP port must be between 1 and 65535");
+            throw new Exception("Invalid SMTP configuration");
 
         if (string.IsNullOrWhiteSpace(_emailSettings.FromEmail))
-            throw new ValidationException("FromEmail", "From email address is required");
+            throw new Exception("Invalid SMTP configuration");
 
         if (!EmailRegex.IsMatch(_emailSettings.FromEmail))
-            throw new ValidationException("FromEmail", "From email address format is invalid");
+            throw new Exception("Invalid SMTP configuration");
 
         if (string.IsNullOrWhiteSpace(_emailSettings.FromName))
-            throw new ValidationException("FromName", "From name is required");
+            throw new Exception("Invalid SMTP configuration");
 
         if (string.IsNullOrWhiteSpace(_emailSettings.Password))
-            throw new ValidationException("Password", "Email password is required");
+            throw new Exception("Invalid SMTP configuration");
 
         _logger.LogInformation("Email configuration validated successfully");
     }
