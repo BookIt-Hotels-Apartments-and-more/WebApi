@@ -125,7 +125,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserDTO?> AuthByGoogleAsync(string username, string email)
+    public async Task<UserDTO?> AuthByGoogleAsync(string username, string email, UserRole role = UserRole.Tenant)
     {
         _logger.LogInformation("AuthByGoogleAsync started for Email={Email}, Username={Username}", email, username);
         try
@@ -141,7 +141,7 @@ public class UserService : IUserService
             else
             {
                 _logger.LogInformation("AuthByGoogleAsync: no existing user, registering new user for Email={Email}", email);
-                return await RegisterAsync(username, email, null, UserRole.Tenant);
+                return await RegisterAsync(username, email, null, role);
             }
         }
         catch (BookItBaseException)

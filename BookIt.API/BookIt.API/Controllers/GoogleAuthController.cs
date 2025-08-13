@@ -5,8 +5,8 @@ using Microsoft.Extensions.Options;
 
 namespace BookIt.API.Controllers;
 
-[Route("google-auth")]
 [ApiController]
+[Route("google-auth")]
 public class GoogleAuthController : ControllerBase
 {
     private readonly IGoogleAuthService _googleAuthService;
