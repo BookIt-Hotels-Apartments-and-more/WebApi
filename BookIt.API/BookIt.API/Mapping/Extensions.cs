@@ -15,6 +15,7 @@ public static class ServicesExtensions
         services.AddAutoMapper(typeof(ReviewsMappingProfile));
         services.AddAutoMapper(typeof(RatingsMappingProfile));
         services.AddAutoMapper(typeof(UserMappingProfile));
+        services.AddAutoMapper(typeof(CommonMappingProfile));
         return services;
     }
 }

@@ -1,6 +1,6 @@
 namespace BookIt.API.Models.Requests;
 
-public class MonobankWebhookRequest
+public record MonobankWebhookRequest
 {
     public string InvoiceId { get; set; } = default!;
     public string Status { get; set; } = default!; // success, failure, expired, etc.

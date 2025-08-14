@@ -28,12 +28,31 @@ public class ApartmentsController : ControllerBase
         return Ok(apartmentsResponse);
     }
 
+    [HttpGet("establishment/{establishmentId:int}")]
+    public async Task<ActionResult<PaginatedResponse<ApartmentResponse>>> GetPagedByEstablishmentIdAsync([FromRoute] int establishmentId, [FromQuery] PaginationRequest request)
+    {
+        var pagedResult = await _service.GetPagedByEstablishmentIdAsync(establishmentId, request.Page, request.PageSize);
+
+        var response = new PaginatedResponse<ApartmentResponse>
+        {
+            Items = _mapper.Map<IEnumerable<ApartmentResponse>>(pagedResult.Items),
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize,
+            TotalCount = pagedResult.TotalCount,
+            TotalPages = pagedResult.TotalPages,
+            HasNextPage = pagedResult.HasNextPage,
+            HasPreviousPage = pagedResult.HasPreviousPage
+        };
+
+        return Ok(response);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ApartmentResponse>> GetByIdAsync([FromRoute] int id)
     {
         var apartmentDto = await _service.GetByIdAsync(id);
         var apartmentResponse = _mapper.Map<ApartmentResponse>(apartmentDto);
-        return apartmentResponse is not null ? Ok(apartmentResponse) : NotFound();
+        return Ok(apartmentResponse);
     }
 
     [HttpPost]
@@ -61,26 +80,5 @@ public class ApartmentsController : ControllerBase
     {
         var deleted = await _service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
-    }
-
-    [HttpGet("establishment/{establishmentId:int}")]
-    public async Task<ActionResult<PaginatedResponse<ApartmentResponse>>> GetPagedByEstablishmentIdAsync(
-        [FromRoute] int establishmentId,
-        [FromQuery] ApartmentsByEstablishmentPaginationRequest request)
-    {
-        var pagedResult = await _service.GetPagedByEstablishmentIdAsync(establishmentId, request.Page, request.PageSize);
-
-        var response = new PaginatedResponse<ApartmentResponse>
-        {
-            Items = _mapper.Map<IEnumerable<ApartmentResponse>>(pagedResult.Items),
-            PageNumber = pagedResult.PageNumber,
-            PageSize = pagedResult.PageSize,
-            TotalCount = pagedResult.TotalCount,
-            TotalPages = pagedResult.TotalPages,
-            HasNextPage = pagedResult.HasNextPage,
-            HasPreviousPage = pagedResult.HasPreviousPage
-        };
-
-        return Ok(response);
     }
 }

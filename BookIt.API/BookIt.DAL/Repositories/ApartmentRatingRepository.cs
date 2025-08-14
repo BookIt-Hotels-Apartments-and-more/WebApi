@@ -43,19 +43,4 @@ public class ApartmentRatingRepository
             await _context.SaveChangesAsync();
         }
     }
-
-    public async Task<bool> ExistsAsync(int id)
-    {
-        return await _context.ApartmentRatings.AnyAsync(r => r.Id == id);
-    }
-
-    public async Task<ApartmentRating> CreateDefaultRatingAsync()
-    {
-        var rating = new ApartmentRating();
-        rating.UpdateGeneralRating();
-
-        await _context.ApartmentRatings.AddAsync(rating);
-        await _context.SaveChangesAsync();
-        return rating;
-    }
 }
