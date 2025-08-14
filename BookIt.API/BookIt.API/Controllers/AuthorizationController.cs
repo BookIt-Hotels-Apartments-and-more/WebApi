@@ -84,10 +84,10 @@ public class AuthorizationController : ControllerBase
     [HttpPost("reset-password/generate-token")]
     public async Task<IActionResult> ResetPasswordToken([FromBody] GenerateResetPasswordTokenRequest request)
     {
-        var baseUrl = _appSettingsOptions.Value.BaseUrl;
+        var clientUrl = _urlSettingsOptions.Value.ClientUrl;
 
         var user = await _userService.GenerateResetPasswordTokenAsync(request.Email);
-        var confirmationLink = $"{baseUrl}/auth/reset-token?token={user.ResetPasswordToken}";
+        var confirmationLink = $"{clientUrl}/auth/reset-password?token={user.ResetPasswordToken}";
         var body = $"Password Reset: {confirmationLink}";
 
         _emailSenderService.SendEmail(user.Email, "Password Reset", body);
