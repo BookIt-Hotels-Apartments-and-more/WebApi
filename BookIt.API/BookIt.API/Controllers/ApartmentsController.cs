@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using BookIt.BLL.Interfaces;
-using BookIt.BLL.DTOs;
-using AutoMapper;
-using BookIt.API.Models.Responses;
+﻿using AutoMapper;
 using BookIt.API.Models.Requests;
+using BookIt.API.Models.Responses;
+using BookIt.BLL.DTOs;
+using BookIt.BLL.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BookIt.API.Controllers;
 
@@ -32,18 +32,7 @@ public class ApartmentsController : ControllerBase
     public async Task<ActionResult<PaginatedResponse<ApartmentResponse>>> GetPagedByEstablishmentIdAsync([FromRoute] int establishmentId, [FromQuery] PaginationRequest request)
     {
         var pagedResult = await _service.GetPagedByEstablishmentIdAsync(establishmentId, request.Page, request.PageSize);
-
-        var response = new PaginatedResponse<ApartmentResponse>
-        {
-            Items = _mapper.Map<IEnumerable<ApartmentResponse>>(pagedResult.Items),
-            PageNumber = pagedResult.PageNumber,
-            PageSize = pagedResult.PageSize,
-            TotalCount = pagedResult.TotalCount,
-            TotalPages = pagedResult.TotalPages,
-            HasNextPage = pagedResult.HasNextPage,
-            HasPreviousPage = pagedResult.HasPreviousPage
-        };
-
+        var response = _mapper.Map<PaginatedResponse<ApartmentResponse>>(pagedResult);
         return Ok(response);
     }
 

@@ -16,7 +16,7 @@ public class PaymentRepository
 
     public async Task<IEnumerable<Payment>> GetAllAsync()
     {
-        return await _context.Payments
+        return await _context.Payments.AsNoTracking()
             .Include(p => p.Booking)
             .ToListAsync();
     }
@@ -49,6 +49,7 @@ public class PaymentRepository
     public async Task DeleteAsync(int id)
     {
         var payment = await _context.Payments.FindAsync(id);
+
         if (payment is not null)
         {
             _context.Payments.Remove(payment);

@@ -31,7 +31,6 @@ public class UserController : ControllerBase
     public async Task<IActionResult> GetById([FromRoute] int id)
     {
         var userDto = await _userService.GetUserByIdAsync(id);
-        if (userDto is null) return NotFound();
         var usersResponse = _mapper.Map<UserResponse>(userDto);
         return Ok(usersResponse);
     }
@@ -42,11 +41,4 @@ public class UserController : ControllerBase
         await _userService.ChangeUserRoleAsync(id, role);
         return Ok();
     }
-
-    // [HttpDelete("{id}")]
-    // public async Task<IActionResult> Delete(int id)
-    // {
-    //     await _userService.DeleteUserAsync(id);
-    //     return NoContent();
-    // }
 }

@@ -25,7 +25,7 @@ public class UserService : IUserService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<UserDTO> RegisterAsync(string username, string email, string? password, UserRole role)
+    public async Task<UserDTO> RegisterAsync(string username, string email, string? password, UserRole role = UserRole.Tenant)
     {
         _logger.LogInformation("RegisterAsync started for Email={Email}, Username={Username}, Role={Role}", email, username, role);
         try
@@ -130,13 +130,12 @@ public class UserService : IUserService
         _logger.LogInformation("AuthByGoogleAsync started for Email={Email}, Username={Username}", email, username);
         try
         {
-            var existingUser = await _userRepository.ExistsByEmailAsync(email);
+            var existingUser = await _userRepository.GetByEmailAsync(email);
 
-            if (existingUser)
+            if (existingUser is not null)
             {
-                var existingUserDomain = await _userRepository.GetByEmailAsync(email);
                 _logger.LogInformation("AuthByGoogleAsync: existing user found for Email={Email}", email);
-                return _mapper.Map<UserDTO>(existingUserDomain);
+                return _mapper.Map<UserDTO>(existingUser);
             }
             else
             {
@@ -287,7 +286,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserDTO?> LoginAsync(string email, string password)
+    public async Task<UserDTO> LoginAsync(string email, string password)
     {
         _logger.LogInformation("LoginAsync started for Email={Email}", email);
         try

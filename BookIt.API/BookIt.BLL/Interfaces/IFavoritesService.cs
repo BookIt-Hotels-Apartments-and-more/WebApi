@@ -8,5 +8,5 @@ public interface IFavoritesService
     Task<IEnumerable<FavoriteDTO>> GetAllForUserAsync(int userId);
     Task<int> GetCountForApartmentAsync(int apartmentId);
     Task<FavoriteDTO?> CreateAsync(FavoriteDTO dto);
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(int favoriteId, int userId);
 }

@@ -4,6 +4,7 @@ public record ReviewResponse
 {
     public int Id { get; set; }
     public string Text { get; set; } = null!;
+    public ReviewerResponse? Author { get; set; }
 
     public float Rating { get; set; }
 
@@ -18,8 +19,21 @@ public record ReviewResponse
     // User review rating (nullable - only present for user reviews)
     public float? CustomerStayRating { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public int BookingId { get; set; }
+    public DateTime? CreatedAt { get; set; }
+
+    public bool IsCustomerReview => CustomerId.HasValue;
+    public int? CustomerId { get; set; }
+
+    public bool IsApartmentReview => ApartmentId.HasValue;
+    public int? ApartmentId { get; set; }
+
     public BookingResponse Booking { get; set; } = null!;
     public List<ImageResponse> Photos { get; set; } = new();
+}
+
+public record ReviewerResponse
+{
+    public string Username { get; set; } = null!;
+    public string Email { get; set; } = null!;
+    public List<string> Photos { get; set; } = new();
 }

@@ -5,6 +5,7 @@ using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BookIt.API.Controllers;
 
@@ -30,8 +31,10 @@ public class UserManagementController : ControllerBase
     [Authorize]
     public async Task<IActionResult> SetUserImages([FromBody] UserImagesRequest request)
     {
-        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        int userId = int.Parse(userIdStr!);
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
 
         var imagesDto = request
             .ExistingPhotosIds
@@ -48,8 +51,10 @@ public class UserManagementController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetUserImages()
     {
-        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        int userId = int.Parse(userIdStr!);
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
 
         var imageDtos = await _userManagementService.GetUserImagesAsync(userId);
         var imagesResponse = _mapper.Map<IEnumerable<ImageResponse>>(imageDtos);
@@ -61,8 +66,10 @@ public class UserManagementController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteUserImage()
     {
-        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        int userId = int.Parse(userIdStr!);
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
 
         var isDeleted = await _userManagementService.DeleteAllUserImagesAsync(userId);
 
@@ -75,8 +82,10 @@ public class UserManagementController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdateUserDetails([FromBody] UserDetailsRequest request)
     {
-        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        int userId = int.Parse(userIdStr!);
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
 
         var userDetailsDto = _mapper.Map<UserDetailsDTO>(request);
         userDetailsDto.Id = userId;
@@ -90,8 +99,10 @@ public class UserManagementController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
     {
-        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        int userId = int.Parse(userIdStr!);
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
 
         await _userService.ChangeUserPasswordAsync(userId, request.CurrentPassword, request.NewPassword);
 

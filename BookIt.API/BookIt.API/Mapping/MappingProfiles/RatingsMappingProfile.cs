@@ -10,11 +10,15 @@ public class RatingsMappingProfile : Profile
     public RatingsMappingProfile()
     {
         CreateMap<ApartmentRating, ApartmentRatingDTO>().ReverseMap();
+
         CreateMap<ApartmentRatingDTO, ApartmentRatingResponse>().ReverseMap();
+
         CreateMap<ApartmentRating, ApartmentRatingResponse>();
 
         CreateMap<UserRating, UserRatingDTO>().ReverseMap();
+
         CreateMap<UserRatingDTO, UserRatingResponse>().ReverseMap();
+
         CreateMap<UserRating, UserRatingResponse>();
     }
 }

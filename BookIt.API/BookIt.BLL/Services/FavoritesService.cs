@@ -148,21 +148,27 @@ public class FavoritesService : IFavoritesService
         }
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int favoriteId, int userId)
     {
-        _logger.LogInformation("Start DeleteAsync for Favorite Id: {Id}", id);
+        _logger.LogInformation("Start DeleteAsync for Favorite Id: {Id}", favoriteId);
         try
         {
-            var favoriteExists = await _repository.ExistsAsync(id);
-            if (!favoriteExists)
+            var favoriteDomain = await _repository.GetByIdAsync(favoriteId);
+            if (favoriteDomain is null)
             {
-                _logger.LogWarning("Favorite with Id {Id} not found for deletion", id);
-                throw new EntityNotFoundException("Favorite", id);
+                _logger.LogWarning("Favorite with Id {Id} not found for deletion", favoriteId);
+                throw new EntityNotFoundException("Favorite", favoriteId);
             }
 
-            await _repository.DeleteAsync(id);
+            if (favoriteDomain.UserId != userId)
+            {
+                _logger.LogWarning("User {UserId} is not authorized to delete favorite with Id {Id}", userId, favoriteId);
+                throw new UnauthorizedAccessException($"User {userId} is not authorized to delete this favorite");
+            }
 
-            _logger.LogInformation("Successfully deleted favorite with Id {Id}", id);
+            await _repository.DeleteAsync(favoriteId);
+
+            _logger.LogInformation("Successfully deleted favorite with Id {Id}", favoriteId);
 
             return true;
         }
@@ -172,7 +178,7 @@ public class FavoritesService : IFavoritesService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete favorite with Id {Id}", id);
+            _logger.LogError(ex, "Failed to delete favorite with Id {Id}", favoriteId);
             throw new ExternalServiceException("Database", "Failed to delete favorite", ex);
         }
     }
@@ -202,7 +208,7 @@ public class FavoritesService : IFavoritesService
 
     private async Task ValidateFavoriteDoesNotExistAsync(int userId, int apartmentId)
     {
-        if (await _repository.GetByUserAndApartmentAsync(userId, apartmentId) is not null)
+        if (await _repository.ExistsByUserAndApartmentAsync(userId, apartmentId))
             throw new EntityAlreadyExistsException("Favorite", "user and apartment combination", $"User {userId} - Apartment {apartmentId}");
     }
 }

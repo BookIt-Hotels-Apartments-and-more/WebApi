@@ -16,27 +16,27 @@ public class ReviewsRepository
 
     public async Task<IEnumerable<Review>> GetAllAsync()
     {
-        return await _context.Reviews
+        return await _context.Reviews.AsNoTracking().AsSplitQuery()
             .Include(a => a.Photos)
-            .Include(r => r.User).ThenInclude(a => a.Photos)
-            .Include(r => r.Apartment).ThenInclude(a => a.Photos)
-            .Include(r => r.Apartment).ThenInclude(a => a.Establishment)
+            .Include(r => r.User)
+            .Include(r => r.Apartment)
             .Include(a => a.Booking).ThenInclude(b => b.User).ThenInclude(u => u.Photos)
             .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Photos)
-            .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment)
+            .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Photos)
+            .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner).ThenInclude(o => o.Photos)
             .ToListAsync();
     }
 
     public async Task<Review?> GetByIdAsync(int id)
     {
-        return await _context.Reviews
+        return await _context.Reviews.AsSplitQuery()
             .Include(a => a.Photos)
-            .Include(r => r.User).ThenInclude(a => a.Photos)
-            .Include(r => r.Apartment).ThenInclude(a => a.Photos)
-            .Include(r => r.Apartment).ThenInclude(a => a.Establishment)
+            .Include(r => r.User)
+            .Include(r => r.Apartment)
             .Include(a => a.Booking).ThenInclude(b => b.User).ThenInclude(u => u.Photos)
             .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Photos)
-            .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment)
+            .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Photos)
+            .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner).ThenInclude(o => o.Photos)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
@@ -46,47 +46,16 @@ public class ReviewsRepository
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
-    public async Task<IEnumerable<Review>> GetByApartmentIdAsync(int apartmentId)
-    {
-        return await _context.Reviews
-            .Include(a => a.Photos)
-            .Include(r => r.User).ThenInclude(a => a.Photos)
-            .Where(r => r.ApartmentId == apartmentId)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Review>> GetByEstablishmentIdAsync(int establishmentId)
-    {
-        return await _context.Reviews
-            .Include(r => r.Apartment)
-            .Include(r => r.User).ThenInclude(u => u.Photos)
-            .Include(a => a.Photos)
-            .Where(r => r.Apartment != null && r.Apartment.EstablishmentId == establishmentId)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Review>> GetByUserIdAsync(int userId)
-    {
-        return await _context.Reviews
-            .Include(a => a.Photos)
-            .Include(r => r.Apartment).ThenInclude(a => a.Photos)
-            .Include(r => r.Apartment).ThenInclude(a => a.Establishment)
-            .Where(r => r.UserId == userId)
-            .ToListAsync();
-    }
-
     public async Task<Review?> GetExistingReviewAsync(int? userId, int? apartmentId, int? customerId)
     {
-        return await _context.Reviews
-            .FirstOrDefaultAsync(r =>
-                r.UserId == userId &&
-                r.ApartmentId == apartmentId &&
-                r.UserId == customerId);
+        return await _context.Reviews.AsNoTracking()
+            .FirstOrDefaultAsync(r => r.UserId == userId && r.ApartmentId == apartmentId && r.UserId == customerId);
     }
 
     public async Task<bool> ExistsAsync(int id)
     {
-        return await _context.Reviews.AsNoTracking().AnyAsync(a => a.Id == id);
+        return await _context.Reviews.AsNoTracking()
+            .AnyAsync(a => a.Id == id);
     }
 
     public async Task<Review> AddAsync(Review review)
@@ -121,16 +90,14 @@ public class ReviewsRepository
 
     public async Task<IEnumerable<Review>> GetReviewsForApartmentRatingAsync(int apartmentId)
     {
-        return await _context.Reviews
-            .AsNoTracking()
+        return await _context.Reviews.AsNoTracking()
             .Where(r => r.ApartmentId == apartmentId)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Review>> GetReviewsForEstablishmentRatingAsync(int establishmentId)
     {
-        return await _context.Reviews
-            .AsNoTracking()
+        return await _context.Reviews.AsNoTracking()
             .Include(r => r.Apartment)
             .Where(r => r.Apartment != null && r.Apartment.EstablishmentId == establishmentId)
             .ToListAsync();
@@ -138,8 +105,7 @@ public class ReviewsRepository
 
     public async Task<IEnumerable<Review>> GetReviewsForUserRatingAsync(int userId)
     {
-        return await _context.Reviews
-            .AsNoTracking()
+        return await _context.Reviews.AsNoTracking()
             .Where(r => r.UserId == userId)
             .ToListAsync();
     }
@@ -153,13 +119,15 @@ public class ReviewsRepository
             .Where(predicate)
             .CountAsync();
 
-        var reviews = await _context.Reviews
+        var reviews = await _context.Reviews.AsNoTracking().AsSplitQuery()
             .Where(predicate)
-            .Include(r => r.Photos)
-            .Include(r => r.Booking)
-            .Include(r => r.User).ThenInclude(u => u.Photos)
-            .Include(r => r.Apartment).ThenInclude(a => a.Photos)
-            .Include(r => r.Apartment).ThenInclude(a => a.Establishment)
+            .Include(a => a.Photos)
+            .Include(r => r.User)
+            .Include(r => r.Apartment)
+            .Include(a => a.Booking).ThenInclude(b => b.User).ThenInclude(u => u.Photos)
+            .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Photos)
+            .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Photos)
+            .Include(a => a.Booking).ThenInclude(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner).ThenInclude(o => o.Photos)
             .OrderByDescending(e => e.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

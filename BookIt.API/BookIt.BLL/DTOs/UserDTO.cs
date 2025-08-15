@@ -14,7 +14,7 @@ public record UserDTO
     public string? PhoneNumber { get; set; }
     public string? Bio { get; set; }
     public UserRole Role { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? CreatedAt { get; set; }
     public DateTime? LastActiveAt { get; set; }
 
     public UserRatingDTO? Rating { get; set; }

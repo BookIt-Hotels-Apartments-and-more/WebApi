@@ -15,13 +15,14 @@ public class ImagesRepository
 
     public async Task<Image?> GetByIdAsync(int id)
     {
-        return await _context.Images
+        return await _context.Images.AsNoTracking()
             .FirstOrDefaultAsync(i => i.Id == id);
     }
 
     public async Task<bool> ExistsAsync(int id)
     {
-        return await _context.Images.AnyAsync(i => i.Id == id);
+        return await _context.Images.AsNoTracking()
+            .AnyAsync(i => i.Id == id);
     }
 
     public async Task<Image> AddAsync(Image image)
@@ -45,28 +46,28 @@ public class ImagesRepository
 
     public async Task<IEnumerable<Image>> GetApartmentImagesAsync(int apartmentId)
     {
-        return await _context.Images
+        return await _context.Images.AsNoTracking()
             .Where(i => i.ApartmentId == apartmentId)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Image>> GetEstablishmentImagesAsync(int establishmentId)
     {
-        return await _context.Images
+        return await _context.Images.AsNoTracking()
             .Where(i => i.EstablishmentId == establishmentId)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Image>> GetReviewImagesAsync(int reviewId)
     {
-        return await _context.Images
+        return await _context.Images.AsNoTracking()
             .Where(i => i.ReviewId == reviewId)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Image>> GetUserImagesAsync(int userId)
     {
-        return await _context.Images
+        return await _context.Images.AsNoTracking()
             .Where(i => i.UserId == userId)
             .ToListAsync();
     }

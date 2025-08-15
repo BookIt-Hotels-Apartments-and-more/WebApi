@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
-using BookIt.BLL.Services;
 using BookIt.API.Models.Requests;
-using Microsoft.Extensions.Options;
+using BookIt.BLL.Services;
 using BookIt.DAL.Configuration.Settings;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace BookIt.API.Controllers;
 
@@ -10,38 +10,24 @@ namespace BookIt.API.Controllers;
 [Route("api/monobank/webhook/{secret}")]
 public class MonobankWebhookController : ControllerBase
 {
-    private readonly IPaymentService _paymentService;
+    private readonly IPaymentService _service;
     private readonly IOptions<MonobankSettings> _monobankSettingsOptions;
 
-    public MonobankWebhookController(
-        IPaymentService paymentService,
-        IOptions<MonobankSettings> monobankSettingsOptions)
+    public MonobankWebhookController(IPaymentService service, IOptions<MonobankSettings> monobankSettingsOptions)
     {
-        _paymentService = paymentService;
+        _service = service;
         _monobankSettingsOptions = monobankSettingsOptions;
     }
 
     [HttpPost]
-    public async Task<IActionResult> ReceiveWebhook(
-        [FromRoute] string secret,
-        [FromBody] MonobankWebhookRequest payload)
+    public async Task<IActionResult> ReceiveWebhook([FromRoute] string secret, [FromBody] MonobankWebhookRequest payload)
     {
         var expectedSecret = _monobankSettingsOptions.Value.WebhookSecret;
-        if (secret != expectedSecret)
-            return Unauthorized("Invalid webhook secret");
-
-        // if (!payload.Reference.StartsWith("BOOKING-"))
-        //     return BadRequest("Invalid reference");
-
-        if (payload.Status != "success")
-            return Ok();
+        if (secret != expectedSecret) return Unauthorized("Invalid webhook secret");
+        if (payload.Status != "success") return Ok();
 
         var bookingIdStr = payload.Reference.Replace("BOOKING-", "");
-        if (!int.TryParse(bookingIdStr, out int bookingId))
-            return BadRequest("Invalid bookingId");
-
-        var success = await _paymentService.MarkPaymentAsCompletedAsync(bookingId);
-        
-        return success ? Ok() : NotFound();
+        if (!int.TryParse(bookingIdStr, out int bookingId)) return BadRequest("Invalid bookingId");
+        return await _service.MarkPaymentAsCompletedAsync(bookingId) ? Ok() : NotFound();
     }
 }

@@ -10,7 +10,7 @@ public record ApartmentDTO
     public double Area { get; set; }
     public int Capacity { get; set; }
     public string Description { get; set; } = null!;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? CreatedAt { get; set; }
     public int EstablishmentId { get; set; }
     public ApartmentFeatures Features { get; set; } = new();
 

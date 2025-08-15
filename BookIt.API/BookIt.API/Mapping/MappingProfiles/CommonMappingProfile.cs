@@ -9,5 +9,9 @@ public class CommonMappingProfile : Profile
     public CommonMappingProfile()
     {
         CreateMap<PagedResultDTO<ReviewDTO>, PaginatedResponse<ReviewResponse>>();
+
+        CreateMap<PagedResultDTO<ApartmentDTO>, PaginatedResponse<ApartmentResponse>>();
+
+        CreateMap<PagedResultDTO<EstablishmentDTO>, PaginatedResponse<EstablishmentResponse>>();
     }
 }

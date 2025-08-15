@@ -1,4 +1,4 @@
-namespace BookIt.BLL.Models.Responses;
+namespace BookIt.API.Models.Responses;
 
 public class UserAuthResponse
 {

@@ -2,14 +2,14 @@ using BookIt.DAL.Enums;
 
 namespace BookIt.BLL.DTOs;
 
-public class CreatePaymentDto
+public record CreatePaymentDto
 {
     public PaymentType Type { get; set; }
     public decimal Amount { get; set; }
     public int BookingId { get; set; }
 }
 
-public class PaymentDetailsDto
+public record PaymentDetailsDto
 {
     public int Id { get; set; }
     public PaymentType Type { get; set; }
@@ -20,13 +20,13 @@ public class PaymentDetailsDto
     public int BookingId { get; set; }
 }
 
-public class ProcessMonoPaymentDto
+public record ProcessMonoPaymentDto
 {
     public string InvoiceId { get; set; } = null!;
     public int PaymentId { get; set; }
 }
 
-public class ManualConfirmPaymentDto
+public record ManualConfirmPaymentDto
 {
     public int PaymentId { get; set; }
 }

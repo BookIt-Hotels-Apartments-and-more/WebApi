@@ -20,6 +20,6 @@ public abstract record BaseRatingResponse
 {
     public int Id { get; set; }
     public int ReviewCount { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
     public DateTime? LastUpdatedAt { get; set; }
 }

@@ -50,7 +50,6 @@ public class ReviewsController : ControllerBase
     {
         var reviewDto = _mapper.Map<ReviewDTO>(request);
         var added = await _service.CreateAsync(reviewDto);
-        if (added is null) return BadRequest("Failed to create review.");
         var reviewResponse = _mapper.Map<ReviewResponse>(added);
         return Ok(reviewResponse);
     }
@@ -60,7 +59,6 @@ public class ReviewsController : ControllerBase
     {
         var reviewDto = _mapper.Map<ReviewDTO>(request);
         var updated = await _service.UpdateAsync(id, reviewDto);
-        if (updated is null) return NotFound();
         var reviewResponse = _mapper.Map<ReviewResponse>(updated);
         return Ok(reviewResponse);
     }
