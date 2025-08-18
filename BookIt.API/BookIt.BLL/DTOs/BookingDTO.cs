@@ -6,7 +6,7 @@ public record BookingDTO
     public DateTime DateFrom { get; set; }
     public DateTime DateTo { get; set; }
     public bool IsCheckedIn { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
     public string? AdditionalRequests { get; set; }
     public int CustomerId { get; set; }
     public CustomerDTO Customer { get; set; } = null!;

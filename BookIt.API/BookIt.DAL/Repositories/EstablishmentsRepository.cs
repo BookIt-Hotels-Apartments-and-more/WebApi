@@ -16,38 +16,37 @@ public class EstablishmentsRepository
 
     public async Task<IEnumerable<Establishment>> GetAllAsync()
     {
-        return await _context
-            .Establishments
+        return await _context.Establishments.AsNoTracking().AsSplitQuery()
             .Include(e => e.Owner)
             .Include(e => e.Photos)
-            .Include(u => u.ApartmentRating)
+            .Include(e => e.Apartments)
             .Include(e => e.Geolocation)
-            .Include(e => e.Apartments).ThenInclude(a => a.Reviews)
+            .Include(u => u.ApartmentRating)
             .ToListAsync();
     }
 
     public async Task<Establishment?> GetByIdAsync(int id)
     {
-        return await _context.Establishments
+        return await _context.Establishments.AsSplitQuery()
             .Include(e => e.Owner)
             .Include(e => e.Photos)
-            .Include(u => u.ApartmentRating)
+            .Include(e => e.Apartments)
             .Include(e => e.Geolocation)
-            .Include(e => e.Apartments).ThenInclude(a => a.Reviews)
+            .Include(u => u.ApartmentRating)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
     public async Task<Establishment?> GetByIdForVibeComparisonAsync(int id)
     {
-        return await _context.Establishments
-            .AsNoTracking()
+        return await _context.Establishments.AsNoTracking()
             .Include(e => e.Geolocation)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
     public async Task<bool> ExistsAsync(int id)
     {
-        return await _context.Establishments.AsNoTracking().AnyAsync(e => e.Id == id);
+        return await _context.Establishments.AsNoTracking()
+            .AnyAsync(e => e.Id == id);
     }
 
     public async Task<Establishment> AddAsync(Establishment establishment)
@@ -81,16 +80,17 @@ public class EstablishmentsRepository
         int page,
         int pageSize)
     {
-        var totalCount = await _context.Establishments
+        var totalCount = await _context.Establishments.AsNoTracking()
             .Where(predicate)
             .CountAsync();
 
-        var establishments = await _context.Establishments
+        var establishments = await _context.Establishments.AsNoTracking().AsSplitQuery()
             .Where(predicate)
             .Include(e => e.Owner)
-            .Include(u => u.ApartmentRating)
-            .Include(e => e.Geolocation)
             .Include(e => e.Photos)
+            .Include(e => e.Apartments)
+            .Include(e => e.Geolocation)
+            .Include(u => u.ApartmentRating)
             .OrderByDescending(e => e.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -109,7 +109,7 @@ public class EstablishmentsRepository
     {
         var fromDate = periodInDays.HasValue ? DateTime.UtcNow.AddDays(-periodInDays.Value) : (DateTime?)null;
 
-        var topEstablishmentsQuery = _context.Establishments
+        var topEstablishmentsQuery = _context.Establishments.AsNoTracking().AsSplitQuery()
             .Select(e => new
             {
                 e.Id,
@@ -125,7 +125,7 @@ public class EstablishmentsRepository
 
         var ids = topEstablishments.Select(x => x.Id).ToList();
 
-        var establishmentsWithIncludes = await _context.Establishments
+        var establishmentsWithIncludes = await _context.Establishments.AsNoTracking().AsSplitQuery()
             .Where(e => ids.Contains(e.Id))
             .Include(e => e.Owner)
             .Include(e => e.Photos)

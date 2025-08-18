@@ -423,15 +423,14 @@ public class EstablishmentsService : IEstablishmentsService
 
     private async Task ValidateNoActiveBookingsInApartmentsAsync(int establishmentId)
     {
-        var apartments = await _apartmentsRepository.GetByEstablishmentIdAsync(establishmentId);
+        var apartmentsIds = await _apartmentsRepository.GetApartmentIdsByEstablishmentIdAsync(establishmentId);
 
-        if (!apartments.Any()) return;
+        if (!apartmentsIds.Any()) return;
 
-        var apartmentIds = apartments.Select(a => a.Id).ToList();
         var activeBookingsCount = 0;
         var activeBookingDetails = new List<string>();
 
-        foreach (var apartmentId in apartmentIds)
+        foreach (var apartmentId in apartmentsIds)
         {
             var activeBookings = await _bookingsRepository.GetActiveAndFutureBookingsAsync(apartmentId);
 
@@ -439,10 +438,8 @@ public class EstablishmentsService : IEstablishmentsService
             {
                 activeBookingsCount += activeBookings.Count();
 
-                var apartment = apartments.First(a => a.Id == apartmentId);
-
                 var bookingDetails = activeBookings.Select(b =>
-                    $"Apartment '{apartment.Name}' - Booking #{b.Id}: {b.DateFrom:yyyy-MM-dd} to {b.DateTo:yyyy-MM-dd}");
+                    $"Apartment #{apartmentId} - Booking #{b.Id}: {b.DateFrom:yyyy-MM-dd} to {b.DateTo:yyyy-MM-dd}");
 
                 activeBookingDetails.AddRange(bookingDetails);
             }
@@ -451,12 +448,11 @@ public class EstablishmentsService : IEstablishmentsService
         if (activeBookingsCount > 0)
             throw new BusinessRuleViolationException(
                 "ESTABLISHMENT_HAS_ACTIVE_BOOKINGS",
-                $"Cannot delete establishment with {activeBookingsCount} active or future booking(s) across {apartments.Count()} apartment(s). " +
+                $"Cannot delete establishment with {activeBookingsCount} active or future booking(s). " +
                 "Please wait until all bookings are completed or cancel them first.",
                 new Dictionary<string, object>
                 {
                 { "ActiveBookingsCount", activeBookingsCount },
-                { "ApartmentsCount", apartments.Count() },
                 { "ActiveBookings", activeBookingDetails }
                 });
     }

@@ -2,7 +2,7 @@ using BookIt.DAL.Enums;
 
 namespace BookIt.BLL.DTOs;
 
-public class EstablishmentFilterDTO
+public record EstablishmentFilterDTO : PaginationFilterDTO
 {
     public string? Name { get; set; }
     public VibeType? Vibe { get; set; }
@@ -15,6 +15,4 @@ public class EstablishmentFilterDTO
     public float? MaxRating { get; set; }
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
-    public int Page { get; set; } = 1;
-    public int PageSize { get; set; } = 10;
 }

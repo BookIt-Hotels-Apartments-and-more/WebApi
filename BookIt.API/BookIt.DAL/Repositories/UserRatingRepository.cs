@@ -15,7 +15,8 @@ public class UserRatingRepository
 
     public async Task<UserRating?> GetByIdAsync(int id)
     {
-        return await _context.UserRatings.FirstOrDefaultAsync(r => r.Id == id);
+        return await _context.UserRatings
+            .FirstOrDefaultAsync(r => r.Id == id);
     }
 
     public async Task<UserRating> CreateAsync(UserRating rating)
@@ -34,24 +35,13 @@ public class UserRatingRepository
 
     public async Task DeleteAsync(int id)
     {
-        var rating = await _context.UserRatings.FirstOrDefaultAsync(r => r.Id == id);
-        if (rating != null)
+        var rating = await _context.UserRatings
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (rating is not null)
         {
             _context.UserRatings.Remove(rating);
             await _context.SaveChangesAsync();
         }
-    }
-
-    public async Task<bool> ExistsAsync(int id)
-    {
-        return await _context.UserRatings.AnyAsync(r => r.Id == id);
-    }
-
-    public async Task<UserRating> CreateDefaultRatingAsync()
-    {
-        var rating = new UserRating();
-        await _context.UserRatings.AddAsync(rating);
-        await _context.SaveChangesAsync();
-        return rating;
     }
 }

@@ -16,11 +16,13 @@ public record ReviewDTO
 
     public float? CustomerStayRating { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
+    public bool IsCustomerReview => CustomerId.HasValue;
     public int? CustomerId { get; set; }
     public CustomerDTO? Customer { get; set; }
 
+    public bool IsApartmentReview => ApartmentId.HasValue;
     public int? ApartmentId { get; set; }
     public ApartmentDTO? Apartment { get; set; }
 

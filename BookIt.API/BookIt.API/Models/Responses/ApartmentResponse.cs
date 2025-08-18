@@ -22,7 +22,7 @@ public record ApartmentResponse
     public int Capacity { get; set; }
     public double Area { get; set; }
     public string Description { get; set; } = null!;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? CreatedAt { get; set; }
     public ApartmentRatingResponse? Rating { get; set; }
     public EstablishmentResponse Establishment { get; set; } = null!;
     public List<ImageDTO> Photos { get; set; } = new();

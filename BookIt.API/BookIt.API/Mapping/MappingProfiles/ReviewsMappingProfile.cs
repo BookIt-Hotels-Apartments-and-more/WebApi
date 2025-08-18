@@ -28,7 +28,15 @@ public class ReviewsMappingProfile : Profile
             .ForMember(r => r.CreatedAt, o => o.Ignore())
             .ForMember(r => r.UserId, o => o.MapFrom(dto => dto.CustomerId));
 
-        CreateMap<ReviewDTO, ReviewResponse>();
+        CreateMap<CustomerDTO, ReviewerResponse>();
+
+        CreateMap<OwnerDTO, ReviewerResponse>();
+
+        CreateMap<ReviewDTO, ReviewResponse>()
+            .ForMember(res => res.Author, opt => opt.MapFrom((dto, _, _, ctx) =>
+                dto.IsApartmentReview
+                    ? ctx.Mapper.Map<ReviewerResponse>(dto.Booking.Customer)
+                    : ctx.Mapper.Map<ReviewerResponse>(dto.Booking.Apartment.Establishment.Owner)));
     }
 
     private static float CalculateOverallRating(ReviewRequest src)

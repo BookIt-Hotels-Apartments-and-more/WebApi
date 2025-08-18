@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BookIt.API.Models.Requests;
 
-public class ApartmentsByEstablishmentPaginationRequest
+public record PaginationRequest
 {
     [Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0")]
     public int Page { get; set; } = 1;

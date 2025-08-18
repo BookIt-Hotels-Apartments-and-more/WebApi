@@ -23,6 +23,7 @@ services:
       - MONOBANK_WEBHOOK_SECRET=${MONOBANK_WEBHOOK_SECRET}
       - GEOCODING_API_KEY=${GEOCODING_API_KEY}
       - GEMINI_AI_API_KEY=${GEMINI_AI_API_KEY}
+      - EMAIL_SMTP_PASSWORD=${EMAIL_SMTP_PASSWORD}
     volumes:
       - ~/.aspnet/https:/https:ro
       - bookit-dataprotection:/root/.aspnet/DataProtection-Keys

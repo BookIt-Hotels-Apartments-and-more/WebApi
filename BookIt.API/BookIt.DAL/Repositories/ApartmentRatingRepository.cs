@@ -15,7 +15,8 @@ public class ApartmentRatingRepository
 
     public async Task<ApartmentRating?> GetByIdAsync(int id)
     {
-        return await _context.ApartmentRatings.FirstOrDefaultAsync(r => r.Id == id);
+        return await _context.ApartmentRatings
+            .FirstOrDefaultAsync(r => r.Id == id);
     }
 
     public async Task<ApartmentRating> CreateAsync(ApartmentRating rating)
@@ -36,26 +37,13 @@ public class ApartmentRatingRepository
 
     public async Task DeleteAsync(int id)
     {
-        var rating = await _context.ApartmentRatings.FirstOrDefaultAsync(r => r.Id == id);
+        var rating = await _context.ApartmentRatings
+            .FirstOrDefaultAsync(r => r.Id == id);
+
         if (rating is not null)
         {
             _context.ApartmentRatings.Remove(rating);
             await _context.SaveChangesAsync();
         }
-    }
-
-    public async Task<bool> ExistsAsync(int id)
-    {
-        return await _context.ApartmentRatings.AnyAsync(r => r.Id == id);
-    }
-
-    public async Task<ApartmentRating> CreateDefaultRatingAsync()
-    {
-        var rating = new ApartmentRating();
-        rating.UpdateGeneralRating();
-
-        await _context.ApartmentRatings.AddAsync(rating);
-        await _context.SaveChangesAsync();
-        return rating;
     }
 }

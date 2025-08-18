@@ -1,6 +1,6 @@
 namespace BookIt.BLL.DTOs;
 
-public class PagedResultDTO<T>
+public record PagedResultDTO<T>
 {
     public IEnumerable<T> Items { get; set; } = null!;
     public int PageNumber { get; set; }

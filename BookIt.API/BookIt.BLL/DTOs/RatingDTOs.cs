@@ -11,7 +11,7 @@ public record ApartmentRatingDTO
     public float LocationRating { get; set; }
     public float GeneralRating { get; set; }
     public int ReviewCount { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
     public DateTime? LastUpdatedAt { get; set; }
 }
 
@@ -20,6 +20,6 @@ public record UserRatingDTO
     public int Id { get; set; }
     public float CustomerStayRating { get; set; }
     public int ReviewCount { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
     public DateTime? LastUpdatedAt { get; set; }
 }

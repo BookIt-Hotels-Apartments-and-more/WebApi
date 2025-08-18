@@ -232,6 +232,10 @@ public class ReviewsService : IReviewsService
             validationErrors.Add("Review", new List<string> { "Review data cannot be null" });
             _logger.LogWarning("Validation failed: review data is null");
         }
+        else
+        {
+            AnnulInappropriateRatings(dto);
+        }
 
         if (dto?.ApartmentId.HasValue == true && dto.CustomerId.HasValue)
         {
@@ -322,6 +326,26 @@ public class ReviewsService : IReviewsService
                 _logger.LogWarning("Validation failed: Customer with Id {CustomerId} not found for review update", dto.CustomerId.Value);
                 throw new EntityNotFoundException("Customer", dto.CustomerId.Value);
             }
+        }
+    }
+
+    private void AnnulInappropriateRatings(ReviewDTO dto)
+    {
+        if (dto.CustomerId.HasValue)
+        {
+            dto.StaffRating = null;
+            dto.PurityRating = null;
+            dto.PriceQualityRating = null;
+            dto.ComfortRating = null;
+            dto.FacilitiesRating = null;
+            dto.LocationRating = null;
+            _logger.LogInformation("Annulling inappropriate ratings for review with CustomerId");
+        }
+        
+        if (dto.ApartmentId.HasValue)
+        {
+            dto.CustomerStayRating = null;
+            _logger.LogInformation("Annulling inappropriate ratings for review with ApartmentId");
         }
     }
 

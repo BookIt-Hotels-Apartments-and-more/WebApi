@@ -15,7 +15,7 @@ public class ApartmentsRepository
 
     public async Task<IEnumerable<Apartment>> GetAllAsync()
     {
-        return await _context.Apartments
+        return await _context.Apartments.AsNoTracking().AsSplitQuery()
             .Include(a => a.Photos)
             .Include(u => u.ApartmentRating)
             .Include(u => u.Reviews)
@@ -43,7 +43,8 @@ public class ApartmentsRepository
 
     public async Task<bool> ExistsAsync(int id)
     {
-        return await _context.Apartments.AnyAsync(a => a.Id == id);
+        return await _context.Apartments.AsNoTracking()
+            .AnyAsync(a => a.Id == id);
     }
 
     public async Task<Apartment> AddAsync(Apartment apartment)
@@ -74,11 +75,11 @@ public class ApartmentsRepository
 
     public async Task<(IEnumerable<Apartment>, int)> GetPagedByEstablishmentIdAsync(int establishmentId, int page, int pageSize)
     {
-        var totalCount = await _context.Apartments
+        var totalCount = await _context.Apartments.AsNoTracking()
             .Where(a => a.EstablishmentId == establishmentId)
             .CountAsync();
 
-        var apartments = await _context.Apartments
+        var apartments = await _context.Apartments.AsNoTracking().AsSplitQuery()
             .Where(a => a.EstablishmentId == establishmentId)
             .Include(a => a.Photos)
             .Include(u => u.ApartmentRating)
@@ -93,10 +94,11 @@ public class ApartmentsRepository
         return (apartments, totalCount);
     }
 
-    public async Task<IEnumerable<Apartment>> GetByEstablishmentIdAsync(int establishmentId)
+    public async Task<IEnumerable<int>> GetApartmentIdsByEstablishmentIdAsync(int establishmentId)
     {
         return await _context.Apartments
             .Where(a => a.EstablishmentId == establishmentId)
+            .Select(a => a.Id)
             .ToListAsync();
     }
 

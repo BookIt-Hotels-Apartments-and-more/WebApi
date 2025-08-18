@@ -16,7 +16,7 @@ public class BookingsRepository
 
     public async Task<IEnumerable<Booking>> GetAllAsync()
     {
-        return await _context.Bookings
+        return await _context.Bookings.AsNoTracking().AsSplitQuery()
             .Include(b => b.User)
             .ThenInclude(u => u.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.Photos)
@@ -31,7 +31,7 @@ public class BookingsRepository
 
     public async Task<Booking?> GetByIdAsync(int id)
     {
-        return await _context.Bookings
+        return await _context.Bookings.AsTracking().AsSplitQuery()
             .Include(b => b.User).ThenInclude(u => u.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.ApartmentRating)
@@ -45,7 +45,8 @@ public class BookingsRepository
 
     public async Task<bool> ExistsAsync(int id)
     {
-        return await _context.Bookings.AsNoTracking().AnyAsync(a => a.Id == id);
+        return await _context.Bookings.AsNoTracking()
+            .AnyAsync(a => a.Id == id);
     }
 
     public async Task<Booking> AddAsync(Booking booking)

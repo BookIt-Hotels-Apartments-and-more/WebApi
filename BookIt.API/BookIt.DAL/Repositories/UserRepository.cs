@@ -1,7 +1,7 @@
-using BookIt.DAL.Models;
 using BookIt.DAL.Database;
-using Microsoft.EntityFrameworkCore;
 using BookIt.DAL.Enums;
+using BookIt.DAL.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookIt.DAL.Repositories;
 
@@ -16,29 +16,31 @@ public class UserRepository
 
     public async Task<List<User>> GetAllAsync()
     {
-        return await _context.Users
+        return await _context.Users.AsNoTracking().AsSplitQuery()
             .Include(u => u.Photos)
             .Include(u => u.Reviews)
             .Include(u => u.Bookings)
             .Include(u => u.Favorites)
+            .Include(u => u.UserRating)
             .Include(u => u.OwnedEstablishments)
             .ToListAsync();
     }
 
     public async Task<User?> GetByIdAsync(int id)
     {
-        return await _context.Users
+        return await _context.Users.AsSplitQuery()
             .Include(u => u.Photos)
             .Include(u => u.Reviews)
             .Include(u => u.Bookings)
             .Include(u => u.Favorites)
+            .Include(u => u.UserRating)
             .Include(u => u.OwnedEstablishments)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
     public async Task<User?> GetByEmailAndPasswordHashAsync(string email, string passwordHash)
     {
-        return await _context.Users
+        return await _context.Users.AsNoTracking().AsSplitQuery()
             .Include(u => u.Photos)
             .Include(u => u.Bookings)
             .Include(u => u.Favorites)
@@ -60,7 +62,7 @@ public class UserRepository
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        return await _context.Users
+        return await _context.Users.AsSplitQuery()
             .Include(u => u.Photos)
             .Include(u => u.Bookings)
             .Include(u => u.Favorites)
@@ -70,12 +72,14 @@ public class UserRepository
 
     public async Task<bool> ExistsByEmailAsync(string email)
     {
-        return await _context.Users.AnyAsync(u => u.Email == email);
+        return await _context.Users.AsNoTracking()
+            .AnyAsync(u => u.Email == email);
     }
 
     public async Task<bool> ExistsByIdAsync(int id)
     {
-        return await _context.Users.AnyAsync(u => u.Id == id);
+        return await _context.Users.AsNoTracking()
+            .AnyAsync(u => u.Id == id);
     }
 
     public async Task<User> CreateAsync(User user)
@@ -136,25 +140,12 @@ public class UserRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user is null) return false;
-
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
-        return true;
-    }
-
     public async Task<List<User>> GetAllByRoleAsync(UserRole role)
     {
-        return await _context.Users
+        return await _context.Users.AsNoTracking().AsSplitQuery()
             .Where(u => u.Role == role)
             .Include(u => u.Photos)
-            .Include(u => u.Reviews)
-            .Include(u => u.Bookings)
-            .Include(u => u.Favorites)
-            .Include(u => u.OwnedEstablishments)
+            .Include(u => u.UserRating)
             .ToListAsync();
     }
 }

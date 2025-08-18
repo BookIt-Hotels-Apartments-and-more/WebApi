@@ -28,12 +28,21 @@ public class ReviewsController : ControllerBase
         return Ok(reviewsResponse);
     }
 
+    [HttpGet("filter")]
+    public async Task<ActionResult<PaginatedResponse<ReviewResponse>>> GetFilteredAsync([FromQuery] ReviewFilterRequest request)
+    {
+        var filterDto = _mapper.Map<ReviewFilterDTO>(request);
+        var pagedResult = await _service.GetFilteredAsync(filterDto);
+        var response = _mapper.Map<PaginatedResponse<ReviewResponse>>(pagedResult);
+        return Ok(response);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ReviewResponse>> GetByIdAsync([FromRoute] int id)
     {
         var reviewDto = await _service.GetByIdAsync(id);
         var reviewResponse = _mapper.Map<ReviewResponse>(reviewDto);
-        return reviewResponse is not null ? Ok(reviewResponse) : NotFound();
+        return Ok(reviewResponse);
     }
 
     [HttpPost]
@@ -41,7 +50,6 @@ public class ReviewsController : ControllerBase
     {
         var reviewDto = _mapper.Map<ReviewDTO>(request);
         var added = await _service.CreateAsync(reviewDto);
-        if (added is null) return BadRequest("Failed to create review.");
         var reviewResponse = _mapper.Map<ReviewResponse>(added);
         return Ok(reviewResponse);
     }
@@ -51,7 +59,6 @@ public class ReviewsController : ControllerBase
     {
         var reviewDto = _mapper.Map<ReviewDTO>(request);
         var updated = await _service.UpdateAsync(id, reviewDto);
-        if (updated is null) return NotFound();
         var reviewResponse = _mapper.Map<ReviewResponse>(updated);
         return Ok(reviewResponse);
     }
@@ -59,27 +66,7 @@ public class ReviewsController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
-        var deleted = await _service.DeleteAsync(id);
-        return deleted ? NoContent() : NotFound();
-    }
-
-    [HttpGet("filter")]
-    public async Task<ActionResult<PaginatedResponse<ReviewResponse>>> GetFilteredAsync([FromQuery] ReviewFilterRequest request)
-    {
-        var filterDto = _mapper.Map<ReviewFilterDTO>(request);
-        var pagedResult = await _service.GetFilteredAsync(filterDto);
-
-        var response = new PaginatedResponse<ReviewResponse>
-        {
-            Items = _mapper.Map<IEnumerable<ReviewResponse>>(pagedResult.Items),
-            PageNumber = pagedResult.PageNumber,
-            PageSize = pagedResult.PageSize,
-            TotalCount = pagedResult.TotalCount,
-            TotalPages = pagedResult.TotalPages,
-            HasNextPage = pagedResult.HasNextPage,
-            HasPreviousPage = pagedResult.HasPreviousPage
-        };
-
-        return Ok(response);
+        await _service.DeleteAsync(id);
+        return NoContent();
     }
 }

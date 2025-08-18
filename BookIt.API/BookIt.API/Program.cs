@@ -1,5 +1,6 @@
 using BookIt.API.Mapping;
 using BookIt.API.Middleware;
+using BookIt.API.Middleware.Logging;
 using BookIt.API.Models.Responses;
 using BookIt.BLL.Interfaces;
 using BookIt.BLL.Services;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Net;
 using System.Text;
 
@@ -22,7 +24,17 @@ var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 builder.Services.ConfigureSettings(builder.Configuration);
 
-builder.Services.AddControllers();
+var logFolder = builder.Configuration["LogSettings:LogFolder"] ?? "Logs";
+var retainedFileCount = builder.Configuration.GetValue("LogSettings:RetainedFileCountLimit", 30);
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithThreadId()
+    .Enrich.With<CallerEnricher>()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
@@ -163,6 +175,8 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
+
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseSwagger();
@@ -177,4 +191,16 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+try
+{
+    Log.Information("Starting BookIt API application");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "BookIt API application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

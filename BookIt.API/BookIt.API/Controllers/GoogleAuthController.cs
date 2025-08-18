@@ -9,9 +9,9 @@ namespace BookIt.API.Controllers;
 [Route("google-auth")]
 public class GoogleAuthController : ControllerBase
 {
-    private readonly IGoogleAuthService _googleAuthService;
-    private readonly IUserService _userService;
     private readonly IJWTService _jwtService;
+    private readonly IUserService _userService;
+    private readonly IGoogleAuthService _googleAuthService;
     private readonly IOptions<UrlSettings> _urlSettingsOptions;
 
     public GoogleAuthController(
@@ -31,10 +31,10 @@ public class GoogleAuthController : ControllerBase
     {
         try
         {
-            var url = _googleAuthService.GetLoginUrl();
-            return Redirect(url);
+            var loginUrl = _googleAuthService.GetLoginUrl();
+            return Redirect(loginUrl);
         }
-        catch (Exception)
+        catch
         {
             var clientUrl = _urlSettingsOptions.Value.ClientUrl;
             return Redirect($"{clientUrl}/auth/error");
@@ -48,27 +48,12 @@ public class GoogleAuthController : ControllerBase
 
         try
         {
-            if (string.IsNullOrWhiteSpace(code))
-            {
-                return Redirect($"{clientUrl}/auth/error");
-            }
-
+            if (string.IsNullOrWhiteSpace(code)) return Redirect($"{clientUrl}/auth/error");
             var (email, name) = await _googleAuthService.GetUserEmailAndNameAsync(code);
-
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return Redirect($"{clientUrl}/auth/error");
-            }
-
+            if (string.IsNullOrWhiteSpace(email)) return Redirect($"{clientUrl}/auth/error");
             var user = await _userService.AuthByGoogleAsync(name ?? string.Empty, email);
-
-            if (user == null)
-            {
-                return Redirect($"{clientUrl}/auth/error");
-            }
-
+            if (user is null) return Redirect($"{clientUrl}/auth/error");
             var token = _jwtService.GenerateToken(user);
-
             Response.Cookies.Append("auth_token", token, new CookieOptions
             {
                 HttpOnly = true,
@@ -76,10 +61,9 @@ public class GoogleAuthController : ControllerBase
                 SameSite = SameSiteMode.Lax,
                 MaxAge = TimeSpan.FromHours(24)
             });
-
             return Redirect($"{clientUrl}/auth/success");
         }
-        catch (Exception)
+        catch
         {
             return Redirect($"{clientUrl}/auth/error");
         }
