@@ -28,3 +28,6 @@ services:
       - ./https:/https:ro
       - ./Logs:/app/Logs
       - bookit-dataprotection:/root/.aspnet/DataProtection-Keys
+
+volumes:
+  bookit-dataprotection:
