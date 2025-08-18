@@ -21,17 +21,19 @@ public class UserRepository
             .Include(u => u.Reviews)
             .Include(u => u.Bookings)
             .Include(u => u.Favorites)
+            .Include(u => u.UserRating)
             .Include(u => u.OwnedEstablishments)
             .ToListAsync();
     }
 
     public async Task<User?> GetByIdAsync(int id)
     {
-        return await _context.Users
+        return await _context.Users.AsSplitQuery()
             .Include(u => u.Photos)
             .Include(u => u.Reviews)
             .Include(u => u.Bookings)
             .Include(u => u.Favorites)
+            .Include(u => u.UserRating)
             .Include(u => u.OwnedEstablishments)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
@@ -60,7 +62,7 @@ public class UserRepository
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        return await _context.Users
+        return await _context.Users.AsSplitQuery()
             .Include(u => u.Photos)
             .Include(u => u.Bookings)
             .Include(u => u.Favorites)
@@ -136,16 +138,6 @@ public class UserRepository
         user.PasswordHash = newPasswordHash;
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
-    }
-
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user is null) return false;
-
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
-        return true;
     }
 
     public async Task<List<User>> GetAllByRoleAsync(UserRole role)

@@ -94,10 +94,11 @@ public class ApartmentsRepository
         return (apartments, totalCount);
     }
 
-    public async Task<IEnumerable<Apartment>> GetByEstablishmentIdAsync(int establishmentId)
+    public async Task<IEnumerable<int>> GetApartmentIdsByEstablishmentIdAsync(int establishmentId)
     {
         return await _context.Apartments
             .Where(a => a.EstablishmentId == establishmentId)
+            .Select(a => a.Id)
             .ToListAsync();
     }
 

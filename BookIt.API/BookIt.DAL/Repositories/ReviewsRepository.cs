@@ -49,7 +49,9 @@ public class ReviewsRepository
     public async Task<Review?> GetExistingReviewAsync(int? userId, int? apartmentId, int? customerId)
     {
         return await _context.Reviews.AsNoTracking()
-            .FirstOrDefaultAsync(r => r.UserId == userId && r.ApartmentId == apartmentId && r.UserId == customerId);
+            .FirstOrDefaultAsync(r => r.UserId == userId &&
+                                      r.ApartmentId == apartmentId
+                                      && r.UserId == customerId);
     }
 
     public async Task<bool> ExistsAsync(int id)
@@ -99,7 +101,8 @@ public class ReviewsRepository
     {
         return await _context.Reviews.AsNoTracking()
             .Include(r => r.Apartment)
-            .Where(r => r.Apartment != null && r.Apartment.EstablishmentId == establishmentId)
+            .Where(r => r.Apartment != null &&
+                        r.Apartment.EstablishmentId == establishmentId)
             .ToListAsync();
     }
 
@@ -115,7 +118,7 @@ public class ReviewsRepository
         int page,
         int pageSize)
     {
-        var totalCount = await _context.Reviews
+        var totalCount = await _context.Reviews.AsNoTracking()
             .Where(predicate)
             .CountAsync();
 
