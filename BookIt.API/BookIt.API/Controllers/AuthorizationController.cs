@@ -83,7 +83,7 @@ public class AuthorizationController : ControllerBase
         var user = await _userService.LoginAsync(request.Email, request.Password);
         var response = _mapper.Map<UserAuthResponse>(user);
         response.Token = _jwtService.GenerateToken(user);
-        return Ok();
+        return Ok(response);
     }
 
     [HttpPost("reset-password/generate-token")]

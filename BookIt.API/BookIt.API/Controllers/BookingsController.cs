@@ -2,7 +2,6 @@
 using BookIt.API.Models.Requests;
 using BookIt.API.Models.Responses;
 using BookIt.BLL.DTOs;
-using BookIt.BLL.Exceptions;
 using BookIt.BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -78,8 +77,6 @@ public class BookingsController : ControllerBase
         startDate ??= DateTime.UtcNow.Date;
         endDate ??= DateTime.UtcNow.Date.AddMonths(12);
 
-        if (startDate >= endDate) return BadRequest("Start date must be before end date");
-
         var availability = await _service.GetApartmentAvailabilityAsync(apartmentId, startDate, endDate);
         return Ok(availability);
     }
@@ -88,8 +85,6 @@ public class BookingsController : ControllerBase
     public async Task<ActionResult> CheckAvailability([FromRoute] int apartmentId,
         [FromQuery, Required] DateTime dateFrom, [FromQuery, Required] DateTime dateTo)
     {
-        if (dateFrom >= dateTo) return BadRequest("Check-in date must be before check-out date");
-
         var isAvailable = await _service.CheckAvailabilityAsync(apartmentId, dateFrom, dateTo);
         var response = new { ApartmentId = apartmentId, IsAvailable = isAvailable, DateFrom = dateFrom, DateTo = dateTo };
         return Ok(response);
