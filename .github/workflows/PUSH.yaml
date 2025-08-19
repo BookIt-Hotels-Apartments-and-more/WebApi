@@ -8,7 +8,7 @@ env:
   IMAGE_NAME: pok1min/bookitapi_bookit
   IMAGE_TAG: latest
   CONTAINER_NAME: bookitapi_bookit_1
-  REMOTE_HOST: bookit.pp.ua
+  REMOTE_HOST: 34.34.77.107
   
 jobs:
   deploy:
