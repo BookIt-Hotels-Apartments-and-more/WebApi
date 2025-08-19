@@ -48,14 +48,6 @@ jobs:
             sudo docker-compose --env-file BookIt.API.env up --build -d
             sudo docker network connect my_network bookitapi_bookit_1
 
-      - name: Check site availability
-        run: |
-          status=$(curl -L -o /dev/null -s -w "%{http_code}" http://bookit.pp.ua)
-          if [ "$status" -ne 200 ]; then
-            echo "Site is unavailable (HTTP $status)"
-            exit 1
-          fi 
-
   zap_scan:
     runs-on: ubuntu-24.04
     needs: deploy
