@@ -23,6 +23,7 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<FavoriteResponse>>> GetAllAsync()
     {
         var favoritesDto = await _service.GetAllAsync();
@@ -31,6 +32,7 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<FavoriteResponse>> GetByIdAsync([FromRoute] int id)
     {
         var favoriteDto = await _service.GetByIdAsync(id);
@@ -39,6 +41,7 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpGet("user/{userId:int}")]
+    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult<IEnumerable<FavoriteResponse>>> GetAllByUserIdAsync([FromRoute] int userId)
     {
         var favoritesDto = await _service.GetAllForUserAsync(userId);
@@ -47,6 +50,7 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpGet("apartment/{apartmentId:int}")]
+    [Authorize(Roles = "Tenant,Landlord,Admin")]
     public async Task<ActionResult<int>> GetCountByApartmentIdAsync([FromRoute] int apartmentId)
     {
         var favoritesCount = await _service.GetCountForApartmentAsync(apartmentId);
@@ -54,7 +58,7 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult<FavoriteResponse>> CreateAsync([FromBody] FavoriteRequest request)
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -73,7 +77,7 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
+    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int favoriteId)
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

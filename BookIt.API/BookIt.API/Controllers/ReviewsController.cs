@@ -3,12 +3,14 @@ using BookIt.API.Models.Requests;
 using BookIt.API.Models.Responses;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class ReviewsController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -46,6 +48,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Tenant,Landlord")]
     public async Task<ActionResult<ReviewResponse>> CreateAsync([FromBody] ReviewRequest request)
     {
         var reviewDto = _mapper.Map<ReviewDTO>(request);
@@ -55,6 +58,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Tenant,Landlord")]
     public async Task<ActionResult<ReviewResponse>> UpdateAsync([FromRoute] int id, [FromBody] ReviewRequest request)
     {
         var reviewDto = _mapper.Map<ReviewDTO>(request);

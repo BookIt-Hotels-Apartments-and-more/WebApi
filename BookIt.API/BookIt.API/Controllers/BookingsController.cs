@@ -3,6 +3,7 @@ using BookIt.API.Models.Requests;
 using BookIt.API.Models.Responses;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -22,6 +23,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<BookingResponse>>> GetAllAsync()
     {
         var bookingsDto = await _service.GetAllAsync();
@@ -38,6 +40,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult<BookingResponse>> CreateAsync([FromBody] BookingRequest request)
     {
         var bookingDto = _mapper.Map<BookingDTO>(request);
@@ -47,6 +50,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Tenant,Landlord")]
     public async Task<ActionResult<BookingResponse>> UpdateAsync([FromRoute] int id, [FromBody] BookingRequest request)
     {
         var bookingDto = _mapper.Map<BookingDTO>(request);
@@ -56,6 +60,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPatch("check-in/{id:int}")]
+    [Authorize(Roles = "Landlord")]
     public async Task<ActionResult<BookingResponse>> CheckInAsync([FromRoute] int id)
     {
         var updatedBookingDto = await _service.CheckInAsync(id);
@@ -64,6 +69,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Tenant,Landlord")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
         await _service.DeleteAsync(id);
@@ -71,6 +77,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("apartment/{apartmentId:int}/availability")]
+    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult<ApartmentAvailabilityDTO>> GetApartmentAvailability([FromRoute] int apartmentId,
         [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
     {
@@ -82,6 +89,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("apartment/{apartmentId:int}/check-availability")]
+    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult> CheckAvailability([FromRoute] int apartmentId,
         [FromQuery, Required] DateTime dateFrom, [FromQuery, Required] DateTime dateTo)
     {

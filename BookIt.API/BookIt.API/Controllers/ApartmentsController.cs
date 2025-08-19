@@ -3,12 +3,14 @@ using BookIt.API.Models.Requests;
 using BookIt.API.Models.Responses;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class ApartmentsController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -45,29 +47,30 @@ public class ApartmentsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult<ApartmentResponse>> CreateAsync([FromBody] ApartmentRequest request)
     {
         var apartmentDto = _mapper.Map<ApartmentDTO>(request);
         var added = await _service.CreateAsync(apartmentDto);
-        if (added is null) return BadRequest("Failed to create apartment.");
         var apartmentResponse = _mapper.Map<ApartmentResponse>(added);
         return Ok(apartmentResponse);
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult<ApartmentResponse>> UpdateAsync([FromRoute] int id, [FromBody] ApartmentRequest request)
     {
         var apartmentDto = _mapper.Map<ApartmentDTO>(request);
         var updated = await _service.UpdateAsync(id, apartmentDto);
-        if (updated is null) return NotFound();
         var apartmentResponse = _mapper.Map<ApartmentResponse>(updated);
         return Ok(apartmentResponse);
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
-        var deleted = await _service.DeleteAsync(id);
-        return deleted ? NoContent() : NotFound();
+        await _service.DeleteAsync(id);
+        return NoContent();
     }
 }

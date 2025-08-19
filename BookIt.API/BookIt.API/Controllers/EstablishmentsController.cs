@@ -3,12 +3,14 @@ using BookIt.API.Models.Requests;
 using BookIt.API.Models.Responses;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class EstablishmentsController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -54,6 +56,7 @@ public class EstablishmentsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult<EstablishmentResponse>> CreateAsync([FromBody] EstablishmentRequest request)
     {
         var establishmentDto = _mapper.Map<EstablishmentDTO>(request);
@@ -63,6 +66,7 @@ public class EstablishmentsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult<EstablishmentResponse>> UpdateAsync([FromRoute] int id, [FromBody] EstablishmentRequest request)
     {
         var establishmentDto = _mapper.Map<EstablishmentDTO>(request);
@@ -72,6 +76,7 @@ public class EstablishmentsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
         await _service.DeleteAsync(id);

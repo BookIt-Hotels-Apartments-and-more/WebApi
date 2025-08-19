@@ -11,6 +11,7 @@ namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class UserManagementController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -28,7 +29,6 @@ public class UserManagementController : ControllerBase
     }
 
     [HttpPut("images")]
-    [Authorize]
     public async Task<IActionResult> SetUserImages([FromBody] UserImagesRequest request)
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -48,7 +48,6 @@ public class UserManagementController : ControllerBase
     }
 
     [HttpGet("images")]
-    [Authorize]
     public async Task<IActionResult> GetUserImages()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -63,7 +62,6 @@ public class UserManagementController : ControllerBase
     }
 
     [HttpDelete("all-images")]
-    [Authorize]
     public async Task<IActionResult> DeleteUserImage()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -79,7 +77,6 @@ public class UserManagementController : ControllerBase
     }
 
     [HttpPut("details")]
-    [Authorize]
     public async Task<IActionResult> UpdateUserDetails([FromBody] UserDetailsRequest request)
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -96,7 +93,6 @@ public class UserManagementController : ControllerBase
     }
 
     [HttpPut("password")]
-    [Authorize]
     public async Task<IActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
