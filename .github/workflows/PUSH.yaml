@@ -41,10 +41,11 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            cd ~/WebApi/BookIt.API
             sudo docker pull pok1min/bookitapi_bookit:latest
             sudo docker stop bookitapi_bookit_1 || true
             sudo docker rm bookitapi_bookit_1 || true
-            sudo docker-compose --env-file ~/WebApi/BookIt.API/BookIt.API.env up --build -d
+            sudo docker-compose --env-file BookIt.API.env up --build -d
             sudo docker network connect my_network bookitapi_bookit_1
 
       - name: Check site availability
