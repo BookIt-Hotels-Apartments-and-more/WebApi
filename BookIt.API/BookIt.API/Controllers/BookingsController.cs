@@ -11,6 +11,7 @@ namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class BookingsController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -77,7 +78,6 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("apartment/{apartmentId:int}/availability")]
-    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult<ApartmentAvailabilityDTO>> GetApartmentAvailability([FromRoute] int apartmentId,
         [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
     {
@@ -89,7 +89,6 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("apartment/{apartmentId:int}/check-availability")]
-    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult> CheckAvailability([FromRoute] int apartmentId,
         [FromQuery, Required] DateTime dateFrom, [FromQuery, Required] DateTime dateTo)
     {

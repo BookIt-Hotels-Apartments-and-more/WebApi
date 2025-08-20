@@ -46,12 +46,34 @@ public class ReviewsRepository
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
-    public async Task<Review?> GetExistingReviewAsync(int? userId, int? apartmentId, int? customerId)
+    public async Task<bool> IsAuthorEligibleToCreateAsync(int bookingId, int authorId, bool isReviewOnApartment)
+    {
+        return await _context.Bookings.AsNoTracking().AnyAsync(
+            b => b.Id == bookingId &&
+            (isReviewOnApartment && b.UserId == authorId ||
+            !isReviewOnApartment && b.Apartment.Establishment.OwnerId == authorId));
+    }
+
+    public async Task<bool> IsAuthorEligibleToUpdateAsync(int reviewId, int authorId)
     {
         return await _context.Reviews.AsNoTracking()
-            .FirstOrDefaultAsync(r => r.UserId == userId &&
-                                      r.ApartmentId == apartmentId
-                                      && r.UserId == customerId);
+            .AnyAsync(r => r.Id == reviewId &&
+                     ((r.ApartmentId.HasValue && r.Booking.UserId == authorId) ||
+                     (r.UserId.HasValue && r.Booking.Apartment.Establishment.OwnerId == authorId)));
+    }
+
+    public async Task<bool> IsAuthorEligibleToDeleteAsync(int reviewId, int authorId)
+    {
+        return await _context.Reviews.AsNoTracking()
+            .AnyAsync(r => r.Id == reviewId &&
+                     ((r.ApartmentId.HasValue && r.Booking.UserId == authorId) ||
+                     (r.UserId.HasValue && r.Booking.Apartment.Establishment.OwnerId == authorId)));
+    }
+
+    public async Task<bool> ReviewForBookingExistsAsync(int bookingId, int? customerId, int? apartmentId)
+    {
+        return await _context.Reviews.AsNoTracking()
+            .AnyAsync(r => r.BookingId == bookingId && r.UserId == customerId && r.ApartmentId == apartmentId);
     }
 
     public async Task<bool> ExistsAsync(int id)

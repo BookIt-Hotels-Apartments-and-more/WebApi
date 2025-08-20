@@ -16,31 +16,31 @@ public class ReviewsService : IReviewsService
 
     private readonly IMapper _mapper;
     private readonly IImagesService _imagesService;
+    private readonly UserRepository _userRepository;
+    private readonly ILogger<ReviewsService> _logger;
     private readonly IRatingsService _ratingsService;
     private readonly ImagesRepository _imagesRepository;
     private readonly ReviewsRepository _reviewsRepository;
     private readonly ApartmentsRepository _apartmentsRepository;
-    private readonly UserRepository _userRepository;
-    private readonly ILogger<ReviewsService> _logger;
 
     public ReviewsService(
         IMapper mapper,
         IImagesService imagesService,
+        UserRepository userRepository,
+        ILogger<ReviewsService> logger,
         IRatingsService ratingsService,
         ImagesRepository imagesRepository,
         ReviewsRepository reviewsRepository,
-        ApartmentsRepository apartmentsRepository,
-        UserRepository userRepository,
-        ILogger<ReviewsService> logger)
+        ApartmentsRepository apartmentsRepository)
     {
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _imagesService = imagesService ?? throw new ArgumentNullException(nameof(imagesService));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _ratingsService = ratingsService ?? throw new ArgumentNullException(nameof(ratingsService));
         _imagesRepository = imagesRepository ?? throw new ArgumentNullException(nameof(imagesRepository));
         _reviewsRepository = reviewsRepository ?? throw new ArgumentNullException(nameof(reviewsRepository));
         _apartmentsRepository = apartmentsRepository ?? throw new ArgumentNullException(nameof(apartmentsRepository));
-        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<IEnumerable<ReviewDTO>> GetAllAsync()
@@ -84,13 +84,13 @@ public class ReviewsService : IReviewsService
         }
     }
 
-    public async Task<ReviewDTO?> CreateAsync(ReviewDTO dto)
+    public async Task<ReviewDTO?> CreateAsync(ReviewDTO dto, int authorId)
     {
         _logger.LogInformation("CreateAsync started for ApartmentId={ApartmentId}, CustomerId={CustomerId}", dto?.ApartmentId, dto?.CustomerId);
         try
         {
             ValidateReviewData(dto);
-            await ValidateReviewCreationRulesAsync(dto);
+            await ValidateReviewCreationRulesAsync(dto, authorId);
 
             var reviewDomain = _mapper.Map<Review>(dto);
             reviewDomain.CreatedAt = DateTime.UtcNow;
@@ -120,7 +120,7 @@ public class ReviewsService : IReviewsService
         }
     }
 
-    public async Task<ReviewDTO?> UpdateAsync(int id, ReviewDTO dto)
+    public async Task<ReviewDTO?> UpdateAsync(int id, ReviewDTO dto, int authorId)
     {
         _logger.LogInformation("UpdateAsync started for ReviewId={ReviewId}", id);
         try
@@ -140,7 +140,7 @@ public class ReviewsService : IReviewsService
                 throw new EntityNotFoundException("Review", id);
             }
 
-            await ValidateReviewUpdateRulesAsync(id, dto);
+            await ValidateReviewUpdateRulesAsync(id, dto, authorId);
 
             var reviewDomain = _mapper.Map<Review>(dto);
             reviewDomain.Id = id;
@@ -169,7 +169,7 @@ public class ReviewsService : IReviewsService
         }
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int authorId)
     {
         _logger.LogInformation("DeleteAsync started for ReviewId={ReviewId}", id);
         try
@@ -179,6 +179,12 @@ public class ReviewsService : IReviewsService
             {
                 _logger.LogWarning("Review with Id {ReviewId} not found for deletion", id);
                 throw new EntityNotFoundException("Review", id);
+            }
+
+            if (!await _reviewsRepository.IsAuthorEligibleToDeleteAsync(id, authorId))
+            {
+                _logger.LogWarning("Validation failed: Author with Id {AuthorId} is not eligible to delete a review with Id {ReviewId}", authorId, id);
+                throw new UnauthorizedOperationException($"User {authorId} is not eligible to delete a review with Id {id}");
             }
 
             _logger.LogInformation("Deleting review {ReviewId}", id);
@@ -223,7 +229,7 @@ public class ReviewsService : IReviewsService
         }
     }
 
-    private void ValidateReviewData(ReviewDTO dto)
+    private void ValidateReviewData(ReviewDTO? dto)
     {
         var validationErrors = new Dictionary<string, List<string>>();
 
@@ -273,7 +279,7 @@ public class ReviewsService : IReviewsService
         }
     }
 
-    private async Task ValidateReviewCreationRulesAsync(ReviewDTO dto)
+    private async Task ValidateReviewCreationRulesAsync(ReviewDTO dto, int authorId)
     {
         if (dto.ApartmentId.HasValue)
         {
@@ -295,18 +301,22 @@ public class ReviewsService : IReviewsService
             }
         }
 
-        var existingReview = await _reviewsRepository.GetExistingReviewAsync(
-            dto.CustomerId, dto.ApartmentId, dto.CustomerId);
-
-        if (existingReview is not null)
+        if (!await _reviewsRepository.IsAuthorEligibleToCreateAsync(dto.BookingId, authorId, dto.ApartmentId.HasValue))
         {
-            _logger.LogWarning("Validation failed: Review already exists for user {UserId} and target", dto.CustomerId);
-            throw new EntityAlreadyExistsException("Review", "user and target combination",
-                $"User {dto.CustomerId} for {(dto.ApartmentId.HasValue ? $"apartment {dto.ApartmentId}" : $"customer {dto.CustomerId}")}");
+            _logger.LogWarning("Validation failed: Author with Id {AuthorId} is not eligible to create a review for BookingId {BookingId}", authorId, dto.BookingId);
+            throw new UnauthorizedOperationException($"User {authorId} is not eligible to create a review for BookingId {dto.BookingId}");
+        }
+
+        if (await _reviewsRepository.ReviewForBookingExistsAsync(dto.BookingId, dto.CustomerId, dto.ApartmentId))
+        {
+            _logger.LogWarning("Validation failed: Review already exists for {EntityInfo}", 
+                dto.ApartmentId.HasValue ? $"apartment + {dto.ApartmentId}" : $"customer {dto.CustomerId}");
+            throw new EntityAlreadyExistsException("Review", "booking and review target combination",
+                $"Review for {(dto.ApartmentId.HasValue ? $"apartment {dto.ApartmentId}" : $"customer {dto.CustomerId}")} in scope of booking {dto.BookingId}");
         }
     }
 
-    private async Task ValidateReviewUpdateRulesAsync(int reviewId, ReviewDTO dto)
+    private async Task ValidateReviewUpdateRulesAsync(int reviewId, ReviewDTO dto, int authorId)
     {
         if (dto.ApartmentId.HasValue)
         {
@@ -326,6 +336,12 @@ public class ReviewsService : IReviewsService
                 _logger.LogWarning("Validation failed: Customer with Id {CustomerId} not found for review update", dto.CustomerId.Value);
                 throw new EntityNotFoundException("Customer", dto.CustomerId.Value);
             }
+        }
+
+        if (!await _reviewsRepository.IsAuthorEligibleToUpdateAsync(reviewId, authorId))
+        {
+            _logger.LogWarning("Validation failed: Author with Id {AuthorId} is not eligible to update a review with Id {ReviewId}", authorId, reviewId);
+            throw new UnauthorizedOperationException($"User {authorId} is not eligible to update a review with Id {reviewId}");
         }
     }
 
