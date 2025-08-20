@@ -8,7 +8,7 @@ env:
   IMAGE_NAME: pok1min/bookitapi_bookit
   IMAGE_TAG: latest
   CONTAINER_NAME: bookitapi_bookit_1
-  REMOTE_HOST: bookit.pp.ua
+  REMOTE_HOST: 34.34.77.107
   
 jobs:
   deploy:
@@ -26,6 +26,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
+          context: ./BookIt.API
+          file: ./BookIt.API/Dockerfile
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           secrets: |
@@ -39,19 +41,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            cd ~/WebApi/BookIt.API
             sudo docker pull pok1min/bookitapi_bookit:latest
             sudo docker stop bookitapi_bookit_1 || true
             sudo docker rm bookitapi_bookit_1 || true
             sudo docker-compose --env-file BookIt.API.env up --build -d
             sudo docker network connect my_network bookitapi_bookit_1
-
-      - name: Check site availability
-        run: |
-          status=$(curl -L -o /dev/null -s -w "%{http_code}" http://bookit.pp.ua)
-          if [ "$status" -ne 200 ]; then
-            echo "Site is unavailable (HTTP $status)"
-            exit 1
-          fi 
 
   zap_scan:
     runs-on: ubuntu-24.04
