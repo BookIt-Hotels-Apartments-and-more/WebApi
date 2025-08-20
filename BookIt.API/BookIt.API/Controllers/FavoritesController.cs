@@ -40,11 +40,16 @@ public class FavoritesController : ControllerBase
         return Ok(favoriteResponse);
     }
 
-    [HttpGet("user/{userId:int}")]
+    [HttpGet("my")]
     [Authorize(Roles = "Tenant")]
-    public async Task<ActionResult<IEnumerable<FavoriteResponse>>> GetAllByUserIdAsync([FromRoute] int userId)
+    public async Task<ActionResult<IEnumerable<FavoriteResponse>>> GetAllForMeAsync()
     {
-        var favoritesDto = await _service.GetAllForUserAsync(userId);
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
+        var favoritesDto = await _service.GetAllForUserAsync(requestorId);
         var favoritesResponse = _mapper.Map<IEnumerable<FavoriteResponse>>(favoritesDto);
         return Ok(favoritesResponse);
     }
@@ -65,7 +70,7 @@ public class FavoritesController : ControllerBase
 
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
         if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
-        if (request.UserId is not null && request.UserId != userId) return Forbid();
+        if (request.UserId is not null && request.UserId != userId) return Forbid("You can only create favorites for yourself.");
 
         request.UserId = userId;
 
@@ -77,15 +82,15 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Tenant")]
-    public async Task<ActionResult> DeleteAsync([FromRoute] int favoriteId)
+    [Authorize(Roles = "Tenant,Landlord")]
+    public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
-        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
 
-        await _service.DeleteAsync(favoriteId, userId);
+        await _service.DeleteAsync(id, requestorId);
         return NoContent();
     }
 }

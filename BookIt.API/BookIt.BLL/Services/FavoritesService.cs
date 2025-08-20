@@ -163,7 +163,7 @@ public class FavoritesService : IFavoritesService
             if (favoriteDomain.UserId != userId)
             {
                 _logger.LogWarning("User {UserId} is not authorized to delete favorite with Id {Id}", userId, favoriteId);
-                throw new UnauthorizedAccessException($"User {userId} is not authorized to delete this favorite");
+                throw new UnauthorizedOperationException($"User {userId} is not authorized to delete this favorite");
             }
 
             await _repository.DeleteAsync(favoriteId);
