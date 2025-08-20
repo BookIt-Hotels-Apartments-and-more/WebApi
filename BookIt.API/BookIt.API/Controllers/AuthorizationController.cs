@@ -65,6 +65,7 @@ public class AuthorizationController : ControllerBase
     }
 
     [HttpPost("register-admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequest request)
     {
         var baseUrl = _appSettingsOptions.Value.BaseUrl;
@@ -124,7 +125,7 @@ public class AuthorizationController : ControllerBase
     }
 
     [HttpGet("me")]
-    [Authorize]
+    [Authorize(Roles = "Tenant,Landlord,Admin")]
     public async Task<IActionResult> Me()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

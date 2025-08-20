@@ -1,6 +1,7 @@
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Models;
 using BookIt.BLL.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookIt.API.Controllers;
@@ -17,6 +18,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAll()
     {
         var payments = await _service.GetAllPaymentsAsync();
@@ -24,6 +26,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Tenant,Landlord,Admin")]
     public async Task<IActionResult> Get(int id)
     {
         var payment = await _service.GetPaymentByIdAsync(id);
@@ -31,6 +34,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Tenant,Landlord,Admin")]
     public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto)
     {
         var paymentId = await _service.CreatePaymentAsync(dto);
@@ -38,6 +42,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete([FromRoute] int id)
     {
         await _service.DeletePaymentAsync(id);
@@ -45,6 +50,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("mono-status")]
+    [Authorize(Roles = "Tenant,Landlord,Admin")]
     public async Task<IActionResult> CheckMonoStatus([FromBody] ProcessMonoPaymentDto dto)
     {
         var isApproved = await _service.CheckMonoPaymentStatusAsync(dto);
@@ -52,6 +58,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("universal")]
+    [Authorize(Roles = "Tenant,Landlord,Admin")]
     public async Task<IActionResult> CreateUniversal([FromBody] CreateUniversalPayment dto)
     {
         var result = await _service.CreateUniversalPaymentAsync(dto);
@@ -59,6 +66,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("manual-confirm")]
+    [Authorize(Roles = "Landlord")]
     public async Task<IActionResult> ConfirmManual([FromBody] ManualConfirmPaymentDto dto)
     {
         var isConfirmed = await _service.ConfirmManualPaymentAsync(dto.PaymentId);

@@ -23,6 +23,7 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<FavoriteResponse>>> GetAllAsync()
     {
         var favoritesDto = await _service.GetAllAsync();
@@ -31,6 +32,7 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<FavoriteResponse>> GetByIdAsync([FromRoute] int id)
     {
         var favoriteDto = await _service.GetByIdAsync(id);
@@ -38,15 +40,22 @@ public class FavoritesController : ControllerBase
         return Ok(favoriteResponse);
     }
 
-    [HttpGet("user/{userId:int}")]
-    public async Task<ActionResult<IEnumerable<FavoriteResponse>>> GetAllByUserIdAsync([FromRoute] int userId)
+    [HttpGet("my")]
+    [Authorize(Roles = "Tenant")]
+    public async Task<ActionResult<IEnumerable<FavoriteResponse>>> GetAllForMeAsync()
     {
-        var favoritesDto = await _service.GetAllForUserAsync(userId);
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
+        var favoritesDto = await _service.GetAllForUserAsync(requestorId);
         var favoritesResponse = _mapper.Map<IEnumerable<FavoriteResponse>>(favoritesDto);
         return Ok(favoritesResponse);
     }
 
     [HttpGet("apartment/{apartmentId:int}")]
+    [Authorize(Roles = "Tenant,Landlord,Admin")]
     public async Task<ActionResult<int>> GetCountByApartmentIdAsync([FromRoute] int apartmentId)
     {
         var favoritesCount = await _service.GetCountForApartmentAsync(apartmentId);
@@ -54,14 +63,14 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult<FavoriteResponse>> CreateAsync([FromBody] FavoriteRequest request)
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
         if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
-        if (request.UserId is not null && request.UserId != userId) return Forbid();
+        if (request.UserId is not null && request.UserId != userId) return Forbid("You can only create favorites for yourself.");
 
         request.UserId = userId;
 
@@ -73,15 +82,15 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
-    public async Task<ActionResult> DeleteAsync([FromRoute] int favoriteId)
+    [Authorize(Roles = "Tenant,Landlord")]
+    public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
-        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
-        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
 
-        await _service.DeleteAsync(favoriteId, userId);
+        await _service.DeleteAsync(id, requestorId);
         return NoContent();
     }
 }

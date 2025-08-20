@@ -2,12 +2,14 @@ using AutoMapper;
 using BookIt.API.Models.Responses;
 using BookIt.BLL.Interfaces;
 using BookIt.DAL.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Admin")]
 public class UserController : ControllerBase
 {
     private readonly IMapper _mapper;

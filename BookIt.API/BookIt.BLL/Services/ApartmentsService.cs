@@ -15,19 +15,19 @@ public class ApartmentsService : IApartmentsService
     private readonly IMapper _mapper;
     private readonly IImagesService _imagesService;
     private readonly IRatingsService _ratingsService;
+    private readonly ILogger<ApartmentsService> _logger;
     private readonly ImagesRepository _imagesRepository;
     private readonly BookingsRepository _bookingsRepository;
     private readonly ApartmentsRepository _apartmentsRepository;
-    private readonly ILogger<ApartmentsService> _logger;
 
     public ApartmentsService(
         IMapper mapper,
         IImagesService imagesService,
         IRatingsService ratingsService,
+        ILogger<ApartmentsService> logger,
         ImagesRepository imagesRepository,
         BookingsRepository bookingsRepository,
-        ApartmentsRepository apartmentsRepository,
-        ILogger<ApartmentsService> logger)
+        ApartmentsRepository apartmentsRepository)
     {
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -79,11 +79,18 @@ public class ApartmentsService : IApartmentsService
         }
     }
 
-    public async Task<ApartmentDTO?> CreateAsync(ApartmentDTO dto)
+    public async Task<ApartmentDTO?> CreateAsync(ApartmentDTO dto, int requestorId)
     {
         try
         {
             _logger.LogInformation("Creating new apartment");
+
+            if (!await _apartmentsRepository.IsUserEligibleToCreateAsync(dto.EstablishmentId, requestorId))
+            {
+                _logger.LogWarning("User {UserId} is not eligible to create apartment in establishment {EstablishmentId}.", requestorId, dto.EstablishmentId);
+                throw new UnauthorizedOperationException("You are not authorized to create this apartment");
+            }
+
             var apartmentDomain = _mapper.Map<Apartment>(dto);
             var addedApartment = await _apartmentsRepository.AddAsync(apartmentDomain);
 
@@ -106,7 +113,7 @@ public class ApartmentsService : IApartmentsService
         }
     }
 
-    public async Task<ApartmentDTO?> UpdateAsync(int id, ApartmentDTO dto)
+    public async Task<ApartmentDTO?> UpdateAsync(int id, ApartmentDTO dto, int requestorId)
     {
         try
         {
@@ -116,6 +123,12 @@ public class ApartmentsService : IApartmentsService
             {
                 _logger.LogWarning("Apartment with ID {ApartmentId} not found for update", id);
                 throw new EntityNotFoundException("Apartment", id);
+            }
+
+            if (!await _apartmentsRepository.IsUserEligibleToUpdateAsync(id, dto.EstablishmentId, requestorId))
+            {
+                _logger.LogWarning("User {UserId} is not authorized to update apartment with ID {ApartmentId}", requestorId, id);
+                throw new UnauthorizedOperationException("You are not authorized to update this apartment");
             }
 
             var apartmentDomain = _mapper.Map<Apartment>(dto);
@@ -138,7 +151,7 @@ public class ApartmentsService : IApartmentsService
         }
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int requestorId)
     {
         try
         {
@@ -148,6 +161,12 @@ public class ApartmentsService : IApartmentsService
             {
                 _logger.LogWarning("Apartment with ID {ApartmentId} not found for deletion", id);
                 throw new EntityNotFoundException("Apartment", id);
+            }
+
+            if (!await _apartmentsRepository.IsUserEligibleToDeleteAsync(id, requestorId))
+            {
+                _logger.LogWarning("User {UserId} is not authorized to delete apartment with ID {ApartmentId}", requestorId, id);
+                throw new UnauthorizedOperationException("You are not authorized to delete this apartment");
             }
 
             await ValidateApartmentCanBeDeletedAsync(id);

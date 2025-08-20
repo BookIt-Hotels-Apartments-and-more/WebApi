@@ -28,6 +28,7 @@ public class UserRatingRepository
 
     public async Task<UserRating> UpdateAsync(UserRating rating)
     {
+        rating.LastUpdatedAt = DateTime.UtcNow;
         _context.UserRatings.Update(rating);
         await _context.SaveChangesAsync();
         return rating;
