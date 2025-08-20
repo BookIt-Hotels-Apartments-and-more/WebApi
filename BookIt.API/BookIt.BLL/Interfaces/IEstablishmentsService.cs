@@ -10,5 +10,5 @@ public interface IEstablishmentsService
     Task<EstablishmentDTO?> GetByIdAsync(int id);
     Task<EstablishmentDTO?> CreateAsync(EstablishmentDTO dto);
     Task<EstablishmentDTO?> UpdateAsync(int id, EstablishmentDTO dto);
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(int id, int requestorId);
 }

@@ -5,6 +5,7 @@ using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BookIt.API.Controllers;
 
@@ -59,6 +60,15 @@ public class EstablishmentsController : ControllerBase
     [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult<EstablishmentResponse>> CreateAsync([FromBody] EstablishmentRequest request)
     {
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var requestorRoleStr = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
+        if (requestorRoleStr == "Landlord" && request.OwnerId != requestorId)
+            return Forbid("You can only create establishments for yourself.");
+
         var establishmentDto = _mapper.Map<EstablishmentDTO>(request);
         var addedEstablishment = await _service.CreateAsync(establishmentDto);
         var establishmentResponse = _mapper.Map<EstablishmentResponse>(addedEstablishment);
@@ -69,6 +79,15 @@ public class EstablishmentsController : ControllerBase
     [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult<EstablishmentResponse>> UpdateAsync([FromRoute] int id, [FromBody] EstablishmentRequest request)
     {
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var requestorRoleStr = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
+        if (requestorRoleStr == "Landlord" && request.OwnerId != requestorId)
+            return Forbid("You can only update your establishments.");
+
         var establishmentDto = _mapper.Map<EstablishmentDTO>(request);
         var updatedEstablishment = await _service.UpdateAsync(id, establishmentDto);
         var establishmentResponse = _mapper.Map<EstablishmentResponse>(updatedEstablishment);
@@ -79,7 +98,12 @@ public class EstablishmentsController : ControllerBase
     [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
-        await _service.DeleteAsync(id);
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
+        await _service.DeleteAsync(id, requestorId);
         return NoContent();
     }
 }

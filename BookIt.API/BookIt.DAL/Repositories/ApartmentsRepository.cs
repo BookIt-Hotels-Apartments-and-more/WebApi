@@ -1,4 +1,5 @@
 ﻿using BookIt.DAL.Database;
+using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,6 +46,49 @@ public class ApartmentsRepository
     {
         return await _context.Apartments.AsNoTracking()
             .AnyAsync(a => a.Id == id);
+    }
+
+    public async Task<bool> IsUserEligibleToCreateAsync(int establishmentId, int userId)
+    {
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+        var eligibleRoles = new[] { UserRole.Landlord, UserRole.Admin };
+        if (user is null || !eligibleRoles.Contains(user.Role)) return false;
+
+        return user.Role == UserRole.Admin ||
+               (await _context.Establishments.AsNoTracking().FirstOrDefaultAsync(e => e.Id == establishmentId))?.OwnerId == userId;
+    }
+
+    public async Task<bool> IsUserEligibleToUpdateAsync(int apartmentId, int establishmentId, int userId)
+    {
+        var isAdmin = (await _context.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId))?.Role == UserRole.Admin;
+
+        if (isAdmin) return true;
+
+        var isPreviousEstablishmentOwner = (await _context.Apartments.AsNoTracking()
+            .Select(a => new { ApartmentId = a.Id, OwnerId = a.Establishment.Owner.Id })
+            .FirstOrDefaultAsync(a => a.ApartmentId == apartmentId))?.OwnerId == userId;
+
+        if (!isPreviousEstablishmentOwner) return false;
+
+        var isNewEstablishmentOwner = (await _context.Establishments.AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == establishmentId))?.OwnerId == userId;
+
+        return isNewEstablishmentOwner;
+    }
+
+    public async Task<bool> IsUserEligibleToDeleteAsync(int apartmentId, int userId)
+    {
+        var isAdmin = (await _context.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId))?.Role == UserRole.Admin;
+
+        if (isAdmin) return true;
+
+        var isEstablishmentOwner = (await _context.Apartments.AsNoTracking()
+            .Select(a => new { ApartmentId = a.Id, OwnerId = a.Establishment.Owner.Id })
+            .FirstOrDefaultAsync(a => a.ApartmentId == apartmentId))?.OwnerId == userId;
+
+        return isEstablishmentOwner;
     }
 
     public async Task<Apartment> AddAsync(Apartment apartment)

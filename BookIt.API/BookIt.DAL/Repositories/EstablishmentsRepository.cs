@@ -1,4 +1,5 @@
 ﻿using BookIt.DAL.Database;
+using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -54,6 +55,25 @@ public class EstablishmentsRepository
         await _context.Establishments.AddAsync(establishment);
         await _context.SaveChangesAsync();
         return establishment;
+    }
+
+    public async Task<bool> IsUserEligibleToCreateAsync(int userId)
+    {
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+        var eligibleRoles = new[] { UserRole.Landlord, UserRole.Admin };
+        return user is not null && eligibleRoles.Contains(user.Role);
+    }
+
+    public async Task<bool> IsUserEligibleToUpdateAsync(int establishmentId, int userId)
+    {
+        return (await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId))?.Role == UserRole.Admin ||
+               (await _context.Establishments.AsNoTracking().FirstOrDefaultAsync(e => e.Id == establishmentId))?.OwnerId == userId;
+    }
+
+    public async Task<bool> IsUserEligibleToDeleteAsync(int establishmentId, int userId)
+    {
+        return (await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId))?.Role == UserRole.Admin ||
+               (await _context.Establishments.AsNoTracking().FirstOrDefaultAsync(e => e.Id == establishmentId))?.OwnerId == userId;
     }
 
     public async Task<Establishment> UpdateAsync(Establishment establishment)

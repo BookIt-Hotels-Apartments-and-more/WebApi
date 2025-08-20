@@ -5,6 +5,7 @@ using BookIt.BLL.DTOs;
 using BookIt.BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BookIt.API.Controllers;
 
@@ -50,8 +51,13 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult<ApartmentResponse>> CreateAsync([FromBody] ApartmentRequest request)
     {
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
         var apartmentDto = _mapper.Map<ApartmentDTO>(request);
-        var added = await _service.CreateAsync(apartmentDto);
+        var added = await _service.CreateAsync(apartmentDto, requestorId);
         var apartmentResponse = _mapper.Map<ApartmentResponse>(added);
         return Ok(apartmentResponse);
     }
@@ -60,8 +66,13 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult<ApartmentResponse>> UpdateAsync([FromRoute] int id, [FromBody] ApartmentRequest request)
     {
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
         var apartmentDto = _mapper.Map<ApartmentDTO>(request);
-        var updated = await _service.UpdateAsync(id, apartmentDto);
+        var updated = await _service.UpdateAsync(id, apartmentDto, requestorId);
         var apartmentResponse = _mapper.Map<ApartmentResponse>(updated);
         return Ok(apartmentResponse);
     }
@@ -70,7 +81,12 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Landlord,Admin")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
-        await _service.DeleteAsync(id);
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
+        await _service.DeleteAsync(id, requestorId);
         return NoContent();
     }
 }

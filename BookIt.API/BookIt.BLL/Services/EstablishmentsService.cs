@@ -99,6 +99,12 @@ public class EstablishmentsService : IEstablishmentsService
         _logger.LogInformation("Start CreateAsync for establishment with name: {Name}", dto.Name);
         try
         {
+            if (!await _establishmentsRepository.IsUserEligibleToCreateAsync(dto.OwnerId))
+            {
+                _logger.LogWarning("User {UserId} is not eligible to create establishment.", dto.OwnerId);
+                throw new UnauthorizedOperationException("You are not authorized to create establishment");
+            }
+
             Task<GeolocationDTO?> addGeolocationTask = _geolocationService.CreateAsync(dto.Geolocation);
             Task<VibeType?> classifyVibeTask = _classificationService.ClassifyEstablishmentVibeAsync(dto);
 
@@ -147,17 +153,20 @@ public class EstablishmentsService : IEstablishmentsService
                 throw new EntityNotFoundException("Establishment", id);
             }
 
+            if (!await _establishmentsRepository.IsUserEligibleToUpdateAsync(id, dto.OwnerId))
+            {
+                _logger.LogWarning("User {UserId} is not eligible to update establishment with Id {Id}", dto.OwnerId, id);
+                throw new UnauthorizedOperationException("You are not authorized to update this establishment");
+            }
+
             var establishmentDomain = _mapper.Map<Establishment>(dto);
             establishmentDomain.Id = id;
 
-            GeolocationDTO? updateGeolocationTask = await _geolocationService.UpdateEstablishmentGeolocationAsync(id, dto.Geolocation);
-            VibeType? updateVibeTask = await _classificationService.UpdateEstablishmentVibeAsync(id, dto);
+            GeolocationDTO? updatedGeolocation = await _geolocationService.UpdateEstablishmentGeolocationAsync(id, dto.Geolocation);
+            VibeType? updatedVibe = await _classificationService.UpdateEstablishmentVibeAsync(id, dto);
 
-            if (updateGeolocationTask?.Id is not null)
-                establishmentDomain.GeolocationId = updateGeolocationTask?.Id;
-
-            if (updateVibeTask is not null)
-                establishmentDomain.Vibe = updateVibeTask;
+            if (updatedGeolocation?.Id is not null) establishmentDomain.GeolocationId = updatedGeolocation?.Id;
+            if (updatedVibe is not null) establishmentDomain.Vibe = updatedVibe;
 
             var currentEstablishmentRatingId = await _establishmentsRepository.GetEstablishmentRatingAsync(id);
             establishmentDomain.ApartmentRatingId = currentEstablishmentRatingId;
@@ -181,7 +190,7 @@ public class EstablishmentsService : IEstablishmentsService
         }
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int requestorId)
     {
         _logger.LogInformation("Start DeleteAsync for establishment Id: {Id}", id);
         try
@@ -191,6 +200,12 @@ public class EstablishmentsService : IEstablishmentsService
             {
                 _logger.LogWarning("Establishment with Id {Id} not found for deletion", id);
                 throw new EntityNotFoundException("Establishment", id);
+            }
+
+            if (!await _establishmentsRepository.IsUserEligibleToDeleteAsync(id, requestorId))
+            {
+                _logger.LogWarning("User {UserId} is not eligible to delete establishment with Id {Id}", requestorId, id);
+                throw new UnauthorizedOperationException("You are not authorized to delete this establishment");
             }
 
             await ValidateEstablishmentCanBeDeletedAsync(id);
@@ -335,7 +350,7 @@ public class EstablishmentsService : IEstablishmentsService
         if (!string.IsNullOrWhiteSpace(filter.Country)) predicate = predicate.And(e => e.Geolocation != null &&
                                                                                        e.Geolocation.Country != null &&
                                                                                        e.Geolocation.Country.ToLower().Contains(filter.Country));
-        if (!string.IsNullOrWhiteSpace(filter.City))    predicate = predicate.And(e => e.Geolocation != null &&
+        if (!string.IsNullOrWhiteSpace(filter.City)) predicate = predicate.And(e => e.Geolocation != null &&
                                                                                        e.Geolocation.City != null &&
                                                                                        e.Geolocation.City.ToLower().Contains(filter.City));
 
