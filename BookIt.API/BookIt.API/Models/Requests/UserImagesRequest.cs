@@ -1,5 +1,5 @@
 ﻿using BookIt.API.Models.Requests.Common;
-using BookIt.API.Validation;
+using BookIt.API.Validation.Attributes;
 using BookIt.DAL.Constants;
 
 namespace BookIt.API.Models.Requests;

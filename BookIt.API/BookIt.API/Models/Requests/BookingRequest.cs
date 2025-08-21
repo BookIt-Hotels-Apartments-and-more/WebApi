@@ -1,4 +1,4 @@
-﻿using BookIt.API.Validation;
+﻿using BookIt.API.Validation.Attributes;
 using System.ComponentModel.DataAnnotations;
 
 namespace BookIt.API.Models.Requests;

@@ -1,4 +1,5 @@
 ﻿using BookIt.DAL.Configuration.Settings;
+using DotNetEnv;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -6,8 +7,10 @@ namespace BookIt.DAL.Configuration;
 
 public static class ConfigurationHelper
 {
-    public static void ConfigureSettings(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection ConfigureSettings(this IServiceCollection services, IConfiguration configuration)
     {
+        Env.Load();
+
         services.Configure<ConnectionStrings>(options =>
         {
             configuration.GetSection(ConnectionStrings.SectionName).Bind(options);
@@ -100,5 +103,7 @@ public static class ConfigurationHelper
             if (!string.IsNullOrEmpty(apiKey))
                 options.ApiKey = apiKey;
         });
+
+        return services;
     }
 }

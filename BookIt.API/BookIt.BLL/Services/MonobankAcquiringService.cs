@@ -113,6 +113,23 @@ public class MonobankAcquiringService : IMonobankAcquiringService
         }
     }
 
+    private void ConfigureHttpClient()
+    {
+        try
+        {
+            _httpClient.BaseAddress = new Uri(_settings.BaseUrl.TrimEnd('/'));
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("X-Token", _settings.Token);
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "BookIt/1.0");
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        }
+        catch (Exception ex)
+        {
+            throw new ExternalServiceException("Monobank", "Failed to configure HTTP client", ex);
+        }
+    }
+
     private void ValidateMonobankConfiguration()
     {
         var validationErrors = new Dictionary<string, List<string>>();
@@ -137,23 +154,6 @@ public class MonobankAcquiringService : IMonobankAcquiringService
 
         if (validationErrors.Any())
             throw new Exception("Invalid Monobank configuration");
-    }
-
-    private void ConfigureHttpClient()
-    {
-        try
-        {
-            _httpClient.BaseAddress = new Uri(_settings.BaseUrl.TrimEnd('/'));
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("X-Token", _settings.Token);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "BookIt/1.0");
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
-        }
-        catch (Exception ex)
-        {
-            throw new ExternalServiceException("Monobank", "Failed to configure HTTP client", ex);
-        }
     }
 
     private void ValidateCreateInvoiceRequest(CreateInvoiceRequest request)
