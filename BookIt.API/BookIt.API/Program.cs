@@ -26,11 +26,11 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddSwaggerGenWithSecurityConfiguration();
 }
 
-builder.Services.AddCustomDbContext<BookingDbContext>(builder.Configuration);
+builder.Services.AddCustomDbContext<BookingDbContext>();
 builder.Services.AddMapping();
-builder.Services.AddHttpClient();
-builder.Services.AddDALRepositories();
 builder.Services.AddBLLServices();
+builder.Services.AddDALRepositories();
+builder.Services.AddCustomHttpClients();
 
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 

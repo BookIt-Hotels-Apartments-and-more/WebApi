@@ -6,13 +6,15 @@ namespace BookIt.DAL.Extensions;
 
 public static class DbContextRegistrationExtension
 {
-    public static IServiceCollection AddCustomDbContext<DbContextType>(this IServiceCollection services, IConfiguration config)
+    public static IServiceCollection AddCustomDbContext<DbContextType>(this IServiceCollection services)
         where DbContextType : DbContext
     {
-        services.AddDbContext<DbContextType>(options =>
+        services.AddDbContext<DbContextType>((serviceProvider, options) =>
         {
             var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
-                                ?? config.GetRequiredSection("ConnectionStrings:SQLDatabase").Value;
+                                   ?? serviceProvider.GetRequiredService<IConfiguration>()
+                                   .GetRequiredSection("ConnectionStrings:SQLDatabase").Value;
+
             options.UseSqlServer(connectionString);
         });
 

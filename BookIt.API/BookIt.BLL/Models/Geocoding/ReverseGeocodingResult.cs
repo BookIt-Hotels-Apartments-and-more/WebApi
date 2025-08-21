@@ -25,6 +25,9 @@ public record Address
     [JsonPropertyName("city")]
     public string? City { get; set; }
 
+    [JsonPropertyName("town")]
+    public string? Town { get; set; }
+
     [JsonPropertyName("postcode")]
     public string? Postcode { get; set; }
 }

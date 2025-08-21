@@ -4,7 +4,6 @@ using BookIt.DAL.Configuration.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -12,8 +11,8 @@ namespace BookIt.BLL.Services;
 
 public class MonobankAcquiringService : IMonobankAcquiringService
 {
+    private readonly string _webHookUrl;
     private readonly HttpClient _httpClient;
-    private readonly MonobankSettings _settings;
     private readonly ILogger<MonobankAcquiringService> _logger;
 
     public MonobankAcquiringService(
@@ -21,12 +20,9 @@ public class MonobankAcquiringService : IMonobankAcquiringService
         IOptions<MonobankSettings> options,
         ILogger<MonobankAcquiringService> logger)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _settings = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        ValidateMonobankConfiguration();
-        ConfigureHttpClient();
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _webHookUrl = $"{options.Value.WebhookBaseUrl.TrimEnd('/')}/api/monobank/webhook/{options.Value.WebhookSecret}";
     }
 
     public async Task<CreateInvoiceResponse?> CreateInvoiceAsync(CreateInvoiceRequest request)
@@ -35,7 +31,7 @@ public class MonobankAcquiringService : IMonobankAcquiringService
         {
             ValidateCreateInvoiceRequest(request);
 
-            request.WebHookUrl = BuildWebhookUrl();
+            request.WebHookUrl = _webHookUrl;
 
             _logger.LogInformation("Creating Monobank invoice for amount {Amount} UAH", request.Amount);
 
@@ -113,49 +109,6 @@ public class MonobankAcquiringService : IMonobankAcquiringService
         }
     }
 
-    private void ConfigureHttpClient()
-    {
-        try
-        {
-            _httpClient.BaseAddress = new Uri(_settings.BaseUrl.TrimEnd('/'));
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("X-Token", _settings.Token);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "BookIt/1.0");
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
-        }
-        catch (Exception ex)
-        {
-            throw new ExternalServiceException("Monobank", "Failed to configure HTTP client", ex);
-        }
-    }
-
-    private void ValidateMonobankConfiguration()
-    {
-        var validationErrors = new Dictionary<string, List<string>>();
-
-        if (string.IsNullOrWhiteSpace(_settings.BaseUrl))
-            validationErrors.Add("BaseUrl", new List<string> { "Monobank base URL is required" });
-
-        if (!string.IsNullOrWhiteSpace(_settings.BaseUrl) && !Uri.IsWellFormedUriString(_settings.BaseUrl, UriKind.Absolute))
-            validationErrors.Add("BaseUrl", new List<string> { "Monobank base URL must be a valid absolute URL" });
-
-        if (string.IsNullOrWhiteSpace(_settings.Token))
-            validationErrors.Add("Token", new List<string> { "Monobank API token is required" });
-
-        if (string.IsNullOrWhiteSpace(_settings.WebhookSecret))
-            validationErrors.Add("WebhookSecret", new List<string> { "Monobank webhook secret is required" });
-
-        if (string.IsNullOrWhiteSpace(_settings.WebhookBaseUrl))
-            validationErrors.Add("WebhookBaseUrl", new List<string> { "Webhook base URL is required" });
-
-        if (!string.IsNullOrWhiteSpace(_settings.WebhookBaseUrl) && !Uri.IsWellFormedUriString(_settings.WebhookBaseUrl, UriKind.Absolute))
-            validationErrors.Add("WebhookBaseUrl", new List<string> { "Webhook base URL must be a valid absolute URL" });
-
-        if (validationErrors.Any())
-            throw new Exception("Invalid Monobank configuration");
-    }
-
     private void ValidateCreateInvoiceRequest(CreateInvoiceRequest request)
     {
         var validationErrors = new Dictionary<string, List<string>>();
@@ -183,18 +136,6 @@ public class MonobankAcquiringService : IMonobankAcquiringService
     {
         if (string.IsNullOrWhiteSpace(invoiceId))
             throw new ValidationException("InvoiceId", "Invoice ID is required");
-    }
-
-    private string BuildWebhookUrl()
-    {
-        try
-        {
-            return $"{_settings.WebhookBaseUrl.TrimEnd('/')}/api/monobank/webhook/{_settings.WebhookSecret}";
-        }
-        catch (Exception ex)
-        {
-            throw new ExternalServiceException("Monobank", "Failed to build webhook URL", ex);
-        }
     }
 
     private async Task HandleMonobankErrorResponseAsync(HttpResponseMessage response, string operation)

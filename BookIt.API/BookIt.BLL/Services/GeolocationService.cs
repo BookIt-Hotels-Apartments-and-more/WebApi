@@ -3,44 +3,32 @@ using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
 using BookIt.BLL.Interfaces;
 using BookIt.BLL.Models.Geocoding;
-using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace BookIt.BLL.Services;
 
-public class GeolocationService : IGeolocationService, IDisposable
+public class GeolocationService : IGeolocationService
 {
     private const double _closeGeoThreshold = 1e-5;
 
     private readonly IMapper _mapper;
-    private readonly HttpClient _httpClient = new();
-    private readonly string _reverseGeocodingBaseUrl;
+    private readonly HttpClient _httpClient;
     private readonly GeolocationRepository _repository;
     private readonly ILogger<GeolocationService> _logger;
-    private readonly GeocodingSettings _geocodingSettings;
 
     public GeolocationService(
         IMapper mapper,
+        HttpClient httpClient,
         GeolocationRepository repository,
-        ILogger<GeolocationService> logger,
-        IOptions<GeocodingSettings> geocodingSettingsOptions)
+        ILogger<GeolocationService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _geocodingSettings = geocodingSettingsOptions?.Value ?? throw new ArgumentNullException(nameof(geocodingSettingsOptions));
-
-        _logger.LogInformation("Initializing GeolocationService");
-
-        ValidateGeocodingConfiguration();
-
-        _reverseGeocodingBaseUrl = string.Join("/", [_geocodingSettings.BaseUrl, "reverse"]);
-
-        ConfigureHttpClient();
     }
 
     public async Task<GeolocationDTO?> CreateAsync(GeolocationDTO dto)
@@ -145,28 +133,6 @@ public class GeolocationService : IGeolocationService, IDisposable
         }
     }
 
-    private void ValidateGeocodingConfiguration()
-    {
-        _logger.LogInformation("Validating geocoding configuration");
-        var validationErrors = new Dictionary<string, List<string>>();
-
-        if (string.IsNullOrWhiteSpace(_geocodingSettings.BaseUrl))
-            validationErrors.Add("BaseUrl", new List<string> { "Geocoding base URL is required" });
-
-        if (string.IsNullOrWhiteSpace(_geocodingSettings.Host))
-            validationErrors.Add("Host", new List<string> { "Geocoding host is required" });
-
-        if (string.IsNullOrWhiteSpace(_geocodingSettings.ApiKey))
-            validationErrors.Add("ApiKey", new List<string> { "Geocoding API key is required" });
-
-        if (validationErrors.Any())
-        {
-            _logger.LogError("Geocoding configuration validation failed: {Errors}", validationErrors);
-            throw new Exception("Invalid Geocoding configuration");
-        }
-        _logger.LogInformation("Geocoding configuration validated successfully");
-    }
-
     private void ValidateGeolocationData(GeolocationDTO dto)
     {
         var validationErrors = new Dictionary<string, List<string>>();
@@ -181,22 +147,6 @@ public class GeolocationService : IGeolocationService, IDisposable
         {
             _logger.LogWarning("Geolocation data validation failed: {Errors}", validationErrors);
             throw new ValidationException(validationErrors);
-        }
-    }
-
-    private void ConfigureHttpClient()
-    {
-        _logger.LogInformation("Configuring HTTP client for geocoding");
-        try
-        {
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "BookIt-Application/1.0");
-            _logger.LogInformation("HTTP client configured successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to configure HTTP client");
-            throw new ExternalServiceException("HttpClient", "Failed to configure HTTP client for geocoding", ex);
         }
     }
 
@@ -244,14 +194,8 @@ public class GeolocationService : IGeolocationService, IDisposable
         {
             var options = new ReverseGeocodingOptions { Lat = lat, Lon = lon };
             var queryParamsString = BuildQueryString(options);
-            var uri = new Uri($"{_reverseGeocodingBaseUrl}?{queryParamsString}");
 
-            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-
-            request.Headers.Add("x-rapidapi-host", _geocodingSettings.Host);
-            request.Headers.Add("x-rapidapi-key", _geocodingSettings.ApiKey);
-
-            using var response = await _httpClient.SendAsync(request);
+            using var response = await _httpClient.GetAsync("/v1/reverse?" + queryParamsString);
 
             if (!response.IsSuccessStatusCode)
             {

@@ -21,12 +21,9 @@ public class GoogleAuthService : IGoogleAuthService
         ILogger<GoogleAuthService> logger,
         IOptions<GoogleOAuthSettings> googleOAuthSettings)
     {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _googleOAuthSettings = googleOAuthSettings?.Value ?? throw new ArgumentNullException(nameof(googleOAuthSettings));
-
-        ValidateGoogleOAuthConfiguration();
-        ConfigureHttpClient();
     }
 
     public string GetLoginUrl()
@@ -84,49 +81,10 @@ public class GoogleAuthService : IGoogleAuthService
         }
     }
 
-    private void ValidateGoogleOAuthConfiguration()
-    {
-        var validationErrors = new Dictionary<string, List<string>>();
-
-        if (string.IsNullOrWhiteSpace(_googleOAuthSettings.ClientId))
-            validationErrors.Add("ClientId", new List<string> { "Google OAuth Client ID is required" });
-
-        if (string.IsNullOrWhiteSpace(_googleOAuthSettings.ClientSecret))
-            validationErrors.Add("ClientSecret", new List<string> { "Google OAuth Client Secret is required" });
-
-        if (string.IsNullOrWhiteSpace(_googleOAuthSettings.RedirectUri))
-            validationErrors.Add("RedirectUri", new List<string> { "Google OAuth Redirect URI is required" });
-
-        if (!string.IsNullOrWhiteSpace(_googleOAuthSettings.RedirectUri) &&
-            !Uri.IsWellFormedUriString(_googleOAuthSettings.RedirectUri, UriKind.Absolute))
-        {
-            validationErrors.Add("RedirectUri", new List<string> { "Google OAuth Redirect URI must be a valid absolute URL" });
-        }
-
-        if (validationErrors.Any())
-            throw new Exception("Invalid Geoogle OAuth configuration");
-    }
-
     private void ValidateAuthorizationCode(string code)
     {
         if (string.IsNullOrWhiteSpace(code))
             throw new ValidationException("Code", "Authorization code is required");
-    }
-
-    private void ConfigureHttpClient()
-    {
-        try
-        {
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "BookIt/1.0");
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        }
-        catch (Exception ex)
-        {
-            throw new ExternalServiceException("Google Auth", "Failed to configure HTTP client", ex);
-        }
     }
 
     private async Task<string> ExchangeCodeForAccessTokenAsync(string code)

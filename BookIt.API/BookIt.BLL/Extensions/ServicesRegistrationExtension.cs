@@ -25,8 +25,6 @@ public static class ServicesRegistrationExtension
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IUserService, UserService>();
 
-        services.AddHttpClient<IMonobankAcquiringService, MonobankAcquiringService>();
-
         return services;
     }
 }
