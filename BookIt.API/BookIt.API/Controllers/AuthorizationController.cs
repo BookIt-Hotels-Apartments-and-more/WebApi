@@ -47,8 +47,8 @@ public class AuthorizationController : ControllerBase
         var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
-
-        return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt });
+        var response = _mapper.Map<UserAuthResponse>(user);
+        return Ok(response);
     }
 
     [HttpPost("register-landlord")]
@@ -60,8 +60,8 @@ public class AuthorizationController : ControllerBase
         var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
-
-        return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt });
+        var response = _mapper.Map<UserAuthResponse>(user);
+        return Ok(response);
     }
 
     [HttpPost("register-admin")]
@@ -74,8 +74,8 @@ public class AuthorizationController : ControllerBase
         var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
-
-        return Ok(new { user.Id, user.Username, user.Email, user.Role, user.CreatedAt });
+        var response = _mapper.Map<UserAuthResponse>(user);
+        return Ok(response);
     }
 
     [HttpPost("login")]
@@ -83,7 +83,7 @@ public class AuthorizationController : ControllerBase
     {
         var user = await _userService.LoginAsync(request.Email, request.Password);
         var response = _mapper.Map<UserAuthResponse>(user);
-        response.Token = _jwtService.GenerateToken(user);
+        response.Token = await _jwtService.GenerateToken(user);
         return Ok(response);
     }
 

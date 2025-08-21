@@ -12,9 +12,11 @@ public class UserMappingProfile : Profile
     {
         CreateMap<User, UserDTO>();
 
+        CreateMap<User, UserAuthDTO>();
+
         CreateMap<UserDTO, UserResponse>();
 
-        CreateMap<UserDTO, UserAuthResponse>()
+        CreateMap<UserAuthDTO, UserAuthResponse>()
             .ForMember(res => res.Role, opt => opt.MapFrom(dto => (int)dto.Role));
 
         CreateMap<UserDetailsRequest, UserDetailsDTO>();

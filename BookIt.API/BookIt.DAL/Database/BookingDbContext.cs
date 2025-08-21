@@ -72,6 +72,10 @@ public class BookingDbContext : DbContext
             .HasIndex(u => u.Username)
             .IsUnique();
 
+        modelBuilder.Entity<Payment>()
+            .Property(p => p.Amount)
+            .HasPrecision(18, 2);
+
         var bookingIdIndexOnReviews = modelBuilder.Entity<Review>().Metadata
             .GetIndexes().FirstOrDefault(i => i.GetDatabaseName() == "IX_Reviews_BookingId");
         

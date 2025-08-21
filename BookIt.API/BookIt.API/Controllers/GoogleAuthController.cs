@@ -53,7 +53,7 @@ public class GoogleAuthController : ControllerBase
             if (string.IsNullOrWhiteSpace(email)) return Redirect($"{clientUrl}/auth/error");
             var user = await _userService.AuthByGoogleAsync(name ?? string.Empty, email);
             if (user is null) return Redirect($"{clientUrl}/auth/error");
-            var token = _jwtService.GenerateToken(user);
+            var token = await _jwtService.GenerateToken(user);
             Response.Cookies.Append("auth_token", token, new CookieOptions
             {
                 HttpOnly = true,
