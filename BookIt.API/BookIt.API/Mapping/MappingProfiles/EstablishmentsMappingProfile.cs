@@ -25,7 +25,11 @@ public class EstablishmentsMappingProfile : Profile
 
         CreateMap<Establishment, EstablishmentDTO>()
             .ForMember(dto => dto.Owner, o => o.MapFrom(e => e.Owner))
-            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => src.ApartmentRating));
+            .ForMember(dto => dto.Rating, opt => opt.MapFrom(src => src.ApartmentRating))
+            .ForMember(dto => dto.MinApartmentPrice, o => o.MapFrom(e =>
+                       e.MinApartmentPrice.HasValue && e.MinApartmentPrice > 0 ? e.MinApartmentPrice : null))
+            .ForMember(dto => dto.MaxApartmentPrice, o => o.MapFrom(e =>
+                       e.MaxApartmentPrice.HasValue && e.MaxApartmentPrice > 0 ? e.MaxApartmentPrice : null));
 
         CreateMap<EstablishmentDTO, Establishment>()
             .ForMember(e => e.Id, o => o.Ignore())

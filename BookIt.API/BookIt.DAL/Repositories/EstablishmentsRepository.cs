@@ -17,24 +17,40 @@ public class EstablishmentsRepository
 
     public async Task<IEnumerable<Establishment>> GetAllAsync()
     {
-        return await _context.Establishments.AsNoTracking().AsSplitQuery()
+        var establishments = await _context.Establishments.AsNoTracking().AsSplitQuery()
             .Include(e => e.Owner)
             .Include(e => e.Photos)
             .Include(e => e.Apartments)
             .Include(e => e.Geolocation)
             .Include(u => u.ApartmentRating)
             .ToListAsync();
+
+        foreach (var e in establishments)
+        {
+            e.MinApartmentPrice = e.Apartments.Min(a => a.Price);
+            e.MaxApartmentPrice = e.Apartments.Max(a => a.Price);
+        }
+
+        return establishments;
     }
 
     public async Task<Establishment?> GetByIdAsync(int id)
     {
-        return await _context.Establishments.AsSplitQuery()
+        var establishment = await _context.Establishments.AsSplitQuery()
             .Include(e => e.Owner)
             .Include(e => e.Photos)
             .Include(e => e.Apartments)
             .Include(e => e.Geolocation)
             .Include(u => u.ApartmentRating)
             .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (establishment is not null)
+        {
+            establishment.MinApartmentPrice = establishment.Apartments.Min(a => a.Price);
+            establishment.MaxApartmentPrice = establishment.Apartments.Max(a => a.Price);
+        }
+
+        return establishment;
     }
 
     public async Task<Establishment?> GetByIdForVibeComparisonAsync(int id)
@@ -116,6 +132,12 @@ public class EstablishmentsRepository
             .Take(pageSize)
             .ToListAsync();
 
+        foreach (var e in establishments)
+        {
+            e.MinApartmentPrice = e.Apartments.Min(a => a.Price);
+            e.MaxApartmentPrice = e.Apartments.Max(a => a.Price);
+        }
+
         return (establishments, totalCount);
     }
 
@@ -154,6 +176,12 @@ public class EstablishmentsRepository
             .Include(e => e.Apartments).ThenInclude(a => a.Reviews)
             .Include(e => e.Apartments).ThenInclude(a => a.Bookings)
             .ToListAsync();
+
+        foreach (var e in establishmentsWithIncludes)
+        {
+            e.MinApartmentPrice = e.Apartments.Min(a => a.Price);
+            e.MaxApartmentPrice = e.Apartments.Max(a => a.Price);
+        }
 
         var result = establishmentsWithIncludes
             .Join(topEstablishments,

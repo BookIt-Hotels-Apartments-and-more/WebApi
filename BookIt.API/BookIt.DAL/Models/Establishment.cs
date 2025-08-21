@@ -1,4 +1,5 @@
 using BookIt.DAL.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookIt.DAL.Models;
 
@@ -27,4 +28,9 @@ public class Establishment
 
     public ICollection<Image> Photos { get; set; } = new List<Image>();
     public ICollection<Apartment> Apartments { get; set; } = new List<Apartment>();
+
+    [NotMapped]
+    public double? MinApartmentPrice { get; set; }
+    [NotMapped]
+    public double? MaxApartmentPrice { get; set; }
 }
