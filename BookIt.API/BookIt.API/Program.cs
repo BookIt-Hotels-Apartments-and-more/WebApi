@@ -7,7 +7,9 @@ using BookIt.BLL.Extensions;
 using BookIt.DAL.Configuration;
 using BookIt.DAL.Database;
 using BookIt.DAL.Extensions;
+using Microsoft.AspNetCore.ResponseCompression;
 using Serilog;
+using System.IO.Compression;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +36,18 @@ builder.Services.AddCustomHttpClients();
 
 builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -49,6 +63,7 @@ app.UseHttpsRedirection();
 app.UseCors(cspName);
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseResponseCompression();
 app.MapControllers();
 
 try
