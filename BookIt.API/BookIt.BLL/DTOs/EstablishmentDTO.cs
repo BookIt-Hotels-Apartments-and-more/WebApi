@@ -11,6 +11,8 @@ public record EstablishmentDTO
     public DateTime? CreatedAt { get; set; }
     public TimeOnly CheckInTime { get; set; }
     public TimeOnly CheckOutTime { get; set; }
+    public double? MinApartmentPrice { get; set; }
+    public double? MaxApartmentPrice { get; set; }
     public EstablishmentFeatures Features { get; set; } = new();
     public VibeType? Vibe { get; set; }
     public int OwnerId { get; set; }

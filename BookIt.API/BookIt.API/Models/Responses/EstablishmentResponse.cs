@@ -28,6 +28,8 @@ public record EstablishmentResponse
     public DateTime? CreatedAt { get; set; }
     public TimeOnly CheckInTime { get; set; }
     public TimeOnly CheckOutTime { get; set; }
+    public double? MinApartmentPrice { get; set; }
+    public double? MaxApartmentPrice { get; set; }
     public ApartmentRatingResponse? Rating { get; set; }
     public OwnerResponse Owner { get; set; } = null!;
     public GeolocationResponse Geolocation { get; set; } = null!;
