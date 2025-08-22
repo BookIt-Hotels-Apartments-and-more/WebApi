@@ -39,6 +39,7 @@ public class AuthorizationController : ControllerBase
     }
 
     [HttpPost("register")]
+    [ResponseCache(NoStore = true)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         var baseUrl = _appSettingsOptions.Value.BaseUrl;
@@ -48,10 +49,12 @@ public class AuthorizationController : ControllerBase
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
         var response = _mapper.Map<UserAuthResponse>(user);
+        Response.Headers.Append("Content-Encoding", "identity");
         return Ok(response);
     }
 
     [HttpPost("register-landlord")]
+    [ResponseCache(NoStore = true)]
     public async Task<IActionResult> RegisterLandlord([FromBody] RegisterRequest request)
     {
         var baseUrl = _appSettingsOptions.Value.BaseUrl;
@@ -61,11 +64,13 @@ public class AuthorizationController : ControllerBase
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
         var response = _mapper.Map<UserAuthResponse>(user);
+        Response.Headers.Append("Content-Encoding", "identity");
         return Ok(response);
     }
 
     [HttpPost("register-admin")]
     [Authorize(Roles = "Admin")]
+    [ResponseCache(NoStore = true)]
     public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequest request)
     {
         var baseUrl = _appSettingsOptions.Value.BaseUrl;
@@ -75,19 +80,23 @@ public class AuthorizationController : ControllerBase
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
         var response = _mapper.Map<UserAuthResponse>(user);
+        Response.Headers.Append("Content-Encoding", "identity");
         return Ok(response);
     }
 
     [HttpPost("login")]
+    [ResponseCache(NoStore = true)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var user = await _userService.LoginAsync(request.Email, request.Password);
         var response = _mapper.Map<UserAuthResponse>(user);
         response.Token = await _jwtService.GenerateToken(user);
+        Response.Headers.Append("Content-Encoding", "identity");
         return Ok(response);
     }
 
     [HttpPost("reset-password/generate-token")]
+    [ResponseCache(NoStore = true)]
     public async Task<IActionResult> ResetPasswordToken([FromBody] GenerateResetPasswordTokenRequest request)
     {
         var clientUrl = _urlSettingsOptions.Value.ClientUrl;
@@ -96,18 +105,21 @@ public class AuthorizationController : ControllerBase
         var confirmationLink = $"{clientUrl}/auth/reset-password?token={user!.ResetPasswordToken}";
         var body = $"Go to this link to reset your password: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Password Reset", body);
-
+        Response.Headers.Append("Content-Encoding", "identity");
         return Ok();
     }
 
     [HttpPost("reset-password")]
+    [ResponseCache(NoStore = true)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         var user = await _userService.ResetPasswordAsync(request.Token, request.NewPassword);
+        Response.Headers.Append("Content-Encoding", "identity");
         return Ok();
     }
 
     [HttpGet("verify-email")]
+    [ResponseCache(NoStore = true)]
     public async Task<IActionResult> VerifyEmail()
     {
         var clientUrl = _urlSettingsOptions.Value.ClientUrl;
@@ -126,12 +138,14 @@ public class AuthorizationController : ControllerBase
 
     [HttpGet("me")]
     [Authorize(Roles = "Tenant,Landlord,Admin")]
+    [ResponseCache(NoStore = true)]
     public async Task<IActionResult> Me()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
         var user = await _userService.GetUserByIdAsync(int.Parse(userIdStr));
         var response = _mapper.Map<UserAuthResponse>(user);
+        Response.Headers.Append("Content-Encoding", "identity");
         return Ok(response);
     }
 }
