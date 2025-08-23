@@ -46,7 +46,6 @@ jobs:
             sudo docker stop bookitapi-bookit-1 || true
             sudo docker rm bookitapi-bookit-1 || true
             sudo docker-compose --env-file BookIt.API.env up --build -d
-            sudo docker network connect my_network bookitapi-bookit-1
 
   zap_scan:
     runs-on: ubuntu-24.04
