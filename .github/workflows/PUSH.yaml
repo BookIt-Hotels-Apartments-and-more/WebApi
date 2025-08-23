@@ -7,7 +7,7 @@ on:
 env: 
   IMAGE_NAME: pok1min/bookitapi_bookit
   IMAGE_TAG: latest
-  CONTAINER_NAME: bookitapi-bookit-3
+  CONTAINER_NAME: bookitapi-bookit-1
   REMOTE_HOST: 34.34.77.107
   
 jobs:
@@ -43,10 +43,10 @@ jobs:
           script: |
             cd ~/WebApi/BookIt.API
             sudo docker pull pok1min/bookitapi_bookit:latest
-            sudo docker stop bookitapi-bookit-3 || true
-            sudo docker rm bookitapi-bookit-3 || true
+            sudo docker stop bookitapi-bookit-1 || true
+            sudo docker rm bookitapi-bookit-1 || true
             sudo docker-compose --env-file BookIt.API.env up --build -d
-            sudo docker network connect my_network bookitapi-bookit-3
+            sudo docker network connect my_network bookitapi-bookit-1
 
   zap_scan:
     runs-on: ubuntu-24.04
