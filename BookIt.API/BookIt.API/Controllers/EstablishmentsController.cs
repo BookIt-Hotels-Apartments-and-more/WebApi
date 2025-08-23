@@ -11,7 +11,6 @@ namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class EstablishmentsController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -24,6 +23,7 @@ public class EstablishmentsController : ControllerBase
     }
 
     [HttpGet("filter")]
+    [AllowAnonymous]
     public async Task<ActionResult<PaginatedResponse<EstablishmentResponse>>> GetFilteredAsync([FromQuery] EstablishmentFilterRequest request)
     {
         var filterDto = _mapper.Map<EstablishmentFilterDTO>(request);
@@ -33,6 +33,7 @@ public class EstablishmentsController : ControllerBase
     }
 
     [HttpGet("trending")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<TrendingEstablishmentResponse>>> GetTrendingAsync([FromQuery] TrendingEstablishmentsRequest request)
     {
         var trendingEstablishmentsDto = await _service.GetTrendingAsync(request.Count, request.PastDays);
@@ -41,6 +42,7 @@ public class EstablishmentsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<EstablishmentResponse>>> GetAllAsync()
     {
         var establishmentsDto = await _service.GetAllAsync();
@@ -49,6 +51,7 @@ public class EstablishmentsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [AllowAnonymous]
     public async Task<ActionResult<EstablishmentResponse>> GetByIdAsync([FromRoute] int id)
     {
         var establishmentDto = await _service.GetByIdAsync(id);
