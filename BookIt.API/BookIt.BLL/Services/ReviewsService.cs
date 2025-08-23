@@ -1,11 +1,14 @@
 ﻿using AutoMapper;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
+using BookIt.BLL.Helpers;
 using BookIt.BLL.Interfaces;
+using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Constants;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Linq.Expressions;
 
 namespace BookIt.BLL.Services;
@@ -15,6 +18,8 @@ public class ReviewsService : IReviewsService
     private const string BlobContainerName = "reviews";
 
     private readonly IMapper _mapper;
+    private readonly ICacheService _cacheService;
+    private readonly RedisSettings _redisSettings;
     private readonly IImagesService _imagesService;
     private readonly UserRepository _userRepository;
     private readonly ILogger<ReviewsService> _logger;
@@ -25,16 +30,20 @@ public class ReviewsService : IReviewsService
 
     public ReviewsService(
         IMapper mapper,
+        ICacheService cacheService,
         IImagesService imagesService,
         UserRepository userRepository,
         ILogger<ReviewsService> logger,
         IRatingsService ratingsService,
         ImagesRepository imagesRepository,
         ReviewsRepository reviewsRepository,
+        IOptions<RedisSettings> redisOptions,
         ApartmentsRepository apartmentsRepository)
     {
+        _redisSettings = redisOptions.Value;
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
         _imagesService = imagesService ?? throw new ArgumentNullException(nameof(imagesService));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _ratingsService = ratingsService ?? throw new ArgumentNullException(nameof(ratingsService));
@@ -62,26 +71,36 @@ public class ReviewsService : IReviewsService
     public async Task<ReviewDTO?> GetByIdAsync(int id)
     {
         _logger.LogInformation("GetByIdAsync started for ReviewId={ReviewId}", id);
-        try
-        {
-            var reviewDomain = await _reviewsRepository.GetByIdAsync(id);
-            if (reviewDomain is null)
+
+        var cacheKey = CacheKeys.ReviewById(id);
+
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () =>
             {
-                _logger.LogWarning("Review with Id {ReviewId} not found", id);
-                throw new EntityNotFoundException("Review", id);
-            }
-            _logger.LogInformation("GetByIdAsync succeeded for ReviewId={ReviewId}", id);
-            return _mapper.Map<ReviewDTO>(reviewDomain);
-        }
-        catch (BookItBaseException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve review by ID: {ReviewId}", id);
-            throw new ExternalServiceException("Database", "Failed to retrieve review", ex);
-        }
+                try
+                {
+                    var reviewDomain = await _reviewsRepository.GetByIdAsync(id);
+                    if (reviewDomain is null)
+                    {
+                        _logger.LogWarning("Review with Id {ReviewId} not found", id);
+                        throw new EntityNotFoundException("Review", id);
+                    }
+                    _logger.LogInformation("GetByIdAsync succeeded for ReviewId={ReviewId}", id);
+                    return _mapper.Map<ReviewDTO>(reviewDomain);
+                }
+                catch (BookItBaseException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to retrieve review by ID: {ReviewId}", id);
+                    throw new ExternalServiceException("Database", "Failed to retrieve review", ex);
+                }
+            },
+            TimeSpan.FromMinutes(_redisSettings.Expiration.Reviews)
+        );
     }
 
     public async Task<ReviewDTO?> CreateAsync(ReviewDTO dto, int authorId)
@@ -104,6 +123,8 @@ public class ReviewsService : IReviewsService
             _logger.LogInformation("Saved {PhotoCount} photos for review {ReviewId}", dto.Photos.Count(), addedReview.Id);
 
             await UpdateRatingsAfterReviewChangeAsync(dto.ApartmentId, dto.CustomerId);
+
+            await InvalidateReviewCachesAsync(addedReview.Id, dto.ApartmentId, dto.CustomerId);
 
             _logger.LogInformation("CreateAsync completed successfully for ReviewId={ReviewId}", addedReview.Id);
 
@@ -154,6 +175,9 @@ public class ReviewsService : IReviewsService
             await UpdateRatingsAfterReviewChangeAsync(dto.ApartmentId, dto.CustomerId);
             await UpdateRatingsAfterReviewEntityChangeAsync(oldReview, dto);
 
+            await InvalidateReviewCachesAsync(id, dto.ApartmentId, dto.CustomerId);
+            await InvalidateReviewCachesAsync(id, oldReview.ApartmentId, oldReview.UserId);
+
             _logger.LogInformation("UpdateAsync completed successfully for ReviewId={ReviewId}", id);
 
             return await GetByIdAsync(id);
@@ -201,6 +225,8 @@ public class ReviewsService : IReviewsService
                 establishmentId = apartment?.EstablishmentId;
             }
 
+            await InvalidateReviewCachesAsync(id, apartmentId, userId);
+
             await _reviewsRepository.DeleteAsync(id);
             _logger.LogInformation("Deleted review {ReviewId} from repository", id);
 
@@ -227,6 +253,102 @@ public class ReviewsService : IReviewsService
             _logger.LogError(ex, "Failed to delete review {ReviewId}", id);
             throw new ExternalServiceException("Database", "Failed to delete review", ex);
         }
+    }
+
+    public async Task<PagedResultDTO<ReviewDTO>> GetFilteredAsync(ReviewFilterDTO filter)
+    {
+        _logger.LogInformation("Start filtering reviews with filter {@Filter}", filter);
+
+        var cacheKey = CacheKeys.ReviewsByFilter(filter);
+
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () =>
+            {
+                try
+                {
+                    ValidateFilterParameters(filter);
+
+                    Expression<Func<Review, bool>> predicate = BuildDatabasePredicate(filter);
+
+                    var (reviews, totalCount) = await _reviewsRepository.GetFilteredAsync(
+                        predicate,
+                        filter.Page,
+                        filter.PageSize);
+
+                    var reviewsDto = _mapper.Map<IEnumerable<ReviewDTO>>(reviews);
+
+                    var finalCount = reviewsDto.Count();
+                    var totalPages = (int)Math.Ceiling(finalCount / (double)filter.PageSize);
+
+                    _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", finalCount, totalPages);
+
+                    return new PagedResultDTO<ReviewDTO>
+                    {
+                        Items = reviewsDto,
+                        PageNumber = filter.Page,
+                        PageSize = filter.PageSize,
+                        TotalCount = finalCount,
+                        TotalPages = totalPages,
+                        HasNextPage = filter.Page < totalPages,
+                        HasPreviousPage = filter.Page > 1
+                    };
+                }
+                catch (BookItBaseException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to get filtered establishments");
+                    throw new ExternalServiceException("Database", "Failed to get filtered establishments", ex);
+                }
+            },
+            TimeSpan.FromMinutes(_redisSettings.Expiration.Reviews)
+        );
+    }
+
+    private async Task InvalidateReviewCachesAsync(int reviewId, int? apartmentId, int? userId)
+    {
+        var invalidationTasks = new List<Task>
+        {
+            _cacheService.RemoveAsync(CacheKeys.ReviewById(reviewId)),
+        };
+        ReviewFilterDTO filterToInvalidate = new();
+
+        if (apartmentId.HasValue)
+        {
+            filterToInvalidate.ApartmentId = apartmentId.Value;
+            invalidationTasks.Add(_cacheService.RemoveAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
+
+            try
+            {
+                var apartment = await _apartmentsRepository.GetByIdAsync(apartmentId.Value);
+                if (apartment is not null)
+                {
+                    filterToInvalidate.EstablishmentId = apartment.EstablishmentId;
+                    invalidationTasks.Add(_cacheService.RemoveAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
+                    filterToInvalidate.ApartmentId = null;
+                    invalidationTasks.Add(_cacheService.RemoveAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
+                    filterToInvalidate.EstablishmentId = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to invalidate establishment cache for apartment {ApartmentId}", apartmentId.Value);
+            }
+        }
+
+        if (userId.HasValue)
+        {
+            filterToInvalidate.TenantId = userId.Value;
+            invalidationTasks.Add(_cacheService.RemoveAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
+            filterToInvalidate.TenantId = null;
+        }
+
+        await Task.WhenAll(invalidationTasks);
+        _logger.LogInformation("Invalidated review caches for ReviewId={ReviewId}, ApartmentId={ApartmentId}, UserId={UserId}",
+            reviewId, apartmentId, userId);
     }
 
     private void ValidateReviewData(ReviewDTO? dto)
@@ -309,7 +431,7 @@ public class ReviewsService : IReviewsService
 
         if (await _reviewsRepository.ReviewForBookingExistsAsync(dto.BookingId, dto.CustomerId, dto.ApartmentId))
         {
-            _logger.LogWarning("Validation failed: Review already exists for {EntityInfo}", 
+            _logger.LogWarning("Validation failed: Review already exists for {EntityInfo}",
                 dto.ApartmentId.HasValue ? $"apartment + {dto.ApartmentId}" : $"customer {dto.CustomerId}");
             throw new EntityAlreadyExistsException("Review", "booking and review target combination",
                 $"Review for {(dto.ApartmentId.HasValue ? $"apartment {dto.ApartmentId}" : $"customer {dto.CustomerId}")} in scope of booking {dto.BookingId}");
@@ -357,7 +479,7 @@ public class ReviewsService : IReviewsService
             dto.LocationRating = null;
             _logger.LogInformation("Annulling inappropriate ratings for review with CustomerId");
         }
-        
+
         if (dto.ApartmentId.HasValue)
         {
             dto.CustomerStayRating = null;
@@ -495,49 +617,6 @@ public class ReviewsService : IReviewsService
         {
             _logger.LogError(ex, "Failed to remove all review images for review {ReviewId}", reviewId);
             throw new ExternalServiceException("ImageProcessing", "Failed to remove review images", ex);
-        }
-    }
-
-    public async Task<PagedResultDTO<ReviewDTO>> GetFilteredAsync(ReviewFilterDTO filter)
-    {
-        _logger.LogInformation("Start filtering reviews with filter {@Filter}", filter);
-        try
-        {
-            ValidateFilterParameters(filter);
-
-            Expression<Func<Review, bool>> predicate = BuildDatabasePredicate(filter);
-
-            var (reviews, totalCount) = await _reviewsRepository.GetFilteredAsync(
-                predicate,
-                filter.Page,
-                filter.PageSize);
-
-            var reviewsDto = _mapper.Map<IEnumerable<ReviewDTO>>(reviews);
-
-            var finalCount = reviewsDto.Count();
-            var totalPages = (int)Math.Ceiling(finalCount / (double)filter.PageSize);
-
-            _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", finalCount, totalPages);
-
-            return new PagedResultDTO<ReviewDTO>
-            {
-                Items = reviewsDto,
-                PageNumber = filter.Page,
-                PageSize = filter.PageSize,
-                TotalCount = finalCount,
-                TotalPages = totalPages,
-                HasNextPage = filter.Page < totalPages,
-                HasPreviousPage = filter.Page > 1
-            };
-        }
-        catch (BookItBaseException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get filtered establishments");
-            throw new ExternalServiceException("Database", "Failed to get filtered establishments", ex);
         }
     }
 
