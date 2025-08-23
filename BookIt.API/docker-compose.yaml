@@ -5,8 +5,8 @@ services:
     build:
         context: .
         dockerfile: Dockerfile
-    ports:
-      - "7065:7065"
+    networks:
+      - my_network
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=https://*:7065
@@ -31,3 +31,6 @@ services:
 
 volumes:
   bookit-dataprotection:
+networks:
+  my_network:
+    external: true
