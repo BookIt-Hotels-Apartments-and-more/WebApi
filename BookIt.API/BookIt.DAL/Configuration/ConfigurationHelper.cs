@@ -104,6 +104,19 @@ public static class ConfigurationHelper
                 options.ApiKey = apiKey;
         });
 
+        services.Configure<RedisSettings>(options =>
+        {
+            configuration.GetSection(RedisSettings.SectionName).Bind(options);
+
+            var redisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+            if (!string.IsNullOrEmpty(redisConnectionString))
+                options.ConnectionString = redisConnectionString;
+
+            var redisInstanceName = Environment.GetEnvironmentVariable("REDIS_INSTANCE_NAME");
+            if (!string.IsNullOrEmpty(redisInstanceName))
+                options.InstanceName = redisInstanceName;
+        });
+
         return services;
     }
 }

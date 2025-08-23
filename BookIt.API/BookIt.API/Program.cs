@@ -4,6 +4,7 @@ using BookIt.API.Middleware;
 using BookIt.API.Middleware.Logging;
 using BookIt.API.Validation;
 using BookIt.BLL.Extensions;
+using BookIt.BLL.Interfaces;
 using BookIt.DAL.Configuration;
 using BookIt.DAL.Database;
 using BookIt.DAL.Extensions;
@@ -28,6 +29,7 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddSwaggerGenWithSecurityConfiguration();
 }
 
+builder.Services.AddRedisCache();
 builder.Services.AddCustomDbContext<BookingDbContext>();
 builder.Services.AddMapping();
 builder.Services.AddBLLServices();
