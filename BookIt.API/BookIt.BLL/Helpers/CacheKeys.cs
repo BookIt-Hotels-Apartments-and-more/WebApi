@@ -24,4 +24,20 @@ public static class CacheKeys
     public const string FavoritesPrefix = "favorites:";
     public static string FavoritesByUserId(int userId) => $"{FavoritesPrefix}user:{userId}";
     public static string FavoritesCountByEstablishmentId(int establishmentId) => $"{FavoritesPrefix}count:establishment:{establishmentId}";
+
+    public const string ApartmentsPrefix = "apartments:";
+    public static string ApartmentById(int id) => $"{ApartmentsPrefix}id:{id}";
+    public static string ApartmentsByEstablishmentId(int establishmentId, int? page = null, int? pageSize = null)
+    {
+        var keyParts = new List<string>
+        {
+            $"{ApartmentsPrefix}filtered",
+            $"establishment:{establishmentId}",
+        };
+
+        if (page.HasValue) keyParts.Add($"page:{page}");
+        if (pageSize.HasValue) keyParts.Add($"size:{pageSize}");
+
+        return string.Join(":", keyParts);
+    }
 }

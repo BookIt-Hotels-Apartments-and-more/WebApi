@@ -319,7 +319,7 @@ public class ReviewsService : IReviewsService
         if (apartmentId.HasValue)
         {
             filterToInvalidate.ApartmentId = apartmentId.Value;
-            invalidationTasks.Add(_cacheService.RemoveAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
+            invalidationTasks.Add(_cacheService.RemoveByPatternAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
 
             try
             {
@@ -327,9 +327,9 @@ public class ReviewsService : IReviewsService
                 if (apartment is not null)
                 {
                     filterToInvalidate.EstablishmentId = apartment.EstablishmentId;
-                    invalidationTasks.Add(_cacheService.RemoveAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
+                    invalidationTasks.Add(_cacheService.RemoveByPatternAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
                     filterToInvalidate.ApartmentId = null;
-                    invalidationTasks.Add(_cacheService.RemoveAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
+                    invalidationTasks.Add(_cacheService.RemoveByPatternAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
                     filterToInvalidate.EstablishmentId = null;
                 }
             }

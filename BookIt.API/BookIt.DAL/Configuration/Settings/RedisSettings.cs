@@ -11,6 +11,7 @@ public class RedisSettings
 
 public class CacheExpirationSettings
 {
-    public int Reviews { get; set; } = 20;
+    public int Apartments { get; set; } = 20;
+    public int Reviews { get; set; } = 10;
     public int Favorites { get; set; } = 10;
 }
