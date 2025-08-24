@@ -144,7 +144,7 @@ public class AuthorizationController : ControllerBase
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
         var user = await _userService.GetUserByIdAsync(int.Parse(userIdStr));
-        var response = _mapper.Map<UserAuthResponse>(user);
+        var response = _mapper.Map<UserResponse>(user);
         Response.Headers.Append("Content-Encoding", "identity");
         return Ok(response);
     }
