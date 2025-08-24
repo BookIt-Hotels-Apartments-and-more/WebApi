@@ -17,8 +17,9 @@ public class FavoritesRepository
     {
         return await _context.Favorites.AsNoTracking().AsSplitQuery()
             .Include(a => a.User)
-            .Include(a => a.Apartment).ThenInclude(e => e.Photos)
-            .Include(a => a.Apartment).ThenInclude(e => e.Establishment).ThenInclude(e => e.Photos)
+            .Include(a => a.Establishment).ThenInclude(e => e.Photos)
+            .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
+            .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .ToListAsync();
     }
 
@@ -26,8 +27,9 @@ public class FavoritesRepository
     {
         return await _context.Favorites.AsNoTracking().AsSplitQuery()
             .Include(a => a.User)
-            .Include(a => a.Apartment).ThenInclude(e => e.Photos)
-            .Include(a => a.Apartment).ThenInclude(e => e.Establishment).ThenInclude(e => e.Photos)
+            .Include(a => a.Establishment).ThenInclude(e => e.Photos)
+            .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
+            .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
@@ -35,21 +37,22 @@ public class FavoritesRepository
     {
         return await _context.Favorites.AsNoTracking().AsSplitQuery()
             .Where(f => f.UserId == userId)
-            .Include(a => a.Apartment).ThenInclude(e => e.Photos)
-            .Include(a => a.Apartment).ThenInclude(e => e.Establishment).ThenInclude(e => e.Photos)
+            .Include(a => a.Establishment).ThenInclude(e => e.Photos)
+            .Include(a => a.Establishment).ThenInclude(e => e.Geolocation)
+            .Include(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
             .ToListAsync();
     }
 
-    public async Task<bool> ExistsByUserAndApartmentAsync(int userId, int apartmentId)
+    public async Task<bool> ExistsByUserAndEstablishmentAsync(int userId, int establishmentId)
     {
         return await _context.Favorites.AsNoTracking()
-            .AnyAsync(f => f.UserId == userId && f.ApartmentId == apartmentId);
+            .AnyAsync(f => f.UserId == userId && f.EstablishmentId == establishmentId);
     }
 
-    public async Task<int> GetCountForApartmentAsync(int apartmentId)
+    public async Task<int> GetCountForEstablishmentAsync(int establishmentId)
     {
         return await _context.Favorites.AsNoTracking()
-            .CountAsync(f => f.ApartmentId == apartmentId);
+            .CountAsync(f => f.EstablishmentId == establishmentId);
     }
 
     public async Task<Favorite> AddAsync(Favorite favorite)
