@@ -7,7 +7,7 @@ public record FavoriteRequest
     [Range(1, int.MaxValue, ErrorMessage = "User ID must be a positive number")]
     public int? UserId { get; set; } = null;
 
-    [Required(ErrorMessage = "Apartment ID is required")]
-    [Range(1, int.MaxValue, ErrorMessage = "Apartment ID must be a positive number")]
-    public int ApartmentId { get; init; }
+    [Required(ErrorMessage = "Establishment ID is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Establishment ID must be a positive number")]
+    public int EstablishmentId { get; init; }
 }

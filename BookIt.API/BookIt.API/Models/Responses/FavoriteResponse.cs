@@ -4,5 +4,5 @@ public record FavoriteResponse
 {
     public int Id { get; set; }
     public CustomerResponse User { get; set; } = null!;
-    public ApartmentResponse Apartment { get; set; } = null!;
+    public EstablishmentResponse Establishment { get; set; } = null!;
 }

@@ -14,20 +14,20 @@ public class FavoritesService : IFavoritesService
     private readonly UserRepository _userRepository;
     private readonly FavoritesRepository _repository;
     private readonly ILogger<FavoritesService> _logger;
-    private readonly ApartmentsRepository _apartmentsRepository;
+    private readonly EstablishmentsRepository _establishmentsRepository;
 
     public FavoritesService(
         IMapper mapper,
         UserRepository userRepository,
         FavoritesRepository repository,
         ILogger<FavoritesService> logger,
-        ApartmentsRepository apartmentsRepository)
+        EstablishmentsRepository establishmentsRepository)
     {
         _mapper = mapper;
         _logger = logger;
         _repository = repository;
         _userRepository = userRepository;
-        _apartmentsRepository = apartmentsRepository;
+        _establishmentsRepository = establishmentsRepository;
     }
 
     public async Task<IEnumerable<FavoriteDTO>> GetAllAsync()
@@ -97,15 +97,15 @@ public class FavoritesService : IFavoritesService
         }
     }
 
-    public async Task<int> GetCountForApartmentAsync(int apartmentId)
+    public async Task<int> GetCountForEstablishmentAsync(int establishmentId)
     {
-        _logger.LogInformation("Start GetCountForApartmentAsync for Apartment Id: {ApartmentId}", apartmentId);
+        _logger.LogInformation("Start GetCountForEstablishmentAsync for Establishment Id: {EstablishmentId}", establishmentId);
         try
         {
-            await ValidateApartmentExistsAsync(apartmentId);
+            await ValidateEstablishmentExistsAsync(establishmentId);
 
-            var count = await _repository.GetCountForApartmentAsync(apartmentId);
-            _logger.LogInformation("Count for Apartment Id {ApartmentId} is {Count}", apartmentId, count);
+            var count = await _repository.GetCountForEstablishmentAsync(establishmentId);
+            _logger.LogInformation("Count for Establishment Id {EstablishmentId} is {Count}", establishmentId, count);
             return count;
         }
         catch (BookItBaseException)
@@ -114,21 +114,21 @@ public class FavoritesService : IFavoritesService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get apartment favorites count for Apartment Id {ApartmentId}", apartmentId);
-            throw new ExternalServiceException("Database", "Failed to get apartment favorites count", ex);
+            _logger.LogError(ex, "Failed to get establishment favorites count for Establishment Id {EstablishmentId}", establishmentId);
+            throw new ExternalServiceException("Database", "Failed to get establishment favorites count", ex);
         }
     }
 
     public async Task<FavoriteDTO?> CreateAsync(FavoriteDTO dto)
     {
-        _logger.LogInformation("Start CreateAsync for Favorite UserId: {UserId}, ApartmentId: {ApartmentId}", dto.UserId, dto.ApartmentId);
+        _logger.LogInformation("Start CreateAsync for Favorite UserId: {UserId}, EstablishmentId: {EstablishmentId}", dto.UserId, dto.EstablishmentId);
         try
         {
             ValidateFavoriteData(dto);
 
             await ValidateUserExistsAsync(dto.UserId);
-            await ValidateApartmentExistsAsync(dto.ApartmentId);
-            await ValidateFavoriteDoesNotExistAsync(dto.UserId, dto.ApartmentId);
+            await ValidateEstablishmentExistsAsync(dto.EstablishmentId);
+            await ValidateFavoriteDoesNotExistAsync(dto.UserId, dto.EstablishmentId);
 
             var favoriteDomain = _mapper.Map<Favorite>(dto);
             var addedFavorite = await _repository.AddAsync(favoriteDomain);
@@ -143,7 +143,7 @@ public class FavoritesService : IFavoritesService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create favorite UserId: {UserId}, ApartmentId: {ApartmentId}", dto.UserId, dto.ApartmentId);
+            _logger.LogError(ex, "Failed to create favorite UserId: {UserId}, EstablishmentId: {EstablishmentId}", dto.UserId, dto.EstablishmentId);
             throw new ExternalServiceException("Database", "Failed to create favorite", ex);
         }
     }
@@ -188,7 +188,7 @@ public class FavoritesService : IFavoritesService
         var validationErrors = new Dictionary<string, List<string>>();
 
         if (dto.UserId <= 0) validationErrors.Add("UserId", new List<string> { "Valid user ID is required" });
-        if (dto.ApartmentId <= 0) validationErrors.Add("ApartmentId", new List<string> { "Valid apartment ID is required" });
+        if (dto.EstablishmentId <= 0) validationErrors.Add("EstablishmentId", new List<string> { "Valid establishment ID is required" });
 
         if (validationErrors.Any())
             throw new ValidationException(validationErrors);
@@ -200,15 +200,15 @@ public class FavoritesService : IFavoritesService
             throw new EntityNotFoundException("User", userId);
     }
 
-    private async Task ValidateApartmentExistsAsync(int apartmentId)
+    private async Task ValidateEstablishmentExistsAsync(int establishmentId)
     {
-        if (!await _apartmentsRepository.ExistsAsync(apartmentId))
-            throw new EntityNotFoundException("Apartment", apartmentId);
+        if (!await _establishmentsRepository.ExistsAsync(establishmentId))
+            throw new EntityNotFoundException("Establishment", establishmentId);
     }
 
-    private async Task ValidateFavoriteDoesNotExistAsync(int userId, int apartmentId)
+    private async Task ValidateFavoriteDoesNotExistAsync(int userId, int establishmentId)
     {
-        if (await _repository.ExistsByUserAndApartmentAsync(userId, apartmentId))
-            throw new EntityAlreadyExistsException("Favorite", "user and apartment combination", $"User {userId} - Apartment {apartmentId}");
+        if (await _repository.ExistsByUserAndEstablishmentAsync(userId, establishmentId))
+            throw new EntityAlreadyExistsException("Favorite", "user and establishment combination", $"User {userId} - Establishment {establishmentId}");
     }
 }
