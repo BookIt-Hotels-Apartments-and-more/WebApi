@@ -11,7 +11,6 @@ namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class ApartmentsController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -24,6 +23,7 @@ public class ApartmentsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<ApartmentResponse>>> GetAllAsync()
     {
         var apartmentsDto = await _service.GetAllAsync();
@@ -32,6 +32,7 @@ public class ApartmentsController : ControllerBase
     }
 
     [HttpGet("establishment/{establishmentId:int}")]
+    [AllowAnonymous]
     public async Task<ActionResult<PaginatedResponse<ApartmentResponse>>> GetPagedByEstablishmentIdAsync([FromRoute] int establishmentId, [FromQuery] PaginationRequest request)
     {
         var pagedResult = await _service.GetPagedByEstablishmentIdAsync(establishmentId, request.Page, request.PageSize);
@@ -40,6 +41,7 @@ public class ApartmentsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [AllowAnonymous]
     public async Task<ActionResult<ApartmentResponse>> GetByIdAsync([FromRoute] int id)
     {
         var apartmentDto = await _service.GetByIdAsync(id);

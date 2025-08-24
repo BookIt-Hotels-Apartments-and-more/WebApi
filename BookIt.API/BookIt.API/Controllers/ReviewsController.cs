@@ -11,7 +11,6 @@ namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class ReviewsController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -24,6 +23,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<ReviewResponse>>> GetAllAsync()
     {
         var reviewsDto = await _service.GetAllAsync();
@@ -32,6 +32,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpGet("filter")]
+    [AllowAnonymous]
     public async Task<ActionResult<PaginatedResponse<ReviewResponse>>> GetFilteredAsync([FromQuery] ReviewFilterRequest request)
     {
         var filterDto = _mapper.Map<ReviewFilterDTO>(request);
@@ -41,6 +42,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [AllowAnonymous]
     public async Task<ActionResult<ReviewResponse>> GetByIdAsync([FromRoute] int id)
     {
         var reviewDto = await _service.GetByIdAsync(id);
@@ -79,6 +81,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Tenant,Landlord,Admin")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
         var authorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

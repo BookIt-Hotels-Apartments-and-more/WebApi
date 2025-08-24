@@ -18,7 +18,7 @@ services:
       dockerfile: Dockerfile
     container_name: bookit-api
     restart: unless-stopped
-    ports:
+      ports:
       - "7065:7065"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
@@ -46,12 +46,13 @@ services:
     networks:
       - bookit-network
 
-networks:
-  bookit-network:
-    driver: bridge
-
 volumes:
   redis-data:
     driver: local
   bookit-dataprotection:
     driver: local
+
+networks:
+  bookit-network:
+    driver: bridge
+    external: true

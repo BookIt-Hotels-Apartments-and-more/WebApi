@@ -11,6 +11,7 @@ namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class FavoritesController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -41,7 +42,6 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpGet("my")]
-    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult<IEnumerable<FavoriteResponse>>> GetAllForMeAsync()
     {
         var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -54,16 +54,14 @@ public class FavoritesController : ControllerBase
         return Ok(favoritesResponse);
     }
 
-    [HttpGet("apartment/{apartmentId:int}")]
-    [Authorize(Roles = "Tenant,Landlord,Admin")]
-    public async Task<ActionResult<int>> GetCountByApartmentIdAsync([FromRoute] int apartmentId)
+    [HttpGet("establishment/{establishmentId:int}")]
+    public async Task<ActionResult<int>> GetCountByEstablishmentIdAsync([FromRoute] int establishmentId)
     {
-        var favoritesCount = await _service.GetCountForApartmentAsync(apartmentId);
+        var favoritesCount = await _service.GetCountForEstablishmentAsync(establishmentId);
         return Ok(favoritesCount);
     }
 
     [HttpPost]
-    [Authorize(Roles = "Tenant")]
     public async Task<ActionResult<FavoriteResponse>> CreateAsync([FromBody] FavoriteRequest request)
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -82,7 +80,6 @@ public class FavoritesController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Tenant,Landlord")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
         var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

@@ -23,5 +23,5 @@ public static class CacheKeys
 
     public const string FavoritesPrefix = "favorites:";
     public static string FavoritesByUserId(int userId) => $"{FavoritesPrefix}user:{userId}";
-    public static string FavoritesCountByApartmentId(int apartmentId) => $"{FavoritesPrefix}count:apartment:{apartmentId}";
+    public static string FavoritesCountByEstablishmentId(int establishmentId) => $"{FavoritesPrefix}count:establishment:{establishmentId}";
 }
