@@ -1,16 +1,21 @@
 ﻿using AutoMapper;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
+using BookIt.BLL.Helpers;
 using BookIt.BLL.Interfaces;
+using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace BookIt.BLL.Services;
 
 public class FavoritesService : IFavoritesService
 {
     private readonly IMapper _mapper;
+    private readonly ICacheService _cacheService;
+    private readonly RedisSettings _redisSettings;
     private readonly UserRepository _userRepository;
     private readonly FavoritesRepository _repository;
     private readonly ILogger<FavoritesService> _logger;
@@ -18,15 +23,19 @@ public class FavoritesService : IFavoritesService
 
     public FavoritesService(
         IMapper mapper,
+        ICacheService cacheService,
         UserRepository userRepository,
         FavoritesRepository repository,
         ILogger<FavoritesService> logger,
+        IOptions<RedisSettings> redisSettings,
         ApartmentsRepository apartmentsRepository)
     {
         _mapper = mapper;
         _logger = logger;
         _repository = repository;
+        _cacheService = cacheService;
         _userRepository = userRepository;
+        _redisSettings = redisSettings.Value;
         _apartmentsRepository = apartmentsRepository;
     }
 
@@ -77,46 +86,66 @@ public class FavoritesService : IFavoritesService
     public async Task<IEnumerable<FavoriteDTO>> GetAllForUserAsync(int userId)
     {
         _logger.LogInformation("Start GetAllForUserAsync for User Id: {UserId}", userId);
-        try
-        {
-            await ValidateUserExistsAsync(userId);
 
-            var favoritesDomain = await _repository.GetAllForUserAsync(userId);
-            var result = _mapper.Map<IEnumerable<FavoriteDTO>>(favoritesDomain);
-            _logger.LogInformation("Retrieved {Count} favorites for User Id {UserId}", result.Count(), userId);
-            return result;
-        }
-        catch (BookItBaseException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve favorites for User Id {UserId}", userId);
-            throw new ExternalServiceException("Database", "Failed to retrieve user favorites", ex);
-        }
+        var cacheKey = CacheKeys.FavoritesByUserId(userId);
+
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () =>
+            {
+                try
+                {
+                    await ValidateUserExistsAsync(userId);
+
+                    var favoritesDomain = await _repository.GetAllForUserAsync(userId);
+                    var result = _mapper.Map<IEnumerable<FavoriteDTO>>(favoritesDomain);
+                    _logger.LogInformation("Retrieved {Count} favorites for User Id {UserId}", result.Count(), userId);
+                    return result;
+                }
+                catch (BookItBaseException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to retrieve favorites for User Id {UserId}", userId);
+                    throw new ExternalServiceException("Database", "Failed to retrieve user favorites", ex);
+                }
+            },
+            TimeSpan.FromMinutes(_redisSettings.Expiration.Favorites)
+        );
     }
 
     public async Task<int> GetCountForApartmentAsync(int apartmentId)
     {
         _logger.LogInformation("Start GetCountForApartmentAsync for Apartment Id: {ApartmentId}", apartmentId);
-        try
-        {
-            await ValidateApartmentExistsAsync(apartmentId);
 
-            var count = await _repository.GetCountForApartmentAsync(apartmentId);
-            _logger.LogInformation("Count for Apartment Id {ApartmentId} is {Count}", apartmentId, count);
-            return count;
-        }
-        catch (BookItBaseException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get apartment favorites count for Apartment Id {ApartmentId}", apartmentId);
-            throw new ExternalServiceException("Database", "Failed to get apartment favorites count", ex);
-        }
+        var cacheKey = CacheKeys.FavoritesCountByApartmentId(apartmentId);
+
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () =>
+            {
+                try
+                {
+                    await ValidateApartmentExistsAsync(apartmentId);
+
+                    var count = await _repository.GetCountForApartmentAsync(apartmentId);
+                    _logger.LogInformation("Count for Apartment Id {ApartmentId} is {Count}", apartmentId, count);
+                    return count;
+                }
+                catch (BookItBaseException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to get apartment favorites count for Apartment Id {ApartmentId}", apartmentId);
+                    throw new ExternalServiceException("Database", "Failed to get apartment favorites count", ex);
+                }
+            },
+            TimeSpan.FromMinutes(_redisSettings.Expiration.Favorites)
+        );
     }
 
     public async Task<FavoriteDTO?> CreateAsync(FavoriteDTO dto)
@@ -132,6 +161,8 @@ public class FavoritesService : IFavoritesService
 
             var favoriteDomain = _mapper.Map<Favorite>(dto);
             var addedFavorite = await _repository.AddAsync(favoriteDomain);
+
+            await InvalidateFavoriteCachesAsync(dto.UserId, dto.ApartmentId);
 
             _logger.LogInformation("Successfully created favorite with Id {Id}", addedFavorite.Id);
 
@@ -166,6 +197,8 @@ public class FavoritesService : IFavoritesService
                 throw new UnauthorizedOperationException($"User {userId} is not authorized to delete this favorite");
             }
 
+            await InvalidateFavoriteCachesAsync(favoriteDomain.UserId, favoriteDomain.ApartmentId);
+
             await _repository.DeleteAsync(favoriteId);
 
             _logger.LogInformation("Successfully deleted favorite with Id {Id}", favoriteId);
@@ -181,6 +214,20 @@ public class FavoritesService : IFavoritesService
             _logger.LogError(ex, "Failed to delete favorite with Id {Id}", favoriteId);
             throw new ExternalServiceException("Database", "Failed to delete favorite", ex);
         }
+    }
+
+    private async Task InvalidateFavoriteCachesAsync(int userId, int apartmentId)
+    {
+        var invalidationTasks = new List<Task>
+        {
+            _cacheService.RemoveAsync(CacheKeys.FavoritesByUserId(userId)),            
+            _cacheService.RemoveAsync(CacheKeys.FavoritesCountByApartmentId(apartmentId))
+        };
+
+        await Task.WhenAll(invalidationTasks);
+
+        _logger.LogInformation("Invalidated favorite caches for UserId={UserId}, ApartmentId={ApartmentId}",
+            userId, apartmentId);
     }
 
     private void ValidateFavoriteData(FavoriteDTO dto)

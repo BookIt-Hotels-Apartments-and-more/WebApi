@@ -280,14 +280,4 @@ public class GeolocationService : IGeolocationService
             throw new ExternalServiceException("Geolocation", "Failed to compare geolocation coordinates", ex);
         }
     }
-
-    public void Dispose()
-    {
-        try
-        {
-            _httpClient?.Dispose();
-        }
-        catch (Exception)
-        { }
-    }
 }

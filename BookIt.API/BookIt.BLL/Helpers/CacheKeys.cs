@@ -7,7 +7,6 @@ public static class CacheKeys
     public const string ReviewsPrefix = "reviews:";
 
     public static string ReviewById(int id) => $"{ReviewsPrefix}id:{id}";
-
     public static string ReviewsByFilter(ReviewFilterDTO filter)
     {
         var keyParts = new List<string> { $"{ReviewsPrefix}filtered" };
@@ -21,4 +20,8 @@ public static class CacheKeys
 
         return string.Join(":", keyParts);
     }
+
+    public const string FavoritesPrefix = "favorites:";
+    public static string FavoritesByUserId(int userId) => $"{FavoritesPrefix}user:{userId}";
+    public static string FavoritesCountByApartmentId(int apartmentId) => $"{FavoritesPrefix}count:apartment:{apartmentId}";
 }
