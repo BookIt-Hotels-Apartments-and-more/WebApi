@@ -18,7 +18,7 @@ services:
       dockerfile: Dockerfile
     container_name: bookit-api
     restart: unless-stopped
-      ports:
+    ports:
       - "7065:7065"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
