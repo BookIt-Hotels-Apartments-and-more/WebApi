@@ -10,7 +10,7 @@ services:
       - redis-data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
-      - bookit-network
+      - my_network
 
   bookit:
     build:
@@ -44,7 +44,7 @@ services:
       - ./Logs:/app/Logs
       - bookit-dataprotection:/root/.aspnet/DataProtection-Keys
     networks:
-      - bookit-network
+      - my_network
 
 volumes:
   redis-data:
@@ -53,6 +53,5 @@ volumes:
     driver: local
 
 networks:
-  bookit-network:
-    driver: bridge
+  my_network:
     external: true
