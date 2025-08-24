@@ -1,4 +1,4 @@
-using BookIt.API.Validation;
+using BookIt.API.Validation.Attributes;
 using BookIt.DAL.Constants;
 using System.ComponentModel.DataAnnotations;
 

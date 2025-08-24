@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
+using BookIt.BLL.Helpers;
 using BookIt.BLL.Interfaces;
+using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace BookIt.BLL.Services;
 
@@ -13,6 +16,8 @@ public class ApartmentsService : IApartmentsService
     private const string BlobContainerName = "apartments";
 
     private readonly IMapper _mapper;
+    private readonly ICacheService _cacheService;
+    private readonly RedisSettings _redisSettings;
     private readonly IImagesService _imagesService;
     private readonly IRatingsService _ratingsService;
     private readonly ILogger<ApartmentsService> _logger;
@@ -22,15 +27,19 @@ public class ApartmentsService : IApartmentsService
 
     public ApartmentsService(
         IMapper mapper,
+        ICacheService cacheService,
         IImagesService imagesService,
         IRatingsService ratingsService,
         ILogger<ApartmentsService> logger,
         ImagesRepository imagesRepository,
+        IOptions<RedisSettings> redisoptions,
         BookingsRepository bookingsRepository,
         ApartmentsRepository apartmentsRepository)
     {
+        _redisSettings = redisoptions.Value;
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
         _imagesService = imagesService ?? throw new ArgumentNullException(nameof(imagesService));
         _ratingsService = ratingsService ?? throw new ArgumentNullException(nameof(ratingsService));
         _imagesRepository = imagesRepository ?? throw new ArgumentNullException(nameof(imagesRepository));
@@ -56,27 +65,37 @@ public class ApartmentsService : IApartmentsService
 
     public async Task<ApartmentDTO?> GetByIdAsync(int id)
     {
-        try
-        {
-            _logger.LogInformation("Retrieving apartment with ID {ApartmentId}", id);
-            var apartmentDomain = await _apartmentsRepository.GetByIdAsync(id);
-            if (apartmentDomain is null)
+        _logger.LogInformation("Retrieving apartment with ID {ApartmentId}", id);
+
+        var cacheKey = CacheKeys.ApartmentById(id);
+
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () =>
             {
-                _logger.LogWarning("Apartment with ID {ApartmentId} not found", id);
-                throw new EntityNotFoundException("Apartment", id);
-            }
-            _logger.LogInformation("Retrieved apartment with ID {ApartmentId}", id);
-            return _mapper.Map<ApartmentDTO>(apartmentDomain);
-        }
-        catch (BookItBaseException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve apartment with ID {ApartmentId}", id);
-            throw new ExternalServiceException("Database", "Failed to retrieve apartment", ex);
-        }
+                try
+                {
+                    var apartmentDomain = await _apartmentsRepository.GetByIdAsync(id);
+                    if (apartmentDomain is null)
+                    {
+                        _logger.LogWarning("Apartment with ID {ApartmentId} not found", id);
+                        throw new EntityNotFoundException("Apartment", id);
+                    }
+                    _logger.LogInformation("Retrieved apartment with ID {ApartmentId}", id);
+                    return _mapper.Map<ApartmentDTO>(apartmentDomain);
+                }
+                catch (BookItBaseException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to retrieve apartment with ID {ApartmentId}", id);
+                    throw new ExternalServiceException("Database", "Failed to retrieve apartment", ex);
+                }
+            },
+            TimeSpan.FromMinutes(_redisSettings.Expiration.Apartments)
+        );
     }
 
     public async Task<ApartmentDTO?> CreateAsync(ApartmentDTO dto, int requestorId)
@@ -93,6 +112,8 @@ public class ApartmentsService : IApartmentsService
 
             var apartmentDomain = _mapper.Map<Apartment>(dto);
             var addedApartment = await _apartmentsRepository.AddAsync(apartmentDomain);
+
+            await InvalidateApartmentCachesAsync(addedApartment.Id, addedApartment.EstablishmentId);
 
             dto.Photos ??= [];
 
@@ -133,6 +154,7 @@ public class ApartmentsService : IApartmentsService
 
             var apartmentDomain = _mapper.Map<Apartment>(dto);
             apartmentDomain.Id = id;
+            await InvalidateApartmentCachesAsync(id, dto.EstablishmentId);
             await _apartmentsRepository.UpdateAsync(apartmentDomain);
 
             await ProcessApartmentImagesAsync(id, dto.Photos);
@@ -156,8 +178,8 @@ public class ApartmentsService : IApartmentsService
         try
         {
             _logger.LogInformation("Deleting apartment with ID {ApartmentId}", id);
-            var apartmentExists = await _apartmentsRepository.ExistsAsync(id);
-            if (!apartmentExists)
+            var apartment = await _apartmentsRepository.GetByIdAsync(id);
+            if (apartment is null)
             {
                 _logger.LogWarning("Apartment with ID {ApartmentId} not found for deletion", id);
                 throw new EntityNotFoundException("Apartment", id);
@@ -170,6 +192,8 @@ public class ApartmentsService : IApartmentsService
             }
 
             await ValidateApartmentCanBeDeletedAsync(id);
+
+            await InvalidateApartmentCachesAsync(id, apartment.EstablishmentId);
 
             await RemoveAllApartmentImagesAsync(id);
 
@@ -191,38 +215,61 @@ public class ApartmentsService : IApartmentsService
 
     public async Task<PagedResultDTO<ApartmentDTO>> GetPagedByEstablishmentIdAsync(int establishmentId, int page, int pageSize)
     {
-        try
-        {
-            _logger.LogInformation("Retrieving apartments for establishment {EstablishmentId}, page {Page}, size {PageSize}", establishmentId, page, pageSize);
-            ValidatePaginationParameters(page, pageSize);
+        _logger.LogInformation("Retrieving apartments for establishment {EstablishmentId}, page {Page}, size {PageSize}", establishmentId, page, pageSize);
 
-            var (apartments, totalCount) = await _apartmentsRepository.GetPagedByEstablishmentIdAsync(establishmentId, page, pageSize);
-            var apartmentsDto = _mapper.Map<IEnumerable<ApartmentDTO>>(apartments);
+        var cacheKey = CacheKeys.ApartmentsByEstablishmentId(establishmentId, page, pageSize);
 
-            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-            _logger.LogInformation("Retrieved {Count} apartments for establishment {EstablishmentId}", apartmentsDto.Count(), establishmentId);
-
-            return new PagedResultDTO<ApartmentDTO>
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () =>
             {
-                Items = apartmentsDto.ToList(),
-                PageNumber = page,
-                PageSize = pageSize,
-                TotalCount = totalCount,
-                TotalPages = totalPages,
-                HasNextPage = page < totalPages,
-                HasPreviousPage = page > 1
-            };
-        }
-        catch (BookItBaseException)
+                try
+                {
+                    ValidatePaginationParameters(page, pageSize);
+
+                    var (apartments, totalCount) = await _apartmentsRepository.GetPagedByEstablishmentIdAsync(establishmentId, page, pageSize);
+                    var apartmentsDto = _mapper.Map<IEnumerable<ApartmentDTO>>(apartments);
+
+                    var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+                    _logger.LogInformation("Retrieved {Count} apartments for establishment {EstablishmentId}", apartmentsDto.Count(), establishmentId);
+
+                    return new PagedResultDTO<ApartmentDTO>
+                    {
+                        Items = apartmentsDto.ToList(),
+                        PageNumber = page,
+                        PageSize = pageSize,
+                        TotalCount = totalCount,
+                        TotalPages = totalPages,
+                        HasNextPage = page < totalPages,
+                        HasPreviousPage = page > 1
+                    };
+                }
+                catch (BookItBaseException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to retrieve paged apartments for establishment {EstablishmentId}", establishmentId);
+                    throw new ExternalServiceException("Database", "Failed to retrieve paged apartments", ex);
+                }
+            },
+            TimeSpan.FromMinutes(_redisSettings.Expiration.Apartments)
+        );
+    }
+
+    private async Task InvalidateApartmentCachesAsync(int apartmentId, int establishmentId)
+    {
+        var invalidationTasks = new List<Task>
         {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve paged apartments for establishment {EstablishmentId}", establishmentId);
-            throw new ExternalServiceException("Database", "Failed to retrieve paged apartments", ex);
-        }
+            _cacheService.RemoveAsync(CacheKeys.ApartmentById(apartmentId)),
+            _cacheService.RemoveByPatternAsync(CacheKeys.ApartmentsByEstablishmentId(establishmentId)),
+        };
+
+        await Task.WhenAll(invalidationTasks);
+        _logger.LogInformation("Invalidated apartments caches for ApartmentId={ApartmentId}, EstablishmentId={EstablishmentId}",
+            apartmentId, establishmentId);
     }
 
     private void ValidatePaginationParameters(int page, int pageSize)

@@ -1,7 +1,7 @@
 ﻿using BookIt.API.Models.Requests.Common;
 using System.ComponentModel.DataAnnotations;
 
-namespace BookIt.API.Validation;
+namespace BookIt.API.Validation.Attributes;
 
 public class PhotoLimitValidationAttribute : ValidationAttribute
 {

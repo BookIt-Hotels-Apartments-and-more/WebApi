@@ -35,7 +35,7 @@ public class JWTService : IJWTService
         _tokenHandler = new JwtSecurityTokenHandler();
     }
 
-    public string GenerateToken(UserDTO user)
+    public async Task<string> GenerateToken(UserAuthDTO user)
     {
         try
         {
@@ -50,7 +50,7 @@ public class JWTService : IJWTService
             var token = _tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = _tokenHandler.WriteToken(token);
 
-            _userRepository.UpdateUserLastActivityAtAsync(user.Id);
+            await _userRepository.UpdateUserLastActivityAtAsync(user.Id);
 
             _logger.LogInformation("Successfully generated JWT token for user {UserId}", user.Id);
 
@@ -191,7 +191,7 @@ public class JWTService : IJWTService
             throw new Exception("Invalid JWT configuration");
     }
 
-    private void ValidateUserData(UserDTO user)
+    private void ValidateUserData(UserAuthDTO user)
     {
         var validationErrors = new Dictionary<string, List<string>>();
 
@@ -225,7 +225,7 @@ public class JWTService : IJWTService
         }
     }
 
-    private List<Claim> CreateUserClaims(UserDTO user)
+    private List<Claim> CreateUserClaims(UserAuthDTO user)
     {
         try
         {

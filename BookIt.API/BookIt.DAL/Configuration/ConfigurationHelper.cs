@@ -1,4 +1,5 @@
 ﻿using BookIt.DAL.Configuration.Settings;
+using DotNetEnv;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -6,8 +7,10 @@ namespace BookIt.DAL.Configuration;
 
 public static class ConfigurationHelper
 {
-    public static void ConfigureSettings(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection ConfigureSettings(this IServiceCollection services, IConfiguration configuration)
     {
+        Env.Load();
+
         services.Configure<ConnectionStrings>(options =>
         {
             configuration.GetSection(ConnectionStrings.SectionName).Bind(options);
@@ -100,5 +103,20 @@ public static class ConfigurationHelper
             if (!string.IsNullOrEmpty(apiKey))
                 options.ApiKey = apiKey;
         });
+
+        services.Configure<RedisSettings>(options =>
+        {
+            configuration.GetSection(RedisSettings.SectionName).Bind(options);
+
+            var redisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+            if (!string.IsNullOrEmpty(redisConnectionString))
+                options.ConnectionString = redisConnectionString;
+
+            var redisInstanceName = Environment.GetEnvironmentVariable("REDIS_INSTANCE_NAME");
+            if (!string.IsNullOrEmpty(redisInstanceName))
+                options.InstanceName = redisInstanceName;
+        });
+
+        return services;
     }
 }

@@ -15,7 +15,7 @@ public class GeolocationsMappingProfile : Profile
             .ForMember(geo => geo.Latitude, o => o.MapFrom(res => double.Parse(res.Latitude)))
             .ForMember(geo => geo.Longitude, o => o.MapFrom(res => double.Parse(res.Longitude)))
             .ForMember(geo => geo.Country, o => o.MapFrom(res => res.Address.Country))
-            .ForMember(geo => geo.City, o => o.MapFrom(res => res.Address.City))
+            .ForMember(geo => geo.City, o => o.MapFrom(res => string.IsNullOrEmpty(res.Address.City) ? res.Address.Town : res.Address.City))
             .ForMember(geo => geo.PostalCode, o => o.MapFrom(res => res.Address.Postcode))
             .ForMember(geo => geo.Address, o => o.MapFrom(res => res.DisplayAddress));
 

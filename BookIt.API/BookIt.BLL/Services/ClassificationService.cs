@@ -9,6 +9,7 @@ using BookIt.DAL.Repositories;
 using GenerativeAI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
 using System.Text;
 
 namespace BookIt.BLL.Services;
@@ -53,7 +54,7 @@ public class ClassificationService : IClassificationService
 
     public async Task<VibeType?> ClassifyEstablishmentVibeAsync(EstablishmentDTO establishment)
     {
-        _logger.LogInformation("Classifying vibe for establishment: {@Establishment}", establishment);
+        _logger.LogInformation("Classifying vibe for establishment: {@Establishment}", establishment.Name);
 
         try
         {
@@ -217,25 +218,30 @@ public class ClassificationService : IClassificationService
         {
             throw;
         }
+        catch (HttpRequestException ex) when (ex.StatusCode.HasValue && ex.StatusCode.Value == HttpStatusCode.ServiceUnavailable)
+        {
+            _logger.LogWarning(ex, "Gemini AI is currently unavailable. Setting None Vibe type for establishment");
+            return VibeType.None;
+        }
         catch (HttpRequestException ex)
         {
             _logger.LogWarning(ex, "Network error while calling Gemini AI service");
-            throw new ExternalServiceException("Gemini AI", "Network error while calling Gemini AI service", ex);
+            return VibeType.None;
         }
         catch (TaskCanceledException ex)
         {
             _logger.LogWarning(ex, "Request to Gemini AI service timed out");
-            throw new ExternalServiceException("Gemini AI", "Request to Gemini AI service timed out", ex);
+            return VibeType.None;
         }
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Unauthorized access to Gemini AI service");
-            throw new ExternalServiceException("Gemini AI", "Invalid API key or unauthorized access to Gemini AI", ex, 401);
+            return VibeType.None;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error while calling Gemini AI service");
-            throw new ExternalServiceException("Gemini AI", "Unexpected error while calling Gemini AI service", ex);
+            return VibeType.None;
         }
     }
 

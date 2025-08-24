@@ -93,7 +93,13 @@ public class BookingsController : ControllerBase
         [FromQuery, Required] DateTime dateFrom, [FromQuery, Required] DateTime dateTo)
     {
         var isAvailable = await _service.CheckAvailabilityAsync(apartmentId, dateFrom, dateTo);
-        var response = new { ApartmentId = apartmentId, IsAvailable = isAvailable, DateFrom = dateFrom, DateTo = dateTo };
+        var response = new AvailabilityCheckResponse
+        {
+            ApartmentId = apartmentId,
+            IsAvailable = isAvailable,
+            DateFrom = dateFrom,
+            DateTo = dateTo
+        };
         return Ok(response);
     }
 }

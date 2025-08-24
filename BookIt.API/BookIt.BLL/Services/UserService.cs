@@ -25,7 +25,7 @@ public class UserService : IUserService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<UserDTO> RegisterAsync(string username, string email, string? password, UserRole role = UserRole.Tenant)
+    public async Task<UserAuthDTO> RegisterAsync(string username, string email, string? password, UserRole role = UserRole.Tenant)
     {
         _logger.LogInformation("RegisterAsync started for Email={Email}, Username={Username}, Role={Role}", email, username, role);
         try
@@ -51,7 +51,7 @@ public class UserService : IUserService
 
             var registeredUser = await _userRepository.CreateAsync(user);
             _logger.LogInformation("User registered successfully with Id={UserId}", registeredUser.Id);
-            return _mapper.Map<UserDTO>(registeredUser);
+            return _mapper.Map<UserAuthDTO>(registeredUser);
         }
         catch (DbUpdateException ex)
         {
@@ -125,7 +125,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserDTO?> AuthByGoogleAsync(string username, string email, UserRole role = UserRole.Tenant)
+    public async Task<UserAuthDTO?> AuthByGoogleAsync(string username, string email, UserRole role = UserRole.Tenant)
     {
         _logger.LogInformation("AuthByGoogleAsync started for Email={Email}, Username={Username}", email, username);
         try
@@ -135,7 +135,7 @@ public class UserService : IUserService
             if (existingUser is not null)
             {
                 _logger.LogInformation("AuthByGoogleAsync: existing user found for Email={Email}", email);
-                return _mapper.Map<UserDTO>(existingUser);
+                return _mapper.Map<UserAuthDTO>(existingUser);
             }
             else
             {
@@ -286,7 +286,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserDTO> LoginAsync(string email, string password)
+    public async Task<UserAuthDTO> LoginAsync(string email, string password)
     {
         _logger.LogInformation("LoginAsync started for Email={Email}", email);
         try
@@ -306,7 +306,7 @@ public class UserService : IUserService
             //    throw new BusinessRuleViolationException("EMAIL_NOT_CONFIRMED", "Please confirm your email before logging in");
             //}
 
-            return _mapper.Map<UserDTO>(userDomain);
+            return _mapper.Map<UserAuthDTO>(userDomain);
         }
         catch (BookItBaseException)
         {

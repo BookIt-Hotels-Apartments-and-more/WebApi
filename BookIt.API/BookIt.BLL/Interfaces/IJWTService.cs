@@ -5,7 +5,7 @@ namespace BookIt.BLL.Interfaces;
 
 public interface IJWTService
 {
-    string GenerateToken(UserDTO user);
+    Task<string> GenerateToken(UserAuthDTO user);
     ClaimsPrincipal? ValidateToken(string token);
     bool IsTokenExpired(string token);
     string? GetUserIdFromToken(string token);

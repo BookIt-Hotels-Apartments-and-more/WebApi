@@ -40,11 +40,7 @@ public class UserRepository
 
     public async Task<User?> GetByEmailAndPasswordHashAsync(string email, string passwordHash)
     {
-        return await _context.Users.AsNoTracking().AsSplitQuery()
-            .Include(u => u.Photos)
-            .Include(u => u.Bookings)
-            .Include(u => u.Favorites)
-            .Include(u => u.OwnedEstablishments)
+        return await _context.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email && u.PasswordHash == passwordHash);
     }
 
