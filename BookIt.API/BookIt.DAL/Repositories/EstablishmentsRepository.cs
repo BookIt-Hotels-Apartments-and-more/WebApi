@@ -23,12 +23,20 @@ public class EstablishmentsRepository
             .Include(e => e.Apartments)
             .Include(e => e.Geolocation)
             .Include(u => u.ApartmentRating)
-            .ToListAsync();
+            .ToListAsync() ?? [];
 
         foreach (var e in establishments)
         {
-            e.MinApartmentPrice = e.Apartments.Min(a => a.Price);
-            e.MaxApartmentPrice = e.Apartments.Max(a => a.Price);
+            if (!e.Apartments.Any())
+            {
+                e.MinApartmentPrice = null;
+                e.MaxApartmentPrice = null;
+            }
+            else
+            {
+                e.MinApartmentPrice = e.Apartments.Min(a => a.Price);
+                e.MaxApartmentPrice = e.Apartments.Max(a => a.Price);
+            }
         }
 
         return establishments;
@@ -46,8 +54,16 @@ public class EstablishmentsRepository
 
         if (establishment is not null)
         {
-            establishment.MinApartmentPrice = establishment.Apartments.Min(a => a.Price);
-            establishment.MaxApartmentPrice = establishment.Apartments.Max(a => a.Price);
+            if (!establishment.Apartments.Any())
+            {
+                establishment.MinApartmentPrice = null;
+                establishment.MaxApartmentPrice = null;
+            }
+            else
+            {
+                establishment.MinApartmentPrice = establishment.Apartments.Min(a => a.Price);
+                establishment.MaxApartmentPrice = establishment.Apartments.Max(a => a.Price);
+            }
         }
 
         return establishment;
@@ -130,12 +146,20 @@ public class EstablishmentsRepository
             .OrderByDescending(e => e.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .ToListAsync() ?? [];
 
         foreach (var e in establishments)
         {
-            e.MinApartmentPrice = e.Apartments.Min(a => a.Price);
-            e.MaxApartmentPrice = e.Apartments.Max(a => a.Price);
+            if (!e.Apartments.Any())
+            {
+                e.MinApartmentPrice = null;
+                e.MaxApartmentPrice = null;
+            }
+            else
+            {
+                e.MinApartmentPrice = e.Apartments.Min(a => a.Price);
+                e.MaxApartmentPrice = e.Apartments.Max(a => a.Price);
+            }
         }
 
         return (establishments, totalCount);
@@ -175,12 +199,20 @@ public class EstablishmentsRepository
             .Include(e => e.Geolocation)
             .Include(e => e.Apartments).ThenInclude(a => a.Reviews)
             .Include(e => e.Apartments).ThenInclude(a => a.Bookings)
-            .ToListAsync();
+            .ToListAsync() ?? [];
 
         foreach (var e in establishmentsWithIncludes)
         {
-            e.MinApartmentPrice = e.Apartments.Min(a => a.Price);
-            e.MaxApartmentPrice = e.Apartments.Max(a => a.Price);
+            if (!e.Apartments.Any())
+            {
+                e.MinApartmentPrice = null;
+                e.MaxApartmentPrice = null;
+            }
+            else
+            {
+                e.MinApartmentPrice = e.Apartments.Min(a => a.Price);
+                e.MaxApartmentPrice = e.Apartments.Max(a => a.Price);
+            }
         }
 
         var result = establishmentsWithIncludes
