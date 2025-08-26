@@ -104,6 +104,8 @@ public class AzureBlobStorageService : IBlobStorageService
     {
         _logger.LogInformation("Attempting to delete image from container '{Container}' with URL '{BlobUrl}'.", containerName, blobUrl);
 
+        if (!blobUrl.Contains("blob.core.windows.net")) return true;
+
         try
         {
             ValidateDeleteInputs(blobUrl, containerName);

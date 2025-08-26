@@ -49,19 +49,12 @@ public class GoogleAuthController : ControllerBase
         try
         {
             if (string.IsNullOrWhiteSpace(code)) return Redirect($"{clientUrl}/auth/error");
-            var (email, name) = await _googleAuthService.GetUserEmailAndNameAsync(code);
+            var (email, name, imageUrl) = await _googleAuthService.GetUserInfoAsync(code);
             if (string.IsNullOrWhiteSpace(email)) return Redirect($"{clientUrl}/auth/error");
-            var user = await _userService.AuthByGoogleAsync(name ?? string.Empty, email);
+            var user = await _userService.AuthByGoogleAsync(name ?? string.Empty, email, imageUrl);
             if (user is null) return Redirect($"{clientUrl}/auth/error");
             var token = await _jwtService.GenerateToken(user);
-            Response.Cookies.Append("auth_token", token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Lax,
-                MaxAge = TimeSpan.FromHours(24)
-            });
-            return Redirect($"{clientUrl}/auth/success");
+            return Redirect($"{clientUrl}/auth/success?token={token}");
         }
         catch
         {

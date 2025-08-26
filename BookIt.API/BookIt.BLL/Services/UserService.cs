@@ -15,17 +15,23 @@ namespace BookIt.BLL.Services;
 public class UserService : IUserService
 {
     private readonly IMapper _mapper;
-    private readonly UserRepository _userRepository;
     private readonly ILogger<UserService> _logger;
+    private readonly UserRepository _userRepository;
+    private readonly ImagesRepository _imagesRepository;
 
-    public UserService(IMapper mapper, UserRepository userRepository, ILogger<UserService> logger)
+    public UserService(
+        IMapper mapper,
+        ILogger<UserService> logger,
+        UserRepository userRepository,
+        ImagesRepository imagesRepository)
     {
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _imagesRepository = imagesRepository ?? throw new ArgumentNullException(nameof(imagesRepository));
     }
 
-    public async Task<UserAuthDTO> RegisterAsync(string username, string email, string? password, UserRole role = UserRole.Tenant)
+    public async Task<UserAuthDTO> RegisterAsync(string username, string email, string? password, UserRole role = UserRole.Tenant, string? imageUrl = null)
     {
         _logger.LogInformation("RegisterAsync started for Email={Email}, Username={Username}, Role={Role}", email, username, role);
         try
@@ -50,6 +56,13 @@ public class UserService : IUserService
             };
 
             var registeredUser = await _userRepository.CreateAsync(user);
+
+            if (imageUrl is not null)
+            {
+                var userImage = await _imagesRepository.AddAsync(new Image { BlobUrl = imageUrl, UserId = registeredUser.Id });
+                registeredUser.Photos.Add(userImage);
+            }
+
             _logger.LogInformation("User registered successfully with Id={UserId}", registeredUser.Id);
             return _mapper.Map<UserAuthDTO>(registeredUser);
         }
@@ -125,7 +138,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserAuthDTO?> AuthByGoogleAsync(string username, string email, UserRole role = UserRole.Tenant)
+    public async Task<UserAuthDTO?> AuthByGoogleAsync(string username, string email, string? imageUrl, UserRole role = UserRole.Tenant)
     {
         _logger.LogInformation("AuthByGoogleAsync started for Email={Email}, Username={Username}", email, username);
         try
@@ -140,7 +153,7 @@ public class UserService : IUserService
             else
             {
                 _logger.LogInformation("AuthByGoogleAsync: no existing user, registering new user for Email={Email}", email);
-                return await RegisterAsync(username, email, null, role);
+                return await RegisterAsync(username, email, null, role, imageUrl);
             }
         }
         catch (BookItBaseException)

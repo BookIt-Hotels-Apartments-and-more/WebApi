@@ -54,7 +54,7 @@ public class GoogleAuthService : IGoogleAuthService
         }
     }
 
-    public async Task<(string Email, string Name)> GetUserEmailAndNameAsync(string code)
+    public async Task<(string Email, string Name, string? ImageUrl)> GetUserInfoAsync(string code)
     {
         try
         {
@@ -64,11 +64,11 @@ public class GoogleAuthService : IGoogleAuthService
 
             var accessToken = await ExchangeCodeForAccessTokenAsync(code);
 
-            var (email, name) = await GetUserInfoAsync(accessToken);
+            var (email, name, imageUrl) = await GetUserInfoAsync(accessToken);
 
             _logger.LogInformation("Successfully retrieved user info from Google for email: {Email}", email);
 
-            return (email, name);
+            return (email, name, imageUrl);
         }
         catch (BookItBaseException)
         {
@@ -162,7 +162,7 @@ public class GoogleAuthService : IGoogleAuthService
         }
     }
 
-    private async Task<(string Email, string Name)> GetUserInfoAsync(string accessToken)
+    private async Task<(string Email, string Name, string? ImageUrl)> GetUserInfoAsync(string accessToken)
     {
         try
         {
@@ -204,6 +204,8 @@ public class GoogleAuthService : IGoogleAuthService
 
             var name = root.TryGetProperty("name", out var nameElement) ? nameElement.GetString() : string.Empty;
 
+            var imageUrl = root.TryGetProperty("picture", out var pictureElement) ? pictureElement.GetString() : string.Empty;
+
             if (!string.IsNullOrWhiteSpace(name) && name.Length > 100)
             {
                 _logger.LogWarning("Received unusually long name from Google: {NameLength} characters", name.Length);
@@ -211,7 +213,7 @@ public class GoogleAuthService : IGoogleAuthService
             }
 
             _logger.LogInformation("Successfully retrieved user info from Google");
-            return (email, name ?? string.Empty);
+            return (email, name ?? string.Empty, imageUrl);
         }
         catch (JsonException ex)
         {
