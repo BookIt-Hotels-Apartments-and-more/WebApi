@@ -64,7 +64,7 @@ public class GoogleAuthService : IGoogleAuthService
 
             var accessToken = await ExchangeCodeForAccessTokenAsync(code);
 
-            var (email, name, imageUrl) = await GetUserInfoAsync(accessToken);
+            var (email, name, imageUrl) = await GetGoogleUserInfoAsync(accessToken);
 
             _logger.LogInformation("Successfully retrieved user info from Google for email: {Email}", email);
 
@@ -162,7 +162,7 @@ public class GoogleAuthService : IGoogleAuthService
         }
     }
 
-    private async Task<(string Email, string Name, string? ImageUrl)> GetUserInfoAsync(string accessToken)
+    private async Task<(string Email, string Name, string? ImageUrl)> GetGoogleUserInfoAsync(string accessToken)
     {
         try
         {
