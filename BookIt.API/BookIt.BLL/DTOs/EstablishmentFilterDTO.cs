@@ -15,4 +15,7 @@ public record EstablishmentFilterDTO : PaginationFilterDTO
     public float? MaxRating { get; set; }
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
+    public int? Capacity { get; set; }
+    public DateTime? DateFrom { get; set; }
+    public DateTime? DateTo { get; set; }
 }

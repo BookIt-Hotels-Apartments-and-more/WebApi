@@ -247,17 +247,16 @@ public class EstablishmentsService : IEstablishmentsService
 
             var establishmentsDto = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishments);
 
-            var finalCount = establishmentsDto.Count();
-            var totalPages = (int)Math.Ceiling(finalCount / (double)filter.PageSize);
+            var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
 
-            _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", finalCount, totalPages);
+            _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", totalCount, totalPages);
 
             return new PagedResultDTO<EstablishmentDTO>
             {
                 Items = establishmentsDto,
                 PageNumber = filter.Page,
                 PageSize = filter.PageSize,
-                TotalCount = finalCount,
+                TotalCount = totalCount,
                 TotalPages = totalPages,
                 HasNextPage = filter.Page < totalPages,
                 HasPreviousPage = filter.Page > 1
@@ -339,6 +338,21 @@ public class EstablishmentsService : IEstablishmentsService
 
         if (filter.MinPrice.HasValue && filter.MaxPrice.HasValue && filter.MinPrice > filter.MaxPrice)
             throw new BusinessRuleViolationException("INVALID_PRICE_RANGE", "Minimum price cannot be greater than maximum price");
+
+        if (filter.Capacity.HasValue && filter.Capacity <= 0)
+            throw new BusinessRuleViolationException("INVALID_CAPACITY", "Capacity must be greater than 0");
+
+        if (filter.DateFrom.HasValue && !filter.DateTo.HasValue)
+            throw new BusinessRuleViolationException("MISSING_DATE_TO", "DateTo must be provided when DateFrom is specified");
+
+        if (!filter.DateFrom.HasValue && filter.DateTo.HasValue)
+            throw new BusinessRuleViolationException("MISSING_DATE_FROM", "DateFrom must be provided when DateTo is specified");
+
+        if (filter.DateFrom.HasValue && filter.DateTo.HasValue && filter.DateFrom > filter.DateTo)
+            throw new BusinessRuleViolationException("INVALID_DATE_RANGE", "DateFrom cannot be later than DateTo");
+
+        if (filter.DateFrom.HasValue && filter.DateTo.HasValue && filter.DateFrom < DateTime.Now.Date)
+            throw new BusinessRuleViolationException("INVALID_DATE_FROM", "DateFrom cannot be in the past");
     }
 
     private Expression<Func<Establishment, bool>> BuildDatabasePredicate(EstablishmentFilterDTO filter)
@@ -371,6 +385,12 @@ public class EstablishmentsService : IEstablishmentsService
                                                                      e.Apartments.Max(a => a.Price) >= (double)filter.MinPrice.Value);
         if (filter.MaxPrice.HasValue) predicate = predicate.And(e => e.Apartments.Any() &&
                                                                      e.Apartments.Min(a => a.Price) <= (double)filter.MaxPrice.Value);
+
+        if (filter.Capacity.HasValue) predicate = predicate.And(e => e.Apartments.Any(a => a.Capacity >= filter.Capacity.Value));
+
+        if (filter.DateFrom.HasValue && filter.DateTo.HasValue)
+            predicate = predicate.And(e => e.Apartments.Any(a => !a.Bookings.Any(b => b.DateFrom.Date <= filter.DateTo.Value.Date &&
+                                                                                      b.DateTo.Date >= filter.DateFrom.Value.Date)));
 
         return predicate;
     }
