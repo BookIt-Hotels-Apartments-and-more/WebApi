@@ -30,20 +30,15 @@ public class ClassificationService : IClassificationService
     {
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _logger.LogInformation("Initializing {ServiceName}", nameof(ClassificationService));
 
         try
         {
             _geminiSettings = geminiAiOptions?.Value ?? throw new ArgumentNullException(nameof(geminiAiOptions));
             _establishmentsRepository = establishmentsRepository ?? throw new ArgumentNullException(nameof(establishmentsRepository));
 
-            _logger.LogInformation("Validating Gemini AI configuration");
             ValidateGeminiConfiguration(_geminiSettings);
 
-            _logger.LogInformation("Creating Gemini AI model instance with model '{Model}'", _geminiSettings.Model);
             _geminiModel = new GenerativeModel(_geminiSettings.ApiKey, _geminiSettings.Model);
-
-            _logger.LogInformation("{ServiceName} initialized successfully", nameof(ClassificationService));
         }
         catch (Exception ex) when (!(ex is BookItBaseException))
         {
@@ -118,8 +113,6 @@ public class ClassificationService : IClassificationService
 
     private void ValidateGeminiConfiguration(GeminiAISettings settings)
     {
-        _logger.LogInformation("Validating Gemini AI settings");
-
         var validationErrors = new Dictionary<string, List<string>>();
 
         if (string.IsNullOrWhiteSpace(settings.ApiKey))
