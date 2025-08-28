@@ -6,6 +6,7 @@ using BookIt.BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace BookIt.API.Controllers;
 
@@ -41,9 +42,18 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Tenant")]
+    [Authorize(Roles = "Tenant,Admin")]
     public async Task<ActionResult<BookingResponse>> CreateAsync([FromBody] BookingRequest request)
     {
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var requestorRoleStr = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
+        if (requestorRoleStr == "Tenant" && request.CustomerId != requestorId)
+            return Forbid("You can only create bookings for yourself.");
+
         var bookingDto = _mapper.Map<BookingDTO>(request);
         var addedBookingDto = await _service.CreateAsync(bookingDto);
         var bookingResponse = _mapper.Map<BookingResponse>(addedBookingDto);
@@ -54,6 +64,15 @@ public class BookingsController : ControllerBase
     [Authorize(Roles = "Tenant,Landlord")]
     public async Task<ActionResult<BookingResponse>> UpdateAsync([FromRoute] int id, [FromBody] BookingRequest request)
     {
+        var requestorIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var requestorRoleStr = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(requestorIdStr)) return Unauthorized();
+        if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
+
+        if (requestorRoleStr == "Tenant" && request.CustomerId != requestorId)
+            return Forbid("You can only update your own bookings.");
+
         var bookingDto = _mapper.Map<BookingDTO>(request);
         var updatedBookingDto = await _service.UpdateAsync(id, bookingDto);
         var bookingResponse = _mapper.Map<BookingResponse>(updatedBookingDto);
@@ -70,7 +89,6 @@ public class BookingsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Tenant,Landlord")]
     public async Task<ActionResult> DeleteAsync([FromRoute] int id)
     {
         await _service.DeleteAsync(id);
