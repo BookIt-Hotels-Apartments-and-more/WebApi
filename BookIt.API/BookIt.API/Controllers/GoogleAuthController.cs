@@ -12,18 +12,18 @@ public class GoogleAuthController : ControllerBase
     private readonly IJWTService _jwtService;
     private readonly IUserService _userService;
     private readonly IGoogleAuthService _googleAuthService;
-    private readonly IOptions<UrlSettings> _urlSettingsOptions;
+    private readonly IOptions<GoogleOAuthSettings> _googleOauthSettingsOptions;
 
     public GoogleAuthController(
         IJWTService jwtService,
         IUserService userService,
         IGoogleAuthService googleAuthService,
-        IOptions<UrlSettings> urlSettingsOptions)
+        IOptions<GoogleOAuthSettings> options)
     {
         _jwtService = jwtService;
         _userService = userService;
         _googleAuthService = googleAuthService;
-        _urlSettingsOptions = urlSettingsOptions;
+        _googleOauthSettingsOptions = options;
     }
 
     [HttpGet("login")]
@@ -36,7 +36,7 @@ public class GoogleAuthController : ControllerBase
         }
         catch
         {
-            var clientUrl = _urlSettingsOptions.Value.ClientUrl;
+            var clientUrl = _googleOauthSettingsOptions.Value.RedirectClientUri;
             return Redirect($"{clientUrl}/auth/error");
         }
     }
@@ -44,7 +44,7 @@ public class GoogleAuthController : ControllerBase
     [HttpGet("callback")]
     public async Task<IActionResult> Callback([FromQuery] string code)
     {
-        var clientUrl = _urlSettingsOptions.Value.ClientUrl;
+        var clientUrl = _googleOauthSettingsOptions.Value.RedirectClientUri;
 
         try
         {

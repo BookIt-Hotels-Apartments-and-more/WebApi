@@ -48,6 +48,10 @@ public static class ConfigurationHelper
             var redirectUri = Environment.GetEnvironmentVariable("GOOGLE_REDIRECT_URI");
             if (!string.IsNullOrEmpty(redirectUri))
                 options.RedirectUri = redirectUri;
+
+            var redirectClientUri = Environment.GetEnvironmentVariable("GOOGLE_REDIRECT_CLIENT_URI");
+            if (!string.IsNullOrEmpty(redirectClientUri))
+                options.RedirectClientUri = redirectClientUri;
         });
 
         services.Configure<EmailSMTPSettings>(options =>
