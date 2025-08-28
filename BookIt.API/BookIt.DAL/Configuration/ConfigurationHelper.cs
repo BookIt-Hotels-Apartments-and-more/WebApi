@@ -44,6 +44,10 @@ public static class ConfigurationHelper
             var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
             if (!string.IsNullOrEmpty(clientSecret))
                 options.ClientSecret = clientSecret;
+
+            var redirectUri = Environment.GetEnvironmentVariable("GOOGLE_REDIRECT_URI");
+            if (!string.IsNullOrEmpty(redirectUri))
+                options.RedirectUri = redirectUri;
         });
 
         services.Configure<EmailSMTPSettings>(options =>
