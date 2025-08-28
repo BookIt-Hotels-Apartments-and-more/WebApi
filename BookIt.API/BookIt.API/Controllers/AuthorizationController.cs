@@ -17,10 +17,10 @@ public class AuthorizationController : ControllerBase
 {
     private readonly IMapper _mapper;
     private readonly IJWTService _jwtService;
+    private readonly string _redirectUrl;
     private readonly IUserService _userService;
     private readonly IEmailSenderService _emailSenderService;
     private readonly IOptions<AppSettings> _appSettingsOptions;
-    private readonly IOptions<UrlSettings> _urlSettingsOptions;
 
     public AuthorizationController(
         IMapper mapper,
@@ -28,24 +28,22 @@ public class AuthorizationController : ControllerBase
         IUserService userService,
         IEmailSenderService emailSenderService,
         IOptions<AppSettings> appSettingsOptions,
-        IOptions<UrlSettings> urlSettingsOptions)
+        IOptions<GoogleOAuthSettings> googleAuthOptions)
     {
         _mapper = mapper;
         _jwtService = jwtService;
         _userService = userService;
         _emailSenderService = emailSenderService;
         _appSettingsOptions = appSettingsOptions;
-        _urlSettingsOptions = urlSettingsOptions;
+        _redirectUrl = googleAuthOptions.Value.RedirectClientUri;
     }
 
     [HttpPost("register")]
     [ResponseCache(NoStore = true)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var baseUrl = _appSettingsOptions.Value.BaseUrl;
-
         var user = await _userService.RegisterAsync(request.Username, request.Email, request.Password);
-        var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
+        var confirmationLink = $"{_redirectUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
         var response = _mapper.Map<UserAuthResponse>(user);
@@ -57,10 +55,8 @@ public class AuthorizationController : ControllerBase
     [ResponseCache(NoStore = true)]
     public async Task<IActionResult> RegisterLandlord([FromBody] RegisterRequest request)
     {
-        var baseUrl = _appSettingsOptions.Value.BaseUrl;
-
         var user = await _userService.RegisterAsync(request.Username, request.Email, request.Password, UserRole.Landlord);
-        var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
+        var confirmationLink = $"{_redirectUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
         var response = _mapper.Map<UserAuthResponse>(user);
@@ -73,10 +69,8 @@ public class AuthorizationController : ControllerBase
     [ResponseCache(NoStore = true)]
     public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequest request)
     {
-        var baseUrl = _appSettingsOptions.Value.BaseUrl;
-
         var user = await _userService.RegisterAsync(request.Username, request.Email, request.Password, UserRole.Admin);
-        var confirmationLink = $"{baseUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
+        var confirmationLink = $"{_redirectUrl}/auth/verify-email?token={user.EmailConfirmationToken}";
         var body = $"Please confirm your email by clicking the following link: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Email Confirmation", body);
         var response = _mapper.Map<UserAuthResponse>(user);
@@ -99,10 +93,8 @@ public class AuthorizationController : ControllerBase
     [ResponseCache(NoStore = true)]
     public async Task<IActionResult> ResetPasswordToken([FromBody] GenerateResetPasswordTokenRequest request)
     {
-        var clientUrl = _urlSettingsOptions.Value.ClientUrl;
-
         var user = await _userService.GenerateResetPasswordTokenAsync(request.Email);
-        var confirmationLink = $"{clientUrl}/auth/reset-password?token={user!.ResetPasswordToken}";
+        var confirmationLink = $"{_redirectUrl}/auth/reset-password?token={user!.ResetPasswordToken}";
         var body = $"Go to this link to reset your password: {confirmationLink}";
         _emailSenderService.SendEmail(user.Email, "Password Reset", body);
         Response.Headers.Append("Content-Encoding", "identity");
@@ -122,17 +114,16 @@ public class AuthorizationController : ControllerBase
     [ResponseCache(NoStore = true)]
     public async Task<IActionResult> VerifyEmail()
     {
-        var clientUrl = _urlSettingsOptions.Value.ClientUrl;
         try
         {
             var token = HttpContext.Request.Query["token"].ToString();
             if (string.IsNullOrEmpty(token)) throw new Exception();
             await _userService.VerifyEmailAsync(token);
-            return Redirect($"{clientUrl}/email-confirmed");
+            return Redirect($"{_redirectUrl}/email-confirmed");
         }
         catch
         {
-            return Redirect($"{clientUrl}/email-not-confirm");
+            return Redirect($"{_redirectUrl}/email-not-confirm");
         }
     }
 
