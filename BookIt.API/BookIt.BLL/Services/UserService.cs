@@ -151,7 +151,7 @@ public class UserService : IUserService
                 if (existingUser.IsRestricted)
                 {
                     _logger.LogWarning("AuthByGoogleAsync failed: user with Email={Email} is restricted", email);
-                    return null;
+                    throw new BusinessRuleViolationException("USER_RESTRICTED", "Your account was restricted.");
                 }
                 return _mapper.Map<UserAuthDTO>(existingUser);
             }
@@ -320,12 +320,12 @@ public class UserService : IUserService
 
             if (!userDomain.IsEmailConfirmed)
             {
-                throw new BusinessRuleViolationException("EMAIL_NOT_CONFIRMED", "Please confirm your email before logging in");
+                throw new BusinessRuleViolationException("EMAIL_NOT_CONFIRMED", "Please confirm your email before logging in.");
             }
 
             if (userDomain.IsRestricted)
             {
-                throw new BusinessRuleViolationException("USER_RESTRICTED", "Your account was restricted");
+                throw new BusinessRuleViolationException("USER_RESTRICTED", "Your account was restricted. Please contact support.");
             }
 
             _logger.LogInformation("LoginAsync succeeded for UserId={UserId}", userDomain.Id);

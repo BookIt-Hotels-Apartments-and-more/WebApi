@@ -123,7 +123,8 @@ public class AuthorizationController : ControllerBase
         }
         catch
         {
-            return Redirect($"{_redirectUrl}/email-not-confirm");
+            var message = "Failed to verify your email. Check its validity and try again.";
+            return Redirect($"{_redirectUrl}/auth/error?error={message}");
         }
     }
 

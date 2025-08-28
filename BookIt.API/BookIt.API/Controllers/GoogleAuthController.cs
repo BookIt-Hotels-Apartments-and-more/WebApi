@@ -1,3 +1,4 @@
+using BookIt.BLL.Exceptions;
 using BookIt.BLL.Interfaces;
 using BookIt.DAL.Configuration.Settings;
 using Microsoft.AspNetCore.Mvc;
@@ -55,6 +56,10 @@ public class GoogleAuthController : ControllerBase
             if (user is null) return Redirect($"{clientUrl}/auth/error");
             var token = await _jwtService.GenerateToken(user);
             return Redirect($"{clientUrl}/auth/success?token={token}");
+        }
+        catch (BusinessRuleViolationException ex)
+        {
+            return Redirect($"{clientUrl}/auth/error?error={ex.Message}");
         }
         catch
         {
