@@ -17,4 +17,5 @@ public interface IUserService
     Task ChangeUserPasswordAsync(int userId, string currentPassword, string newPassword);
     Task<IEnumerable<UserDTO>> GetAllUsersAsync(UserRole? role = null);
     Task ChangeUserRoleAsync(int userId, UserRole role);
+    Task RestrictUserAsync(int userId, bool shouldBeRestricted);
 }

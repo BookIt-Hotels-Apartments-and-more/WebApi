@@ -10,4 +10,5 @@ public record UserAuthDTO
     public UserRole Role { get; set; }
     public string Token { get; set; } = null!;
     public string? EmailConfirmationToken { get; set; } = null;
+    public bool IsRestricted { get; set; }
 }

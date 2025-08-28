@@ -7,7 +7,8 @@ public record UserDTO
     public int Id { get; set; }
     public string Username { get; set; } = null!;
     public string Email { get; set; } = null!;
-    public bool IsEmailConfirmed { get; set; } = false;
+    public bool IsEmailConfirmed { get; set; }
+    public bool IsRestricted { get; set; }
     public string? EmailConfirmationToken { get; set; } = null;
     public string? ResetPasswordToken { get; set; } = null;
     public string? PasswordHash { get; set; } = null;

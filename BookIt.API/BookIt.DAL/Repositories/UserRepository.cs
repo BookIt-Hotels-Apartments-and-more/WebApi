@@ -144,4 +144,15 @@ public class UserRepository
             .Include(u => u.UserRating)
             .ToListAsync();
     }
+
+    public async Task<bool> RestrictUserAsync(int userId, bool shouldBeRestricted)
+    {
+        var user = await _context.Users.FindAsync(userId);
+
+        if (user is null) return false;
+
+        user.IsRestricted = shouldBeRestricted;
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

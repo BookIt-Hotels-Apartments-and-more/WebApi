@@ -26,8 +26,8 @@ public class UserService : IUserService
         ImagesRepository imagesRepository)
     {
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _imagesRepository = imagesRepository ?? throw new ArgumentNullException(nameof(imagesRepository));
     }
 
@@ -148,6 +148,11 @@ public class UserService : IUserService
             if (existingUser is not null)
             {
                 _logger.LogInformation("AuthByGoogleAsync: existing user found for Email={Email}", email);
+                if (existingUser.IsRestricted)
+                {
+                    _logger.LogWarning("AuthByGoogleAsync failed: user with Email={Email} is restricted", email);
+                    return null;
+                }
                 return _mapper.Map<UserAuthDTO>(existingUser);
             }
             else
@@ -313,11 +318,17 @@ public class UserService : IUserService
                 throw new UnauthorizedOperationException("Invalid email or password");
             }
 
+            if (!userDomain.IsEmailConfirmed)
+            {
+                throw new BusinessRuleViolationException("EMAIL_NOT_CONFIRMED", "Please confirm your email before logging in");
+            }
+
+            if (userDomain.IsRestricted)
+            {
+                throw new BusinessRuleViolationException("USER_RESTRICTED", "Your account was restricted");
+            }
+
             _logger.LogInformation("LoginAsync succeeded for UserId={UserId}", userDomain.Id);
-            //if (!userDomain.IsEmailConfirmed)
-            //{
-            //    throw new BusinessRuleViolationException("EMAIL_NOT_CONFIRMED", "Please confirm your email before logging in");
-            //}
 
             return _mapper.Map<UserAuthDTO>(userDomain);
         }
@@ -399,6 +410,29 @@ public class UserService : IUserService
         {
             _logger.LogError(ex, "Failed to change user {UserId} role to {Role}", userId, role);
             throw new ExternalServiceException("Database", "Failed to change user role", ex);
+        }
+    }
+
+    public async Task RestrictUserAsync(int userId, bool shouldBeRestricted)
+    {
+        _logger.LogInformation("Changing user {UserId} restriction to {Restriction}", userId, shouldBeRestricted ? "Restricted" : "Not Restricted");
+        try
+        {
+            var userExists = await _userRepository.ExistsByIdAsync(userId);
+            if (!userExists || !await _userRepository.RestrictUserAsync(userId, shouldBeRestricted))
+            {
+                _logger.LogWarning("User with ID {UserId} not found", userId);
+                throw new EntityNotFoundException("User", userId);
+            }
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to change user {UserId} restriction to {Role}", userId, shouldBeRestricted ? "Restricted" : "Not Restricted");
+            throw new ExternalServiceException("Database", "Failed to change user restriction", ex);
         }
     }
 

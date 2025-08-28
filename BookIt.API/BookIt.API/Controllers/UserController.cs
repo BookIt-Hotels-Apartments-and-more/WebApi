@@ -43,4 +43,18 @@ public class UserController : ControllerBase
         await _userService.ChangeUserRoleAsync(id, role);
         return Ok();
     }
+
+    [HttpPatch("{id:int}/restrict")]
+    public async Task<IActionResult> RestrictUser([FromRoute] int id)
+    {
+        await _userService.RestrictUserAsync(id, true);
+        return Ok();
+    }
+
+    [HttpPatch("{id:int}/unrestrict")]
+    public async Task<IActionResult> UnrestrictUser([FromRoute] int id)
+    {
+        await _userService.RestrictUserAsync(id, false);
+        return Ok();
+    }
 }

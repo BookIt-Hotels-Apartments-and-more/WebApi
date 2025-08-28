@@ -8,6 +8,7 @@ public class User
     public string Username { get; set; } = null!;
     public string Email { get; set; } = null!;
     public bool IsEmailConfirmed { get; set; } = false;
+    public bool IsRestricted { get; set; } = false;
     public string? EmailConfirmationToken { get; set; } = null;
     public string? ResetPasswordToken { get; set; } = null;
     public string? PasswordHash { get; set; } = null;
