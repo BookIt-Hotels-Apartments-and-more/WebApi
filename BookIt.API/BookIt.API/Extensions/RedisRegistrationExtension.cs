@@ -24,10 +24,7 @@ public static class RedisRegistrationExtension
 
             try
             {
-                logger.LogInformation("Connecting to Redis...");
-                var connection = ConnectionMultiplexer.Connect(redisSettings.ConnectionString) ?? throw new Exception("Connection is null");
-                logger.LogInformation("Successfully connected to Redis");
-                return connection;
+                return ConnectionMultiplexer.Connect(redisSettings.ConnectionString) ?? throw new Exception("Connection is null");
             }
             catch (Exception ex)
             {

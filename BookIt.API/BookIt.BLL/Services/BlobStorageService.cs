@@ -36,7 +36,6 @@ public class AzureBlobStorageService : IBlobStorageService
             }
 
             _blobServiceClient = new BlobServiceClient(connectionString);
-            _logger.LogInformation("AzureBlobStorageService initialized successfully.");
         }
         catch (Exception ex) when (!(ex is BookItBaseException))
         {

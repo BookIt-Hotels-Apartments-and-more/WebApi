@@ -24,9 +24,6 @@ public class EmailSenderService : IEmailSenderService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _emailSettings = emailOptions?.Value ?? throw new ArgumentNullException(nameof(emailOptions));
 
-        _logger.LogInformation("Initializing EmailSenderService with SMTP server {SmtpServer} and port {SmtpPort}",
-            _emailSettings.SmtpServer, _emailSettings.SmtpPort);
-
         ValidateConfiguration();
     }
 
@@ -87,8 +84,6 @@ public class EmailSenderService : IEmailSenderService
 
         if (string.IsNullOrWhiteSpace(_emailSettings.Password))
             throw new Exception("Invalid SMTP configuration");
-
-        _logger.LogInformation("Email configuration validated successfully");
     }
 
     private void ValidateEmailInputs(string toEmail, string subject, string body)

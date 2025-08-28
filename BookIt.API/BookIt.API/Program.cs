@@ -4,7 +4,6 @@ using BookIt.API.Middleware;
 using BookIt.API.Middleware.Logging;
 using BookIt.API.Validation;
 using BookIt.BLL.Extensions;
-using BookIt.BLL.Interfaces;
 using BookIt.DAL.Configuration;
 using BookIt.DAL.Database;
 using BookIt.DAL.Extensions;
@@ -24,10 +23,7 @@ builder.Services.ConfigureInvalidModelBehavior();
 
 builder.Services.AddEndpointsApiExplorer();
 
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddSwaggerGenWithSecurityConfiguration();
-}
+builder.Services.AddSwaggerGenWithSecurityConfiguration();
 
 builder.Services.AddRedisCache();
 builder.Services.AddCustomDbContext<BookingDbContext>();
@@ -56,11 +52,10 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 app.UseMiddleware<GlobalExceptionMiddleware>();
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseHttpsRedirection();
 app.UseCors(cspName);
 app.UseAuthentication();
