@@ -44,10 +44,6 @@ public static class ConfigurationHelper
             var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
             if (!string.IsNullOrEmpty(clientSecret))
                 options.ClientSecret = clientSecret;
-
-            var baseUrl = Environment.GetEnvironmentVariable("BASE_URL");
-            if (!string.IsNullOrEmpty(baseUrl))
-                options.RedirectUri = baseUrl.TrimEnd('/') + "/google-auth/callback";
         });
 
         services.Configure<EmailSMTPSettings>(options =>
