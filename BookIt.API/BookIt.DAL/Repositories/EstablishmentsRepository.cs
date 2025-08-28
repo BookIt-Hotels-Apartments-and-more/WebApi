@@ -98,8 +98,7 @@ public class EstablishmentsRepository
 
     public async Task<bool> IsUserEligibleToUpdateAsync(int establishmentId, int userId)
     {
-        return (await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId))?.Role == UserRole.Admin ||
-               (await _context.Establishments.AsNoTracking().FirstOrDefaultAsync(e => e.Id == establishmentId))?.OwnerId == userId;
+        return (await _context.Establishments.AsNoTracking().FirstOrDefaultAsync(e => e.Id == establishmentId))?.OwnerId == userId;
     }
 
     public async Task<bool> IsUserEligibleToDeleteAsync(int establishmentId, int userId)

@@ -30,9 +30,8 @@ public record EstablishmentRequest : IHasPhotos
     [CheckOutTimeValidation]
     public TimeOnly CheckOutTime { get; set; }
 
-    [Required(ErrorMessage = "Owner ID is required")]
     [Range(1, int.MaxValue, ErrorMessage = "Owner ID must be a positive number")]
-    public int OwnerId { get; set; }
+    public int? OwnerId { get; set; }
 
     [PhotoIdsValidation]
     public List<int> ExistingPhotosIds { get; set; } = new();

@@ -70,7 +70,9 @@ public class EstablishmentsController : ControllerBase
         if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
 
         if (requestorRoleStr == "Landlord" && request.OwnerId != requestorId)
-            return Forbid("You can only create establishments for yourself.");
+        {
+            request.OwnerId = requestorId;
+        }
 
         var establishmentDto = _mapper.Map<EstablishmentDTO>(request);
         var addedEstablishment = await _service.CreateAsync(establishmentDto);
@@ -89,7 +91,9 @@ public class EstablishmentsController : ControllerBase
         if (!int.TryParse(requestorIdStr, out var requestorId)) return Unauthorized();
 
         if (requestorRoleStr == "Landlord" && request.OwnerId != requestorId)
-            return Forbid("You can only update your establishments.");
+        {
+            request.OwnerId = requestorId;
+        }
 
         var establishmentDto = _mapper.Map<EstablishmentDTO>(request);
         var updatedEstablishment = await _service.UpdateAsync(id, establishmentDto);
