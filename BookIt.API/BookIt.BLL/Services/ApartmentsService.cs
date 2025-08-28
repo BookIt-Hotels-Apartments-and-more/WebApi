@@ -265,6 +265,7 @@ public class ApartmentsService : IApartmentsService
         {
             _cacheService.RemoveAsync(CacheKeys.ApartmentById(apartmentId)),
             _cacheService.RemoveByPatternAsync(CacheKeys.ApartmentsByEstablishmentId(establishmentId)),
+            _cacheService.RemoveByPatternAsync(CacheKeys.EstablishmentsPrefix),
         };
 
         await Task.WhenAll(invalidationTasks);

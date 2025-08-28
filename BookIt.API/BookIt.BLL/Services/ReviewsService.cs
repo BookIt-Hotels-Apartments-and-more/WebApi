@@ -320,6 +320,7 @@ public class ReviewsService : IReviewsService
         {
             filterToInvalidate.ApartmentId = apartmentId.Value;
             invalidationTasks.Add(_cacheService.RemoveByPatternAsync(CacheKeys.ReviewsByFilter(filterToInvalidate)));
+            invalidationTasks.Add(_cacheService.RemoveByPatternAsync(CacheKeys.EstablishmentsPrefix));
 
             try
             {

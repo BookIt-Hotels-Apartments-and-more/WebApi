@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
+using BookIt.BLL.Helpers;
 using BookIt.BLL.Interfaces;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
@@ -11,18 +12,21 @@ namespace BookIt.BLL.Services;
 public class BookingsService : IBookingsService
 {
     private readonly IMapper _mapper;
+    private readonly ICacheService _cacheService;
     private readonly ILogger<BookingsService> _logger;
     private readonly BookingsRepository _bookingsRepository;
     private readonly ApartmentsRepository _apartmentsRepository;
 
     public BookingsService(
         IMapper mapper,
+        ICacheService cacheService,
         ILogger<BookingsService> logger,
         BookingsRepository bookingsRepository,
         ApartmentsRepository apartmentsRepository)
     {
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
         _bookingsRepository = bookingsRepository ?? throw new ArgumentNullException(nameof(bookingsRepository));
         _apartmentsRepository = apartmentsRepository ?? throw new ArgumentNullException(nameof(apartmentsRepository));
     }
@@ -93,6 +97,8 @@ public class BookingsService : IBookingsService
             var addedBooking = await _bookingsRepository.AddAsync(bookingDomain);
             _logger.LogInformation("Booking created with ID {BookingId}", addedBooking.Id);
 
+            await _cacheService.RemoveByPatternAsync(CacheKeys.EstablishmentsPrefix);
+
             return await GetByIdAsync(addedBooking.Id);
         }
         catch (BookItBaseException)
@@ -136,6 +142,9 @@ public class BookingsService : IBookingsService
             await _bookingsRepository.UpdateAsync(bookingDomain);
 
             _logger.LogInformation("Booking with ID {BookingId} updated successfully", id);
+
+            await _cacheService.RemoveByPatternAsync(CacheKeys.EstablishmentsPrefix);
+
             return await GetByIdAsync(id);
         }
         catch (BookItBaseException)
@@ -246,6 +255,9 @@ public class BookingsService : IBookingsService
 
             await _bookingsRepository.DeleteAsync(id);
             _logger.LogInformation("Successfully deleted booking {BookingId}", id);
+
+            await _cacheService.RemoveByPatternAsync(CacheKeys.EstablishmentsPrefix);
+
             return true;
         }
         catch (BookItBaseException)

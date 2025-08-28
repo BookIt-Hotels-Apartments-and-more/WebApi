@@ -40,4 +40,32 @@ public static class CacheKeys
 
         return string.Join(":", keyParts);
     }
+
+    public const string EstablishmentsPrefix = "establishments:";
+    public static string EstablishmentById(int id) => $"{EstablishmentsPrefix}id:{id}";
+    public static string EstablishmentTrending(int size, int? days) => $"{EstablishmentsPrefix}size:{size}:days:{days ?? -1}";
+    public static string EstablishmentsByFilter(EstablishmentFilterDTO filter)
+    {
+        var keyParts = new List<string> { $"{EstablishmentsPrefix}filtered" };
+
+        if (!string.IsNullOrEmpty(filter.Name)) keyParts.Add($"name:{filter.Name}");
+        if (filter.Vibe.HasValue) keyParts.Add($"vibe:{filter.Vibe}");
+        if (filter.Type.HasValue) keyParts.Add($"type:{filter.Type}");
+        if (filter.Features.HasValue) keyParts.Add($"features:{filter.Features}");
+        if (filter.OwnerId.HasValue) keyParts.Add($"owner:{filter.OwnerId}");
+        if (!string.IsNullOrEmpty(filter.Country)) keyParts.Add($"country:{filter.Country}");
+        if (!string.IsNullOrEmpty(filter.City)) keyParts.Add($"city:{filter.City}");
+        if (filter.MinRating.HasValue) keyParts.Add($"minrating:{filter.MinRating}");
+        if (filter.MaxRating.HasValue) keyParts.Add($"maxrating:{filter.MaxRating}");
+        if (filter.MinPrice.HasValue) keyParts.Add($"minprice:{filter.MinPrice}");
+        if (filter.MaxPrice.HasValue) keyParts.Add($"maxprice:{filter.MaxPrice}");
+        if (filter.Capacity.HasValue) keyParts.Add($"capacity:{filter.Capacity}");
+        if (filter.DateFrom.HasValue) keyParts.Add($"datefrom:{filter.DateFrom}");
+        if (filter.DateTo.HasValue) keyParts.Add($"dateto:{filter.DateTo}");
+
+        keyParts.Add($"page:{filter.Page}");
+        keyParts.Add($"size:{filter.PageSize}");
+
+        return string.Join(":", keyParts);
+    }
 }

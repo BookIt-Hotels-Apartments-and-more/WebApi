@@ -1,12 +1,15 @@
 ﻿using AutoMapper;
 using BookIt.BLL.DTOs;
 using BookIt.BLL.Exceptions;
+using BookIt.BLL.Helpers;
 using BookIt.BLL.Interfaces;
+using BookIt.DAL.Configuration.Settings;
 using BookIt.DAL.Constants;
 using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 using BookIt.DAL.Repositories;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Linq.Expressions;
 
 namespace BookIt.BLL.Services;
@@ -16,6 +19,8 @@ public class EstablishmentsService : IEstablishmentsService
     private const string BlobContainerName = "establishments";
 
     private readonly IMapper _mapper;
+    private readonly ICacheService _cacheService;
+    private readonly RedisSettings _redisSettings;
     private readonly IImagesService _imagesService;
     private readonly IRatingsService _ratingsService;
     private readonly ImagesRepository _imagesRepository;
@@ -28,9 +33,11 @@ public class EstablishmentsService : IEstablishmentsService
 
     public EstablishmentsService(
         IMapper mapper,
+        ICacheService cacheService,
         IImagesService imagesService,
         IRatingsService ratingsService,
         ImagesRepository imagesRepository,
+        IOptions<RedisSettings> redisSettings,
         BookingsRepository bookingsRepository,
         ILogger<EstablishmentsService> logger,
         IGeolocationService geolocationService,
@@ -40,8 +47,10 @@ public class EstablishmentsService : IEstablishmentsService
     {
         _mapper = mapper;
         _logger = logger;
+        _cacheService = cacheService;
         _imagesService = imagesService;
         _ratingsService = ratingsService;
+        _redisSettings = redisSettings.Value;
         _imagesRepository = imagesRepository;
         _bookingsRepository = bookingsRepository;
         _geolocationService = geolocationService;
@@ -70,28 +79,38 @@ public class EstablishmentsService : IEstablishmentsService
     public async Task<EstablishmentDTO?> GetByIdAsync(int id)
     {
         _logger.LogInformation("Start GetByIdAsync for Establishment Id: {Id}", id);
-        try
-        {
-            var establishmentDomain = await _establishmentsRepository.GetByIdAsync(id);
-            if (establishmentDomain is null)
-            {
-                _logger.LogWarning("Establishment with Id {Id} not found", id);
-                throw new EntityNotFoundException("Establishment", id);
-            }
 
-            var result = _mapper.Map<EstablishmentDTO>(establishmentDomain);
-            _logger.LogInformation("Successfully retrieved establishment with Id {Id}", id);
-            return result;
-        }
-        catch (BookItBaseException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve establishment with Id {Id}", id);
-            throw new ExternalServiceException("Database", "Failed to retrieve establishment", ex);
-        }
+        var cacheKey = CacheKeys.EstablishmentById(id);
+
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () =>
+            {
+                try
+                {
+                    var establishmentDomain = await _establishmentsRepository.GetByIdAsync(id);
+                    if (establishmentDomain is null)
+                    {
+                        _logger.LogWarning("Establishment with Id {Id} not found", id);
+                        throw new EntityNotFoundException("Establishment", id);
+                    }
+
+                    var result = _mapper.Map<EstablishmentDTO>(establishmentDomain);
+                    _logger.LogInformation("Successfully retrieved establishment with Id {Id}", id);
+                    return result;
+                }
+                catch (BookItBaseException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to retrieve establishment with Id {Id}", id);
+                    throw new ExternalServiceException("Database", "Failed to retrieve establishment", ex);
+                }
+            },
+            TimeSpan.FromMinutes(_redisSettings.Expiration.Establishments)
+        );
     }
 
     public async Task<EstablishmentDTO?> CreateAsync(EstablishmentDTO dto)
@@ -127,6 +146,8 @@ public class EstablishmentsService : IEstablishmentsService
             await ProcessEstablishmentImagesAsync(addedEstablishment.Id, dto.Photos);
 
             _logger.LogInformation("Successfully created establishment with Id {Id}", addedEstablishment.Id);
+
+            await _cacheService.RemoveByPatternAsync(CacheKeys.EstablishmentsPrefix);
 
             return await GetByIdAsync(addedEstablishment.Id);
         }
@@ -177,6 +198,8 @@ public class EstablishmentsService : IEstablishmentsService
 
             _logger.LogInformation("Successfully updated establishment with Id {Id}", id);
 
+            await _cacheService.RemoveByPatternAsync(CacheKeys.EstablishmentsPrefix);
+
             return await GetByIdAsync(id);
         }
         catch (BookItBaseException)
@@ -215,8 +238,9 @@ public class EstablishmentsService : IEstablishmentsService
             await _geolocationService.DeleteEstablishmentGeolocationAsync(id);
 
             await _establishmentsRepository.DeleteAsync(id);
-
             _logger.LogInformation("Successfully deleted establishment with Id {Id}", id);
+
+            await _cacheService.RemoveByPatternAsync(CacheKeys.EstablishmentsPrefix);
 
             return true;
         }
@@ -234,80 +258,100 @@ public class EstablishmentsService : IEstablishmentsService
     public async Task<PagedResultDTO<EstablishmentDTO>> GetFilteredAsync(EstablishmentFilterDTO filter)
     {
         _logger.LogInformation("Start filtering establishments with filter {@Filter}", filter);
-        try
-        {
-            ValidateFilterParameters(filter);
 
-            Expression<Func<Establishment, bool>> predicate = BuildDatabasePredicate(filter);
+        var cacheKey = CacheKeys.EstablishmentsByFilter(filter);
 
-            var (establishments, totalCount) = await _establishmentsRepository.GetFilteredAsync(
-                predicate,
-                filter.Page,
-                filter.PageSize);
-
-            var establishmentsDto = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishments);
-
-            var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
-
-            _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", totalCount, totalPages);
-
-            return new PagedResultDTO<EstablishmentDTO>
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () =>
             {
-                Items = establishmentsDto,
-                PageNumber = filter.Page,
-                PageSize = filter.PageSize,
-                TotalCount = totalCount,
-                TotalPages = totalPages,
-                HasNextPage = filter.Page < totalPages,
-                HasPreviousPage = filter.Page > 1
-            };
-        }
-        catch (BookItBaseException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get filtered establishments");
-            throw new ExternalServiceException("Database", "Failed to get filtered establishments", ex);
-        }
+                try
+                {
+                    ValidateFilterParameters(filter);
+
+                    Expression<Func<Establishment, bool>> predicate = BuildDatabasePredicate(filter);
+
+                    var (establishments, totalCount) = await _establishmentsRepository.GetFilteredAsync(
+                        predicate,
+                        filter.Page,
+                        filter.PageSize);
+
+                    var establishmentsDto = _mapper.Map<IEnumerable<EstablishmentDTO>>(establishments);
+
+                    var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+                    _logger.LogInformation("Filtered result count: {Count}, total pages: {TotalPages}", totalCount, totalPages);
+
+                    return new PagedResultDTO<EstablishmentDTO>
+                    {
+                        Items = establishmentsDto,
+                        PageNumber = filter.Page,
+                        PageSize = filter.PageSize,
+                        TotalCount = totalCount,
+                        TotalPages = totalPages,
+                        HasNextPage = filter.Page < totalPages,
+                        HasPreviousPage = filter.Page > 1
+                    };
+                }
+                catch (BookItBaseException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to get filtered establishments");
+                    throw new ExternalServiceException("Database", "Failed to get filtered establishments", ex);
+                }
+            },
+            TimeSpan.FromMinutes(_redisSettings.Expiration.Establishments)
+        );
     }
 
     public async Task<IEnumerable<TrendingEstablishmentDTO>> GetTrendingAsync(int count = 10, int? periodInDays = null)
     {
-        try
-        {
-            _logger.LogInformation("Start getting top {Count} trending establishments {Period} ",
-                count, periodInDays is null ? "ever" : $"for the past {periodInDays} days");
+        _logger.LogInformation("Start getting top {Count} trending establishments {Period} ",
+            count, periodInDays is null ? "ever" : $"for the past {periodInDays} days");
 
-            if (count <= 0)
-                throw new BusinessRuleViolationException("INVALID_COUNT", "Count must be greater than 0");
+        var cacheKey = CacheKeys.EstablishmentTrending(count, periodInDays);
 
-            if (periodInDays.HasValue && periodInDays <= 0)
-                throw new BusinessRuleViolationException("INVALID_PERIOD", "Period in days must be greater than 0");
+        return await _cacheService.GetOrSetAsync(
+            cacheKey,
+            async () =>
+            {
 
-            var establishmentsAndBookingsCount = await _establishmentsRepository.GetTrendingAsync(count, periodInDays);
-            var trendingEstablishmentsDto = establishmentsAndBookingsCount
-                .Select(x =>
+                try
                 {
-                    var dto = _mapper.Map<TrendingEstablishmentDTO>(x.Establishment);
-                    dto.BookingsCount = x.BookingCount;
-                    return dto;
-                })
-                .ToList();
+                    if (count <= 0)
+                        throw new BusinessRuleViolationException("INVALID_COUNT", "Count must be greater than 0");
 
-            _logger.LogInformation("Successfully retrieved top {Count} trending establishments", trendingEstablishmentsDto.Count());
-            return trendingEstablishmentsDto;
-        }
-        catch (BookItBaseException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve trending establishments");
-            throw new ExternalServiceException("Database", "Failed to retrieve trending establishments", ex);
-        }
+                    if (periodInDays.HasValue && periodInDays <= 0)
+                        throw new BusinessRuleViolationException("INVALID_PERIOD", "Period in days must be greater than 0");
+
+                    var establishmentsAndBookingsCount = await _establishmentsRepository.GetTrendingAsync(count, periodInDays);
+                    var trendingEstablishmentsDto = establishmentsAndBookingsCount
+                        .Select(x =>
+                        {
+                            var dto = _mapper.Map<TrendingEstablishmentDTO>(x.Establishment);
+                            dto.BookingsCount = x.BookingCount;
+                            return dto;
+                        })
+                        .ToList();
+
+                    _logger.LogInformation("Successfully retrieved top {Count} trending establishments", trendingEstablishmentsDto.Count());
+                    return trendingEstablishmentsDto;
+                }
+                catch (BookItBaseException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to retrieve trending establishments");
+                    throw new ExternalServiceException("Database", "Failed to retrieve trending establishments", ex);
+                }
+            },
+        TimeSpan.FromMinutes(_redisSettings.Expiration.Establishments)
+        );
     }
 
     private void ValidateFilterParameters(EstablishmentFilterDTO filter)
