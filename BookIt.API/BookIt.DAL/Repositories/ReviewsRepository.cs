@@ -1,4 +1,5 @@
 ﻿using BookIt.DAL.Database;
+using BookIt.DAL.Enums;
 using BookIt.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -64,10 +65,11 @@ public class ReviewsRepository
 
     public async Task<bool> IsAuthorEligibleToDeleteAsync(int reviewId, int authorId)
     {
-        return await _context.Reviews.AsNoTracking()
-            .AnyAsync(r => r.Id == reviewId &&
-                     ((r.ApartmentId.HasValue && r.Booking.UserId == authorId) ||
-                     (r.UserId.HasValue && r.Booking.Apartment.Establishment.OwnerId == authorId)));
+        return (await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == authorId))?.Role == UserRole.Admin ||
+                await _context.Reviews.AsNoTracking()
+                    .AnyAsync(r => r.Id == reviewId &&
+                             ((r.ApartmentId.HasValue && r.Booking.UserId == authorId) ||
+                             (r.UserId.HasValue && r.Booking.Apartment.Establishment.OwnerId == authorId)));
     }
 
     public async Task<bool> ReviewForBookingExistsAsync(int bookingId, int? customerId, int? apartmentId)

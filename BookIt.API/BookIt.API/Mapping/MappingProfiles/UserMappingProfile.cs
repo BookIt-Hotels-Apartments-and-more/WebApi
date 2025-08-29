@@ -14,7 +14,8 @@ public class UserMappingProfile : Profile
 
         CreateMap<User, UserAuthDTO>();
 
-        CreateMap<UserDTO, UserResponse>();
+        CreateMap<UserDTO, UserResponse>()
+            .ForMember(res => res.Reviews, opt => opt.Ignore());
 
         CreateMap<UserAuthDTO, UserAuthResponse>()
             .ForMember(res => res.Role, opt => opt.MapFrom(dto => (int)dto.Role));
