@@ -44,6 +44,9 @@ public class MonobankAcquiringService : IMonobankAcquiringService
 
             _logger.LogInformation("Successfully created Monobank invoice with ID: {InvoiceId}",
                 invoiceResponse?.InvoiceId);
+            _logger.LogInformation("Successfully processed Monobank invoice with URL: {_webHookUrl}",
+                _webHookUrl);
+
 
             return invoiceResponse;
         }
