@@ -140,4 +140,17 @@ public class AuthorizationController : ControllerBase
         Response.Headers.Append("Content-Encoding", "identity");
         return Ok(response);
     }
+
+    [HttpGet("me/full")]
+    [Authorize(Roles = "Tenant,Landlord,Admin")]
+    [ResponseCache(NoStore = true)]
+    public async Task<IActionResult> MeFull()
+    {
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+        var user = await _userService.GetFullUserByIdAsync(int.Parse(userIdStr));
+        var response = _mapper.Map<UserResponse>(user);
+        Response.Headers.Append("Content-Encoding", "identity");
+        return Ok(response);
+    }
 }

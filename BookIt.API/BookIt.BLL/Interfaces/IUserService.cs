@@ -1,5 +1,6 @@
 using BookIt.BLL.DTOs;
 using BookIt.DAL.Enums;
+using BookIt.DAL.Models;
 
 namespace BookIt.BLL.Interfaces;
 
@@ -10,6 +11,7 @@ public interface IUserService
     Task<IEnumerable<UserDTO>> GetUsersAsync();
     Task<UserAuthDTO> LoginAsync(string email, string password);
     Task<UserDTO?> GetUserByIdAsync(int id);
+    Task<User?> GetFullUserByIdAsync(int id);
     Task<UserAuthDTO?> AuthByGoogleAsync(string username, string email, string? imageUrl, UserRole role = UserRole.Tenant);
     Task<UserDTO?> VerifyEmailAsync(string token);
     Task<UserDTO?> GenerateResetPasswordTokenAsync(string email);

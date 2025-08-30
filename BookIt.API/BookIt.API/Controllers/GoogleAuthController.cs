@@ -28,11 +28,15 @@ public class GoogleAuthController : ControllerBase
     }
 
     [HttpGet("login")]
-    public IActionResult Login()
+    public IActionResult Login([FromQuery] string client)
     {
         try
         {
             var loginUrl = _googleAuthService.GetLoginUrl();
+
+            // Прокидываем client дальше, чтобы callback знал, откуда пришёл запрос
+            loginUrl += $"&state={client}";
+
             return Redirect(loginUrl);
         }
         catch
@@ -43,18 +47,31 @@ public class GoogleAuthController : ControllerBase
     }
 
     [HttpGet("callback")]
-    public async Task<IActionResult> Callback([FromQuery] string code)
+    public async Task<IActionResult> Callback([FromQuery] string code, [FromQuery] string state)
     {
         var clientUrl = _googleOauthSettingsOptions.Value.RedirectClientUri;
 
         try
         {
-            if (string.IsNullOrWhiteSpace(code)) return Redirect($"{clientUrl}/auth/error");
+            if (string.IsNullOrWhiteSpace(code))
+                return Redirect($"{clientUrl}/auth/error");
+
             var (email, name, imageUrl) = await _googleAuthService.GetUserInfoAsync(code);
-            if (string.IsNullOrWhiteSpace(email)) return Redirect($"{clientUrl}/auth/error");
+            if (string.IsNullOrWhiteSpace(email))
+                return Redirect($"{clientUrl}/auth/error");
+
             var user = await _userService.AuthByGoogleAsync(name ?? string.Empty, email, imageUrl);
-            if (user is null) return Redirect($"{clientUrl}/auth/error");
+            if (user is null)
+                return Redirect($"{clientUrl}/auth/error");
+
             var token = await _jwtService.GenerateToken(user);
+
+            // проверяем state (он же client)
+            if (state == "mobile")
+            {
+                return Redirect($"bookit://auth/callback?token={token}");
+            }
+
             return Redirect($"{clientUrl}/auth/success?token={token}");
         }
         catch (BusinessRuleViolationException ex)
@@ -66,4 +83,5 @@ public class GoogleAuthController : ControllerBase
             return Redirect($"{clientUrl}/auth/error");
         }
     }
+
 }

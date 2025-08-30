@@ -7,6 +7,7 @@ namespace BookIt.BLL.Services;
 public interface IPaymentService
 {
     Task<IEnumerable<PaymentDetailsDto>> GetAllPaymentsAsync();
+    Task<PaymentDetailsDto?> GetPaymentByBookingIdAsync(int bookingId);
     Task<PaymentDetailsDto?> GetPaymentByIdAsync(int id);
     Task<int> CreatePaymentAsync(CreatePaymentDto dto);
     Task<string?> CreateMonoInvoiceAsync(int paymentId);

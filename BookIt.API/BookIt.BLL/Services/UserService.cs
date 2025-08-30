@@ -369,6 +369,32 @@ public class UserService : IUserService
         }
     }
 
+    public async Task<User?> GetFullUserByIdAsync(int id)
+    {
+        _logger.LogInformation("GetFullUserByIdAsync started for UserId={UserId}", id);
+        try
+        {
+            var userDomain = await _userRepository.GetByIdAsync(id);
+            if (userDomain is null)
+            {
+                _logger.LogWarning("GetFullUserByIdAsync failed: user with Id={UserId} not found", id);
+                throw new EntityNotFoundException("User", id);
+            }
+
+            _logger.LogInformation("GetFullUserByIdAsync succeeded for UserId={UserId}", id);
+            return userDomain;
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve user for UserId={UserId}", id);
+            throw new ExternalServiceException("Database", "Failed to retrieve user", ex);
+        }
+    }
+
     public async Task<IEnumerable<UserDTO>> GetAllUsersAsync(UserRole? role = null)
     {
         _logger.LogInformation("GetAllUsersAsync started with Role filter: {Role}", role?.ToString() ?? "None");

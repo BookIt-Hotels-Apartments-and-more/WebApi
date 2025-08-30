@@ -51,6 +51,37 @@ public class PaymentService : IPaymentService
         }
     }
 
+
+    public async Task<PaymentDetailsDto?> GetPaymentByBookingIdAsync(int bookingId)
+    {
+        try
+        {
+            var payment = await _paymentRepository.GetByBookingIdAsync(bookingId);
+            if (payment is null)
+                throw new EntityNotFoundException("Payment", bookingId);
+
+            return new PaymentDetailsDto
+            {
+                Id = payment.Id,
+                Type = payment.Type,
+                Status = payment.Status,
+                Amount = payment.Amount,
+                InvoiceUrl = payment.InvoiceUrl,
+                PaidAt = payment.PaidAt,
+                BookingId = payment.BookingId
+            };
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve payment by booking ID: {BookingId}", bookingId);
+            throw new ExternalServiceException("Database", "Failed to retrieve payment", ex);
+        }
+    }
+
     public async Task<PaymentDetailsDto?> GetPaymentByIdAsync(int id)
     {
         try

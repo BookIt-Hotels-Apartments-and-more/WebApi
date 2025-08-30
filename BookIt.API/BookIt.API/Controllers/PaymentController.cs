@@ -18,7 +18,6 @@ public class PaymentController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAll()
     {
         var payments = await _service.GetAllPaymentsAsync();
@@ -48,6 +47,15 @@ public class PaymentController : ControllerBase
         await _service.DeletePaymentAsync(id);
         return NoContent();
     }
+
+    [HttpGet("booking/{id:int}")]
+    public async Task<IActionResult> GetByBookingId([FromRoute] int id)
+    {
+        var payment = await _service.GetPaymentByBookingIdAsync(id);
+        return payment is not null ? Ok(payment) : NotFound();
+    }
+
+    
 
     [HttpPost("mono-status")]
     [Authorize(Roles = "Tenant,Landlord,Admin")]
