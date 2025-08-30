@@ -196,6 +196,7 @@ public class EstablishmentsRepository
             .Include(e => e.Photos)
             .Include(e => e.ApartmentRating)
             .Include(e => e.Geolocation)
+            .Include(e => e.Apartments)
             .Include(e => e.Apartments).ThenInclude(a => a.Reviews)
             .Include(e => e.Apartments).ThenInclude(a => a.Bookings)
             .ToListAsync() ?? [];

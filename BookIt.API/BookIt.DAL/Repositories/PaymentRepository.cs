@@ -31,7 +31,7 @@ public class PaymentRepository
     public async Task<Payment?> GetByBookingIdAsync(int bookingId)
     {
         return await _context.Payments
-            .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.Type == PaymentType.Mono);
+            .FirstOrDefaultAsync(p => p.BookingId == bookingId);
     }
 
     public async Task AddAsync(Payment payment)
