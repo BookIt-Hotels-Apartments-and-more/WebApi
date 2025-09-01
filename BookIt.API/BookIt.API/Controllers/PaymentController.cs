@@ -55,8 +55,6 @@ public class PaymentController : ControllerBase
         return payment is not null ? Ok(payment) : NotFound();
     }
 
-    
-
     [HttpPost("mono-status")]
     [Authorize(Roles = "Tenant,Landlord,Admin")]
     public async Task<IActionResult> CheckMonoStatus([FromBody] ProcessMonoPaymentDto dto)

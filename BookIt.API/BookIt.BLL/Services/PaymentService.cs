@@ -51,7 +51,6 @@ public class PaymentService : IPaymentService
         }
     }
 
-
     public async Task<PaymentDetailsDto?> GetPaymentByBookingIdAsync(int bookingId)
     {
         try

@@ -12,7 +12,7 @@ namespace BookIt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// [Authorize(Roles = "Tenant,Landlord,Admin")]
+[Authorize(Roles = "Tenant,Landlord,Admin")]
 public class BookingsController : ControllerBase
 {
     private readonly IMapper _mapper;
@@ -25,6 +25,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<BookingResponse>>> GetAllAsync()
     {
         var bookingsDto = await _service.GetAllAsync();
