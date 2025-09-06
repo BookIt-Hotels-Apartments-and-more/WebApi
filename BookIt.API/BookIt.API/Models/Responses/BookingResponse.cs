@@ -10,4 +10,7 @@ public record BookingResponse
     public string? AdditionalRequests { get; set; }
     public CustomerResponse Customer { get; set; } = null!;
     public ApartmentResponse Apartment { get; set; } = null!;
+
+    public bool? HasCustomerReviewed { get; set; } = null;
+    public bool? HasLandlordReviewed { get; set; } = null;
 }

@@ -15,7 +15,7 @@ public class Booking
     public int ApartmentId { get; set; }
     public Apartment Apartment { get; set; } = null!;
 
-    public ICollection<Review>? Reviews { get; set; } = null!;
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }

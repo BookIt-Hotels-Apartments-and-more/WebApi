@@ -60,7 +60,10 @@ public class BookingsService : IBookingsService
             }
 
             _logger.LogInformation("Booking with ID {BookingId} retrieved successfully", id);
-            return _mapper.Map<BookingDTO>(bookingDomain);
+            var dto = _mapper.Map<BookingDTO>(bookingDomain);
+            dto.HasLandlordReviewed = bookingDomain.Reviews?.Any(r => r.UserId is not null) ?? false;
+            dto.HasCustomerReviewed = bookingDomain.Reviews?.Any(r => r.ApartmentId is not null) ?? false;
+            return dto;
         }
         catch (BookItBaseException)
         {
@@ -70,6 +73,27 @@ public class BookingsService : IBookingsService
         {
             _logger.LogError(ex, "Failed to retrieve booking with ID {BookingId}", id);
             throw new ExternalServiceException("Database", "Failed to retrieve booking", ex);
+        }
+    }
+
+    public async Task<IEnumerable<BookingDTO>> GetByApartmentIdAsync(int apartmentId)
+    {
+        _logger.LogInformation("Retrieving booking for apartment #{ApartmentId}", apartmentId);
+        try
+        {
+            var bookingsDomain = await _bookingsRepository.GetByApartmentIdAsync(apartmentId);
+            _logger.LogInformation("Bookings for apartment #{ApartmentId} retrieved successfully", apartmentId);
+            var dtos = _mapper.Map<IEnumerable<BookingDTO>>(bookingsDomain);
+            return dtos;
+        }
+        catch (BookItBaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve bookings for apartment #{ApartmentId}", apartmentId);
+            throw new ExternalServiceException("Database", "Failed to retrieve bookings", ex);
         }
     }
 

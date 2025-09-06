@@ -43,6 +43,21 @@ public class BookingsRepository
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    public async Task<IEnumerable<Booking>> GetByApartmentIdAsync(int apartmentId)
+    {
+        return await _context.Bookings.AsNoTracking().AsSplitQuery()
+            .Where(b => b.ApartmentId == apartmentId)
+            .Include(b => b.User).ThenInclude(u => u.Photos)
+            .Include(b => b.Apartment).ThenInclude(a => a.Photos)
+            .Include(b => b.Apartment).ThenInclude(a => a.ApartmentRating)
+            .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner)
+            .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Geolocation)
+            .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.ApartmentRating)
+            .Include(b => b.Reviews)
+            .Include(b => b.Payments)
+            .ToListAsync();
+    }
+
     public async Task<bool> ExistsAsync(int id)
     {
         return await _context.Bookings.AsNoTracking()

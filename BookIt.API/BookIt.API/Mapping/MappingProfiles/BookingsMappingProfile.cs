@@ -14,7 +14,9 @@ public class BookingsMappingProfile : Profile
 
         CreateMap<Booking, BookingDTO>()
             .ForMember(dto => dto.Customer, o => o.MapFrom(b => b.User))
-            .ForMember(dto => dto.CustomerId, o => o.MapFrom(b => b.UserId));
+            .ForMember(dto => dto.CustomerId, o => o.MapFrom(b => b.UserId))
+            .ForMember(dto => dto.HasCustomerReviewed, o => o.MapFrom(b => b.Reviews.Count(r => r.ApartmentId != null) == 1))
+            .ForMember(dto => dto.HasLandlordReviewed, o => o.MapFrom(b => b.Reviews.Count(r => r.UserId != null) == 1));
 
         CreateMap<BookingDTO, Booking>()
             .ForMember(e => e.Id, o => o.Ignore())

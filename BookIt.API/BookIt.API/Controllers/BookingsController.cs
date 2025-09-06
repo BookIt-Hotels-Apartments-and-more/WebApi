@@ -41,6 +41,14 @@ public class BookingsController : ControllerBase
         return Ok(bookingResponse);
     }
 
+    [HttpGet("filter")]
+    public async Task<ActionResult<BookingResponse>> GetBookingsForApartment([FromQuery] int apartmentId)
+    {
+        var bookingsDto = await _service.GetByApartmentIdAsync(apartmentId);
+        var bookingsResponse = _mapper.Map<IEnumerable<BookingResponse>>(bookingsDto);
+        return Ok(bookingsResponse);
+    }
+
     [HttpPost]
     [Authorize(Roles = "Tenant,Admin")]
     public async Task<ActionResult<BookingResponse>> CreateAsync([FromBody] BookingRequest request)
