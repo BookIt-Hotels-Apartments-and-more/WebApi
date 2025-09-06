@@ -76,13 +76,15 @@ public class BookingsService : IBookingsService
         }
     }
 
-    public async Task<IEnumerable<BookingDTO>> GetByApartmentIdAsync(int apartmentId)
+    public async Task<IEnumerable<BookingDTO>> GetFilteredBookingsAsync(int? apartmentId, int? establishmentId)
     {
-        _logger.LogInformation("Retrieving booking for apartment #{ApartmentId}", apartmentId);
+        _logger.LogInformation("Retrieving filtered bookings for {Entity}",
+            apartmentId.HasValue ? $"apartment #{apartmentId}" : establishmentId.HasValue ? $"establishment #{establishmentId}" : "");
         try
         {
-            var bookingsDomain = await _bookingsRepository.GetByApartmentIdAsync(apartmentId);
-            _logger.LogInformation("Bookings for apartment #{ApartmentId} retrieved successfully", apartmentId);
+            var bookingsDomain = await _bookingsRepository.GetFilteredBookingsAsync(apartmentId, establishmentId);
+            _logger.LogInformation("Retrieved {Count} bookings for {Entity}", bookingsDomain.Count(),
+                apartmentId.HasValue ? $"apartment #{apartmentId}" : establishmentId.HasValue ? $"establishment #{establishmentId}" : "");
             var dtos = _mapper.Map<IEnumerable<BookingDTO>>(bookingsDomain);
             return dtos;
         }

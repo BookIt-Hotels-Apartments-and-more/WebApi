@@ -42,9 +42,9 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("filter")]
-    public async Task<ActionResult<BookingResponse>> GetBookingsForApartment([FromQuery] int apartmentId)
+    public async Task<ActionResult<BookingResponse>> GetFilteredBookingsAsync([FromQuery] int? apartmentId, int? establishmentId)
     {
-        var bookingsDto = await _service.GetByApartmentIdAsync(apartmentId);
+        var bookingsDto = await _service.GetFilteredBookingsAsync(apartmentId, establishmentId);
         var bookingsResponse = _mapper.Map<IEnumerable<BookingResponse>>(bookingsDto);
         return Ok(bookingsResponse);
     }

@@ -17,8 +17,8 @@ public class BookingsRepository
     public async Task<IEnumerable<Booking>> GetAllAsync()
     {
         return await _context.Bookings.AsNoTracking().AsSplitQuery()
-            .Include(b => b.User)
-            .ThenInclude(u => u.Photos)
+            .Include(b => b.User).ThenInclude(u => u.Photos)
+            .Include(b => b.User).ThenInclude(u => u.UserRating)
             .Include(b => b.Apartment).ThenInclude(a => a.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.ApartmentRating)
             .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner)
@@ -33,6 +33,7 @@ public class BookingsRepository
     {
         return await _context.Bookings.AsTracking().AsSplitQuery()
             .Include(b => b.User).ThenInclude(u => u.Photos)
+            .Include(b => b.User).ThenInclude(u => u.UserRating)
             .Include(b => b.Apartment).ThenInclude(a => a.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.ApartmentRating)
             .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner)
@@ -43,11 +44,12 @@ public class BookingsRepository
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
-    public async Task<IEnumerable<Booking>> GetByApartmentIdAsync(int apartmentId)
+    public async Task<IEnumerable<Booking>> GetFilteredBookingsAsync(int? apartmentId, int? establishmentId)
     {
         return await _context.Bookings.AsNoTracking().AsSplitQuery()
-            .Where(b => b.ApartmentId == apartmentId)
+            .Where(b => b.Apartment.EstablishmentId == establishmentId || b.ApartmentId == apartmentId)
             .Include(b => b.User).ThenInclude(u => u.Photos)
+            .Include(b => b.User).ThenInclude(u => u.UserRating)
             .Include(b => b.Apartment).ThenInclude(a => a.Photos)
             .Include(b => b.Apartment).ThenInclude(a => a.ApartmentRating)
             .Include(b => b.Apartment).ThenInclude(a => a.Establishment).ThenInclude(e => e.Owner)
