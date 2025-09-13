@@ -64,7 +64,7 @@ public class ReviewsService : IReviewsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve all reviews");
-            throw new ExternalServiceException("Database", "Failed to retrieve reviews", ex);
+            throw new ExternalServiceException("Database", "Failed to retrieve reviews: ", ex);
         }
     }
 
