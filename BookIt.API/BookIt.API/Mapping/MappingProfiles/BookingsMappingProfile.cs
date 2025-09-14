@@ -24,7 +24,8 @@ public class BookingsMappingProfile : Profile
             .ForMember(e => e.IsCheckedIn, o => o.Ignore())
             .ForMember(e => e.UserId, o => o.MapFrom(dto => dto.CustomerId));
 
-        CreateMap<BookingDTO, BookingResponse>();
+        CreateMap<BookingDTO, BookingResponse>()
+            .ForMember(res => res.IsPaid, o => o.MapFrom(dto => dto.Payments.Any(pay => pay.Status == DAL.Enums.PaymentStatus.Completed)));
 
         CreateMap<User, CustomerDTO>()
             .ForMember(dto => dto.Photos, o => o.MapFrom(u => u.Photos.Select(im => im.BlobUrl)))
@@ -32,5 +33,7 @@ public class BookingsMappingProfile : Profile
 
         CreateMap<CustomerDTO, CustomerResponse>()
             .ForMember(res => res.Rating, o => o.MapFrom(dto => dto.Rating));
+
+        CreateMap<Payment, PaymentDetailsDto>();
     }
 }

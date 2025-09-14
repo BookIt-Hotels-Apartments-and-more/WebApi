@@ -11,6 +11,8 @@ public record BookingResponse
     public CustomerResponse Customer { get; set; } = null!;
     public ApartmentResponse Apartment { get; set; } = null!;
 
+    public bool? IsPaid { get; set; } = null;
+
     public bool? HasCustomerReviewed { get; set; } = null;
     public bool? HasLandlordReviewed { get; set; } = null;
 }

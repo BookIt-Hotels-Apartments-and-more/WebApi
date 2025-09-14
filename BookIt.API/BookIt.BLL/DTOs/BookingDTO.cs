@@ -12,6 +12,7 @@ public record BookingDTO
     public CustomerDTO Customer { get; set; } = null!;
     public int ApartmentId { get; set; }
     public ApartmentDTO Apartment { get; set; } = null!;
+    public IEnumerable<PaymentDetailsDto> Payments { get; set; } = new List<PaymentDetailsDto>();
 
     public bool? HasCustomerReviewed { get; set; } = null;
     public bool? HasLandlordReviewed { get; set; } = null;
