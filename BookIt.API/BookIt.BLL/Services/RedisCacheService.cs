@@ -51,7 +51,7 @@ public class RedisCacheService : ICacheService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error getting cache key: {key}");
+            _logger.LogError(ex, $"Error getting cache key {key}");
             return null;
         }
     }
